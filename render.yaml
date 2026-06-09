@@ -1,0 +1,28 @@
+# Deploy the API on Render (free): https://render.com → New → Blueprint → connect this repo.
+# IMPORTANT: Set MONGO_URI in the Render dashboard (MongoDB Atlas) so user accounts persist.
+# Without Atlas, USE_MEMORY_DB=true will wipe registered users on every restart.
+
+services:
+  - type: web
+    name: skyrovix-task-manager-api
+    runtime: node
+    rootDir: server
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: USE_MEMORY_DB
+        value: "false"
+      - key: MONGO_URI
+        sync: false
+      - key: CLIENT_URL
+        value: https://hariharan1022.github.io
+      - key: AUTO_ACCEPT_APPLICATIONS
+        value: "true"
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true

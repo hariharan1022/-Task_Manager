@@ -1,0 +1,35 @@
+import { createModel } from "../config/modelFactory.js";
+
+const Application = createModel("applications", {
+  _id: "id",
+  id: "id",
+  student: "student_id",
+  internship: "internship_id",
+  status: "status",
+  motivation: "motivation",
+  skills: "skills",
+  availability: "availability",
+  relevantExperience: "relevant_experience",
+  projectsHighlight: "projects_highlight",
+  linkedInUrl: "linked_in_url",
+  githubUrl: "github_url",
+  hoursPerWeek: "hours_per_week",
+  expectedStart: "expected_start",
+  adminFeedback: "admin_feedback",
+  offerLetterURL: "offer_letter_url",
+  offerLetterId: "offer_letter_id",
+  internId: "intern_id",
+  internshipMode: "internship_mode",
+  offerLetterLinkedInPost: "offer_letter_linkedin_post",
+  offerLetterPostedAt: "offer_letter_posted_at",
+  certificateURL: "certificate_url",
+  certificateLinkedInPost: "certificate_linkedin_post",
+  certificatePostedAt: "certificate_posted_at",
+  totalScore: "total_score",
+  appliedAt: "applied_at",
+  completedAt: "completed_at",
+  createdAt: "created_at",
+  updatedAt: "updated_at",
+});
+
+export { Application };
