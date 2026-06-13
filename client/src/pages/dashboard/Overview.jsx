@@ -11,6 +11,8 @@ import {
   Sparkles,
   PlayCircle,
   TrendingUp,
+  IndianRupee,
+  XCircle,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { Shield } from "lucide-react";
@@ -37,6 +39,7 @@ export default function Overview() {
   const isAdmin = user?.role === "admin";
   const [apps, setApps] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [score, setScore] = useState(0);
 
@@ -45,11 +48,13 @@ export default function Overview() {
     Promise.all([
       api.get("/applications/my").catch(() => ({ data: { items: [] } })),
       api.get("/courses/my").catch(() => ({ data: { items: [] } })),
+      api.get("/payments/my").catch(() => ({ data: { items: [] } })),
     ])
-      .then(([a, e]) => {
+      .then(([a, e, p]) => {
         if (cancelled) return;
         setApps(a.data.items || []);
         setEnrollments(e.data.items || []);
+        setPayments(p.data.items || []);
       })
       .finally(() => !cancelled && setLoading(false));
     return () => {
@@ -111,6 +116,39 @@ export default function Overview() {
           </Link>
         </div>
       </div>
+
+      {payments.filter((p) => p.status !== "approved").length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-display font-semibold text-ink">Certificate Payment</h2>
+          {payments.filter((p) => p.status !== "approved").map((p) => (
+            <Card key={p._id} className={`p-4 border ${
+              p.status === "pending" ? "border-amber-200" : "border-red-200"
+            }`}>
+              <div className="flex items-center gap-3">
+                {p.status === "pending" ? (
+                  <Clock size={20} className="text-amber-600 shrink-0" />
+                ) : (
+                  <XCircle size={20} className="text-red-600 shrink-0" />
+                )}
+                <div className="flex-1">
+                  <p className="font-semibold text-ink">
+                    {p.status === "pending" ? "Payment pending approval" : "Payment rejected"}
+                  </p>
+                  <p className="text-sm text-text-secondary">
+                    {p.programName} · ₹{p.amount}
+                  </p>
+                  {p.status === "rejected" && p.rejectionReason && (
+                    <p className="text-sm text-red-600 mt-0.5">Reason: {p.rejectionReason}</p>
+                  )}
+                </div>
+                <Link to="/dashboard/certificate" className="btn-ghost text-sm shrink-0">
+                  View
+                </Link>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {loading

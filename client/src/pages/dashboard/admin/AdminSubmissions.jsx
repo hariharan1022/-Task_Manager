@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CheckCircle2, ExternalLink, RefreshCw, XCircle } from "lucide-react";
 import { api } from "../../../utils/axios.js";
+import { emitDashboardRefresh, formatLastFetched, listenDashboardRefresh } from "../../../utils/refreshEvents.js";
+import { getSocket } from "../../../utils/useSocket.js";
 import {
   Badge,
   Card,
@@ -11,6 +13,8 @@ import {
   Textarea,
 } from "../../../components/common/index.jsx";
 import toast from "react-hot-toast";
+
+const POLL_INTERVAL = 5000;
 
 const filterOptions = [
   { value: "submitted", label: "Awaiting review" },
@@ -49,19 +53,43 @@ export default function AdminSubmissions() {
   const [filter, setFilter] = useState("submitted");
   const [review, setReview] = useState({});
   const [busy, setBusy] = useState(null);
+  const [lastFetched, setLastFetched] = useState(null);
+  const intervalRef = useRef(null);
 
   const load = useCallback(() => {
+    console.log("[AdminSubmissions] Fetching submissions...");
     setLoading(true);
     const qs = filter ? `?status=${filter}` : "";
     api
       .get(`/tasks/submissions${qs}`)
-      .then((res) => setItems(res.data.items || []))
+      .then((res) => {
+        setItems(res.data.items || []);
+        setLastFetched(new Date().toISOString());
+        console.log("[AdminSubmissions] Loaded", res.data.items?.length, "submissions");
+      })
       .catch(() => toast.error("Could not load submissions"))
       .finally(() => setLoading(false));
   }, [filter]);
 
   useEffect(() => {
     load();
+    intervalRef.current = setInterval(load, POLL_INTERVAL);
+    console.log("[AdminSubmissions] Polling every", POLL_INTERVAL + "ms");
+
+    const socket = getSocket();
+    const handlers = {};
+    for (const evt of ["submission_uploaded", "submission_approved", "user_registered"]) {
+      const handler = (p) => { console.log("[AdminSubmissions] Socket:", evt, p); load(); };
+      socket.on(evt, handler);
+      handlers[evt] = handler;
+    }
+    const unlisten = listenDashboardRefresh(() => load());
+
+    return () => {
+      clearInterval(intervalRef.current);
+      for (const [evt, handler] of Object.entries(handlers)) socket.off(evt, handler);
+      unlisten();
+    };
   }, [load]);
 
   const getReview = (id) => review[id] || { feedback: "", score: 20 };
@@ -83,6 +111,7 @@ export default function AdminSubmissions() {
         score: Number(r.score) || 20,
       });
       toast.success(status === "approved" ? "Submission approved" : "Submission rejected");
+      emitDashboardRefresh("submission-review");
       load();
     } catch (err) {
       toast.error(err.response?.data?.message || "Review failed");
@@ -93,6 +122,10 @@ export default function AdminSubmissions() {
 
   return (
     <div className="space-y-4">
+      <p className="text-xs text-text-secondary flex items-center gap-1.5">
+        <RefreshCw size={12} />
+        Updated: <span className="font-mono font-medium text-ink">{formatLastFetched(lastFetched)}</span>
+      </p>
       <div className="flex flex-wrap items-end gap-4">
         <Select
           label="Filter"

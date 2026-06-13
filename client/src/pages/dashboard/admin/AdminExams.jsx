@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -6,13 +6,18 @@ import {
   Clock,
   ListChecks,
   Edit3,
+  RefreshCw,
   Trash2,
   Award,
   ChevronRight,
 } from "lucide-react";
 import { api } from "../../../utils/axios.js";
+import { formatLastFetched, listenDashboardRefresh } from "../../../utils/refreshEvents.js";
+import { getSocket } from "../../../utils/useSocket.js";
 import { Spinner, EmptyState, Modal } from "../../../components/common/index.jsx";
 import { toast } from "react-hot-toast";
+
+const POLL_INTERVAL = 5000;
 
 const blank = {
   title: "",
@@ -35,6 +40,8 @@ export default function AdminExams() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
+  const [lastFetched, setLastFetched] = useState(null);
+  const intervalRef = useRef(null);
 
   const load = () => {
     setLoading(true);
@@ -45,11 +52,27 @@ export default function AdminExams() {
       .then(([e, c]) => {
         setItems(e.data.items || []);
         setCourses(c.data.items || []);
+        setLastFetched(new Date().toISOString());
       })
       .finally(() => setLoading(false));
   };
+
   useEffect(() => {
     load();
+    intervalRef.current = setInterval(load, POLL_INTERVAL);
+    const socket = getSocket();
+    const handlers = {};
+    for (const evt of ["course_created", "course_updated", "course_completed", "quiz_submitted", "quiz_evaluated"]) {
+      const handler = (p) => { console.log("[AdminExams] Socket:", evt, p); load(); };
+      socket.on(evt, handler);
+      handlers[evt] = handler;
+    }
+    const unlisten = listenDashboardRefresh(() => load());
+    return () => {
+      clearInterval(intervalRef.current);
+      for (const [evt, h] of Object.entries(handlers)) socket.off(evt, h);
+      unlisten();
+    };
   }, []);
 
   const save = async () => {
@@ -91,6 +114,10 @@ export default function AdminExams() {
 
   return (
     <div className="space-y-5">
+      <p className="text-xs text-text-secondary flex items-center gap-1.5">
+        <RefreshCw size={12} />
+        Updated: <span className="font-mono font-medium text-ink">{formatLastFetched(lastFetched)}</span>
+      </p>
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-display font-bold text-ink">

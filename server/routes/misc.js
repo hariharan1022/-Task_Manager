@@ -15,7 +15,7 @@ router.get("/verify/:certId", async (req, res, next) => {
     })
       .populate(
         "student",
-        "fullName college department graduationYear profilePhoto"
+        "full_name college department graduation_year profile_photo"
       )
       .populate({
         path: "application",

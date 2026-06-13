@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authRequired } from "../middleware/auth.js";
 import { isAdmin } from "../middleware/isAdmin.js";
-import { adminDashboardStats, adminAnalytics } from "../controllers/adminController.js";
+import { adminDashboardStats, adminDashboardStatsV2, adminAnalytics } from "../controllers/adminController.js";
 import { seedCourses } from "../seed/seedCourses.js";
 import { upsertPrograms } from "../seed/seed.js";
 import { InternshipProgram } from "../models/Internship.js";
@@ -14,6 +14,7 @@ const router = Router();
 router.use(authRequired, isAdmin);
 
 router.get("/stats", adminDashboardStats);
+router.get("/dashboard/stats", adminDashboardStatsV2);
 router.get("/analytics", adminAnalytics);
 router.post("/seed-courses", async (req, res, next) => {
   try {

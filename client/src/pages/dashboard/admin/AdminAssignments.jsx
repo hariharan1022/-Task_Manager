@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Plus,
   CheckCircle2,
@@ -6,13 +6,18 @@ import {
   FileText,
   XCircle,
   Edit3,
+  RefreshCw,
   Trash2,
   Award,
   MessageSquare,
 } from "lucide-react";
 import { api } from "../../../utils/axios.js";
+import { formatLastFetched, listenDashboardRefresh } from "../../../utils/refreshEvents.js";
+import { getSocket } from "../../../utils/useSocket.js";
 import { Spinner, EmptyState, Modal } from "../../../components/common/index.jsx";
 import { toast } from "react-hot-toast";
+
+const POLL_INTERVAL = 5000;
 
 const blankForm = {
   title: "",
@@ -34,6 +39,8 @@ export default function AdminAssignments() {
   const [saving, setSaving] = useState(false);
   const [grading, setGrading] = useState(null);
   const [gradeForm, setGradeForm] = useState({ marks: 0, feedback: "" });
+  const [lastFetched, setLastFetched] = useState(null);
+  const intervalRef = useRef(null);
 
   const load = () => {
     setLoading(true);
@@ -46,11 +53,27 @@ export default function AdminAssignments() {
         setItems(a.data.items || []);
         setSubmissions(s.data.items || []);
         setCourses(c.data.items || []);
+        setLastFetched(new Date().toISOString());
       })
       .finally(() => setLoading(false));
   };
+
   useEffect(() => {
     load();
+    intervalRef.current = setInterval(load, POLL_INTERVAL);
+    const socket = getSocket();
+    const handlers = {};
+    for (const evt of ["submission_uploaded", "submission_approved", "course_created"]) {
+      const handler = (p) => { console.log("[AdminAssignments] Socket:", evt, p); load(); };
+      socket.on(evt, handler);
+      handlers[evt] = handler;
+    }
+    const unlisten = listenDashboardRefresh(() => load());
+    return () => {
+      clearInterval(intervalRef.current);
+      for (const [evt, h] of Object.entries(handlers)) socket.off(evt, h);
+      unlisten();
+    };
   }, []);
 
   const save = async () => {
@@ -104,6 +127,10 @@ export default function AdminAssignments() {
 
   return (
     <div className="space-y-5">
+      <p className="text-xs text-text-secondary flex items-center gap-1.5">
+        <RefreshCw size={12} />
+        Updated: <span className="font-mono font-medium text-ink">{formatLastFetched(lastFetched)}</span>
+      </p>
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-display font-bold text-ink">

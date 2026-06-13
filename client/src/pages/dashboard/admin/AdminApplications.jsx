@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, XCircle, ExternalLink } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CheckCircle2, RefreshCw, XCircle, ExternalLink } from "lucide-react";
 import { api } from "../../../utils/axios.js";
+import { formatLastFetched, listenDashboardRefresh } from "../../../utils/refreshEvents.js";
+import { getSocket } from "../../../utils/useSocket.js";
 import {
   Badge,
   Card,
@@ -10,6 +12,8 @@ import {
   Textarea,
 } from "../../../components/common/index.jsx";
 import toast from "react-hot-toast";
+
+const POLL_INTERVAL = 5000;
 
 const statusOptions = [
   { value: "", label: "All statuses" },
@@ -32,19 +36,40 @@ export default function AdminApplications() {
   const [filter, setFilter] = useState("pending");
   const [feedback, setFeedback] = useState({});
   const [busy, setBusy] = useState(null);
+  const [lastFetched, setLastFetched] = useState(null);
+  const intervalRef = useRef(null);
 
   const load = useCallback(() => {
+    console.log("[AdminApplications] Fetching applications...");
     setLoading(true);
     const qs = filter ? `?status=${filter}` : "";
     api
       .get(`/applications${qs}`)
-      .then((res) => setItems(res.data.items || []))
+      .then((res) => {
+        setItems(res.data.items || []);
+        setLastFetched(new Date().toISOString());
+        console.log("[AdminApplications] Loaded", res.data.items?.length, "applications");
+      })
       .catch(() => toast.error("Could not load applications"))
       .finally(() => setLoading(false));
   }, [filter]);
 
   useEffect(() => {
     load();
+    intervalRef.current = setInterval(load, POLL_INTERVAL);
+    const socket = getSocket();
+    const handlers = {};
+    for (const evt of ["internship_assigned", "internship_completed", "user_registered"]) {
+      const handler = (p) => { console.log("[AdminApplications] Socket:", evt, p); load(); };
+      socket.on(evt, handler);
+      handlers[evt] = handler;
+    }
+    const unlisten = listenDashboardRefresh(() => load());
+    return () => {
+      clearInterval(intervalRef.current);
+      for (const [evt, h] of Object.entries(handlers)) socket.off(evt, h);
+      unlisten();
+    };
   }, [load]);
 
   const updateStatus = async (id, status) => {
@@ -65,6 +90,10 @@ export default function AdminApplications() {
 
   return (
     <div className="space-y-4">
+      <p className="text-xs text-text-secondary flex items-center gap-1.5">
+        <RefreshCw size={12} />
+        Updated: <span className="font-mono font-medium text-ink">{formatLastFetched(lastFetched)}</span>
+      </p>
       <div className="flex flex-wrap items-end gap-4">
         <Select
           label="Filter by status"

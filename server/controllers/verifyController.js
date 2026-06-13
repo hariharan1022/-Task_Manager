@@ -5,7 +5,7 @@ import { detectDocumentType } from "../utils/documentIds.js";
 
 async function verifyCertificateById(certId, res) {
   const cert = await Certificate.findOne({ certificateId: certId })
-    .populate("student", "fullName college department graduationYear profilePhoto email phone")
+    .populate("student", "full_name college department graduation_year profile_photo email phone")
     .populate({
       path: "application",
       populate: { path: "internship", select: "title domain duration" },
@@ -35,7 +35,7 @@ async function verifyCertificateById(certId, res) {
 
 async function verifyOfferById(offerId, res) {
   const app = await Application.findOne({ offerLetterId: offerId })
-    .populate("student", "fullName email college department graduationYear phone")
+    .populate("student", "full_name email college department graduation_year phone")
     .populate("internship", "title domain duration");
   if (!app || !["accepted", "completed"].includes(app.status)) {
     return res.status(404).json({ valid: false, type: "offer", message: "Offer letter not found" });
@@ -61,7 +61,7 @@ async function verifyOfferById(offerId, res) {
 
 async function verifyInternById(internId, res) {
   const app = await Application.findOne({ internId })
-    .populate("student", "fullName email college department graduationYear phone profilePhoto")
+    .populate("student", "full_name email college department graduation_year phone profile_photo")
     .populate("internship", "title domain duration");
   if (!app || !["accepted", "completed"].includes(app.status)) {
     return res.status(404).json({ valid: false, type: "intern", message: "Intern ID not found" });

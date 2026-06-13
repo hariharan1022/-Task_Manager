@@ -6,6 +6,7 @@ import { authRequired } from "../middleware/auth.js";
 import { isAdmin } from "../middleware/isAdmin.js";
 import { ensureCertificateForApplication } from "../utils/issueCertificate.js";
 import { createNotification } from "../utils/createNotification.js";
+import { emitEvent } from "../config/socket.js";
 
 const router = Router();
 
@@ -59,14 +60,14 @@ router.post("/:taskId/submit", authRequired, async (req, res, next) => {
 
     let submission;
     if (existing) {
-      existing.submissionContent = submissionContent;
-      existing.submissionFileUrl = submissionFileUrl || "";
-      existing.status = "submitted";
-      existing.submittedAt = new Date();
-      existing.feedback = "";
-      existing.score = 0;
-      await existing.save();
-      submission = existing;
+      submission = await TaskSubmission.findByIdAndUpdate(existing._id, {
+        submissionContent,
+        submissionFileUrl: submissionFileUrl || "",
+        status: "submitted",
+        submittedAt: new Date(),
+        feedback: "",
+        score: 0,
+      }, { new: true });
     } else {
       submission = await TaskSubmission.create({
         student: req.user._id,
@@ -76,6 +77,7 @@ router.post("/:taskId/submit", authRequired, async (req, res, next) => {
         submissionFileUrl: submissionFileUrl || "",
       });
     }
+    emitEvent("submission_uploaded", { submissionId: submission._id, studentId: req.user._id });
     res.status(201).json({ submission });
   } catch (err) {
     next(err);
@@ -87,7 +89,7 @@ router.get("/submissions/my/:applicationId", authRequired, async (req, res, next
     const items = await TaskSubmission.find({
       student: req.user._id,
       application: req.params.applicationId,
-    }).populate("task", "title taskNumber points submissionType");
+    }).populate("task", "title task_number points submission_type");
     res.json({ items });
   } catch (err) {
     next(err);
@@ -100,11 +102,11 @@ router.get("/submissions", authRequired, isAdmin, async (req, res, next) => {
     const filter = {};
     if (status) filter.status = status;
     const items = await TaskSubmission.find(filter)
-      .populate("student", "fullName email college department")
-      .populate("task", "title taskNumber points submissionType")
+      .populate("student", "full_name email college department")
+      .populate("task", "title task_number points submission_type")
       .populate({
         path: "application",
-        select: "status totalScore internship",
+        select: "status total_score",
         populate: { path: "internship", select: "title domain" },
       })
       .sort({ submittedAt: -1 });
@@ -121,7 +123,7 @@ router.put("/submissions/:id/review", authRequired, isAdmin, async (req, res, ne
       return res.status(400).json({ message: "status must be approved or rejected" });
     }
     const submission = await TaskSubmission.findById(req.params.id)
-      .populate("task", "title taskNumber points")
+      .populate("task", "title task_number points")
       .populate({
         path: "application",
         populate: { path: "internship", select: "title" },
@@ -129,12 +131,17 @@ router.put("/submissions/:id/review", authRequired, isAdmin, async (req, res, ne
     if (!submission) {
       return res.status(404).json({ message: "Submission not found" });
     }
+    const newScore = status === "approved" ? Number(score ?? submission.task?.points ?? 20) : 0;
+    await TaskSubmission.findByIdAndUpdate(req.params.id, {
+      status,
+      feedback: feedback || "",
+      score: newScore,
+      reviewedAt: new Date(),
+      reviewedBy: req.user._id,
+    });
     submission.status = status;
     submission.feedback = feedback || "";
-    submission.score = status === "approved" ? Number(score ?? submission.task.points) : 0;
-    submission.reviewedAt = new Date();
-    submission.reviewedBy = req.user._id;
-    await submission.save();
+    submission.score = newScore;
 
     const studentId = submission.student || submission.application?.student;
     const taskLabel = submission.task?.title || `Task ${submission.task?.taskNumber || ""}`;
@@ -194,6 +201,7 @@ router.put("/submissions/:id/review", authRequired, isAdmin, async (req, res, ne
         }
       }
     }
+    emitEvent("submission_approved", { submissionId: submission._id, status, score: newScore });
     res.json({ submission });
   } catch (err) {
     next(err);

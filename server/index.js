@@ -3,10 +3,12 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
+import http from "http";
 import rateLimit from "express-rate-limit";
 
 import { env } from "./config/env.js";
 import { connectDB, isDBConnected } from "./config/db.js";
+import { initSocket } from "./config/socket.js";
 import { User } from "./models/User.js";
 import { Course } from "./models/Course.js";
 import { seedDatabase } from "./seed/seed.js";
@@ -25,6 +27,7 @@ import notificationRoutes from "./routes/notifications.js";
 import courseRoutes from "./routes/courses.js";
 import assignmentRoutes from "./routes/assignments.js";
 import examRoutes from "./routes/exams.js";
+import paymentRoutes from "./routes/payments.js";
 
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import { requireDB } from "./middleware/requireDB.js";
@@ -57,6 +60,14 @@ app.use(express.urlencoded({ extended: true }));
 if (env.nodeEnv !== "test") app.use(morgan("dev"));
 app.use("/uploads", express.static(path.resolve(process.cwd(), env.uploadsDir)));
 
+// Cache-Control: no-store on all /api routes
+app.use("/api", (req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  next();
+});
+
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
@@ -79,12 +90,16 @@ app.use("/api/notifications", requireDB, notificationRoutes);
 app.use("/api/courses", requireDB, courseRoutes);
 app.use("/api/assignments", requireDB, assignmentRoutes);
 app.use("/api/exams", requireDB, examRoutes);
+app.use("/api/payments", requireDB, paymentRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
 
+const server = http.createServer(app);
+
 const start = async () => {
   await connectDB();
+  initSocket(server);
   if (isDBConnected()) {
     const userCount = await User.countDocuments();
     if (userCount === 0) {
@@ -92,7 +107,7 @@ const start = async () => {
       try {
         await seedDatabase({ clear: false });
       } catch (e) {
-        console.error("[seed] Error seeding database:", e?.message || e, JSON.stringify(e, Object.getOwnPropertyNames(e)));
+        console.warn("[seed] Skipping demo data (expected if anon key has limited permissions):", e?.message || e);
       }
       const courseCount = await Course.countDocuments();
       if (courseCount === 0) {
@@ -100,12 +115,12 @@ const start = async () => {
         try {
           await seedCourses({ clear: false });
         } catch (e) {
-          console.error("[seed] Error seeding courses:", e?.message || e, JSON.stringify(e, Object.getOwnPropertyNames(e)));
+          console.warn("[seed] Skipping courses seed:", e?.message || e);
         }
       }
     }
   }
-  app.listen(env.port, () => {
+  server.listen(env.port, () => {
     console.log(`API listening on http://localhost:${env.port}`);
   });
 };

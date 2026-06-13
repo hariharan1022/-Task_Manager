@@ -5,6 +5,7 @@ import {
   Edit3,
   Trash2,
   BookOpen,
+  RefreshCw,
   Users,
   Video,
   ChevronRight,
@@ -12,6 +13,8 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { api } from "../../../utils/axios.js";
+import { formatLastFetched } from "../../../utils/refreshEvents.js";
+import { useAutoRefresh } from "../../../utils/useAutoRefresh.js";
 import { Spinner, EmptyState, Modal, ProgressBar } from "../../../components/common/index.jsx";
 import { toast } from "react-hot-toast";
 
@@ -41,6 +44,11 @@ export default function AdminCourses() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(blankCourse);
   const [saving, setSaving] = useState(false);
+  const { lastFetched } = useAutoRefresh({
+    onRefresh: () => load(),
+    events: ["course_created", "course_updated", "course_completed"],
+    source: "AdminCourses",
+  });
 
   const load = () => {
     setLoading(true);
@@ -92,6 +100,10 @@ export default function AdminCourses() {
 
   return (
     <div className="space-y-5">
+      <p className="text-xs text-text-secondary flex items-center gap-1.5">
+        <RefreshCw size={12} />
+        Updated: <span className="font-mono font-medium text-ink">{formatLastFetched(lastFetched)}</span>
+      </p>
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-display font-bold text-ink">

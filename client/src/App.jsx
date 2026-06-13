@@ -43,6 +43,7 @@ import AdminAssignments from "./pages/dashboard/admin/AdminAssignments.jsx";
 import AdminExams from "./pages/dashboard/admin/AdminExams.jsx";
 import AdminQuestions from "./pages/dashboard/admin/AdminQuestions.jsx";
 import AdminAnalytics from "./pages/dashboard/admin/AdminAnalytics.jsx";
+import AdminPaymentApprovals from "./pages/dashboard/admin/AdminPaymentApprovals.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import GuestRoute from "./routes/GuestRoute.jsx";
 
@@ -119,6 +120,7 @@ export default function App() {
           <Route path="exams" element={<AdminExams />} />
           <Route path="exams/:examId/questions" element={<AdminQuestions />} />
           <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="payment-approvals" element={<AdminPaymentApprovals />} />
         </Route>
       </Route>
 

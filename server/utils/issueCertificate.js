@@ -29,6 +29,12 @@ const COMPANY = {
   founderTitle: "Founder & CEO",
   coFounderName: "Maheshwaran S",
   coFounderTitle: "Co-Founder",
+  community: {
+    linkedin: env.company.linkedin || "https://www.linkedin.com/in/hariharan-s-92b566381",
+    instagram: env.company.instagram || "https://www.instagram.com/skyrovix_web",
+    telegram: env.company.telegram || "9940773204",
+    whatsapp: env.company.whatsapp || "9940773204",
+  },
 };
 
 async function renderCertificatePDF(cert, student, app, internship) {

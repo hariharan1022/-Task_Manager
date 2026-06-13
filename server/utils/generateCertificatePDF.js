@@ -558,16 +558,31 @@ export async function buildCertificatePDF(payload) {
   doc.text(vShort, panelX + 160, bottomY + qrSize - 8, { width: qrX - 30 - panelX - 160, align: "right" });
 
   // --- Footer bar ---
-  const footerY = pageH - 46;
+  const footerY = pageH - 52;
   doc.save();
   // Thin gold rule
   doc.strokeColor(C.gold).lineWidth(0.5).opacity(0.5);
   doc.moveTo(panelX, footerY - 6).lineTo(panelX + panelW, footerY - 6).stroke();
   doc.opacity(1);
-  doc.fillColor(C.gold).font("Courier-Bold").fontSize(8);
+  doc.fillColor(C.gold).font("Courier-Bold").fontSize(7);
   doc.text(`CERT ID  ${payload.id || payload.certificateId || ""}`, panelX, footerY);
-  doc.fillColor(C.textMuted).font("Helvetica").fontSize(7.5);
-  doc.text(verifyUrl, 0, footerY + 14, { width: pageW, align: "center" });
+  doc.fillColor(C.textMuted).font("Helvetica").fontSize(7);
+  doc.text(verifyUrl, 0, footerY + 11, { width: pageW, align: "center" });
+  doc.restore();
+
+  // --- Join Our Community ---
+  const comm = (company.community || {});
+  const commY = footerY + 28;
+  doc.save();
+  doc.fillColor(C.gold).font("Helvetica-Bold").fontSize(7);
+  doc.text("JOIN OUR COMMUNITY", 0, commY, { width: pageW, align: "center", characterSpacing: 1.5 });
+  doc.fillColor(C.textMuted).font("Helvetica").fontSize(6.5);
+  const commParts = [];
+  if (comm.linkedin) commParts.push(`LinkedIn  ${comm.linkedin}`);
+  if (comm.instagram) commParts.push(`Insta  ${comm.instagram}`);
+  if (comm.telegram) commParts.push(`Telegram  ${comm.telegram}`);
+  if (comm.whatsapp) commParts.push(`WhatsApp  ${comm.whatsapp}`);
+  doc.text(commParts.join("   |   "), 0, commY + 11, { width: pageW, align: "center" });
   doc.restore();
 
   doc.end();

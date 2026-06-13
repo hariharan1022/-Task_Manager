@@ -19,7 +19,7 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 
-const PROJECT_REF = "ytfumhzpzqgplvvpvmco";
+const PROJECT_REF = "bkkunsjahduiwlqxguat";
 const SQL_FILE = path.resolve(__dirname, "../db/schema.sql");
 
 async function main() {

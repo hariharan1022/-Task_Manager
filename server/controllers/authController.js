@@ -7,6 +7,7 @@ import {
 } from "../utils/generateToken.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { env } from "../config/env.js";
+import { emitEvent } from "../config/socket.js";
 
 function generateOtp() {
   return String(crypto.randomInt(0, 1000000)).padStart(6, "0");
@@ -81,6 +82,7 @@ export async function register(req, res, next) {
       lastActiveAt: new Date(),
     });
 
+    emitEvent("user_registered", { userId: user._id || user.id, email: user.email });
     res.status(201).json({
       message: "Account created. You're signed in.",
       ...tokenResponse(user, realAccessToken, realRefreshToken),

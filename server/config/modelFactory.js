@@ -73,24 +73,24 @@ class QueryBuilder {
     const joins = [];
     for (const pop of this._populates) {
       const field = this._toDBField(pop.path);
-      const refField = `${field}:${field}_id`;
+      const fkRef = field.endsWith("_id") ? field : `${field}_id`;
+      const refField = `${pop.path}:${fkRef}`;
       const nested = [];
       if (pop.select) {
         const fields = pop.select.split(" ").filter(Boolean);
         for (const f of fields) {
-          const clean = f.replace(/^[+-]/, "");
-          nested.push(this._toDBField(clean));
+          nested.push(f.replace(/^[+-]/, ""));
         }
       }
-      // Handle nested populate (populate within populate)
       if (pop.populate) {
         const nestedPop = pop.populate;
         const nestedField = this._toDBField(nestedPop.path);
-        const nestedRef = `${nestedField}:${nestedField}_id`;
+        const nestedFkRef = nestedField.endsWith("_id") ? nestedField : `${nestedField}_id`;
+        const nestedRef = `${nestedPop.path}:${nestedFkRef}`;
         if (nestedPop.select) {
           const nf = nestedPop.select.split(" ").filter(Boolean);
-          const nestedSelects = nf.map((f) => this._toDBField(f.replace(/^[+-]/, ""))).join(",");
-          joins.push(`${refField}(${nestedRef}(${nestedSelects}),${nested.map((f) => f).join(",")})`);
+          const nestedSelects = nf.map((f) => f.replace(/^[+-]/, "")).join(",");
+          joins.push(`${refField}(${nestedRef}(${nestedSelects})${nested.length ? `,${nested.join(",")}` : ""})`);
           continue;
         }
       }

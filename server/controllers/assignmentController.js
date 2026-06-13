@@ -108,8 +108,8 @@ export async function adminListSubmissions(req, res, next) {
     if (status) filter.status = status;
     if (courseId) filter.course = courseId;
     const submissions = await AssignmentSubmission.find(filter)
-      .populate("user", "fullName email profilePhoto")
-      .populate("assignment", "title maxMarks")
+      .populate("user", "full_name email profile_photo")
+      .populate("assignment", "title max_marks")
       .populate("course", "title slug")
       .sort({ submittedAt: -1 })
       .lean();

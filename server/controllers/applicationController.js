@@ -111,7 +111,7 @@ export async function myApplications(req, res, next) {
       }
     }
     const items = await Application.find({ student: req.user._id })
-      .populate("internship", "title domain duration stipend coverImage")
+      .populate("internship", "title domain duration stipend cover_image")
       .sort({ createdAt: -1 });
 
     await Promise.all(
@@ -120,7 +120,7 @@ export async function myApplications(req, res, next) {
     );
 
     const refreshed = await Application.find({ student: req.user._id })
-      .populate("internship", "title domain duration stipend coverImage")
+      .populate("internship", "title domain duration stipend cover_image")
       .sort({ createdAt: -1 });
 
     res.json({ items: refreshed });
@@ -135,7 +135,7 @@ export async function listAllApplications(req, res, next) {
     const filter = {};
     if (status) filter.status = status;
     const items = await Application.find(filter)
-      .populate("student", "fullName email college")
+      .populate("student", "full_name email college")
       .populate("internship", "title domain duration")
       .sort({ createdAt: -1 });
     res.json({ items });
@@ -147,7 +147,7 @@ export async function listAllApplications(req, res, next) {
 export async function leaderboard(req, res, next) {
   try {
     const items = await Application.find({ status: { $in: ["accepted", "completed"] } })
-      .populate("student", "fullName college")
+      .populate("student", "full_name college")
       .populate("internship", "title domain")
       .sort({ totalScore: -1, updatedAt: -1 })
       .limit(50);
@@ -258,7 +258,7 @@ export async function updateApplicationStatus(req, res, next) {
     }
 
     const updated = await Application.findById(app._id)
-      .populate("student", "fullName email")
+      .populate("student", "full_name email")
       .populate("internship", "title");
     res.json({ application: updated || app });
   } catch (err) {

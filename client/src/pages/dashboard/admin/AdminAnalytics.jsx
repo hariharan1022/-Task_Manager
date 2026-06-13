@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   TrendingUp,
   Users,
@@ -9,11 +9,15 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  RefreshCw,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { api } from "../../../utils/axios.js";
-import { Spinner } from "../../../components/common/index.jsx";
+import { Card, Spinner, Badge } from "../../../components/common/index.jsx";
+import { listenDashboardRefresh } from "../../../utils/refreshEvents.js";
 import { toast } from "react-hot-toast";
+
+const POLL_INTERVAL = 10000;
 
 function StatCard({ label, value, icon: Icon, color }) {
   return (
@@ -41,23 +45,66 @@ function StatCard({ label, value, icon: Icon, color }) {
   );
 }
 
+function formatTime(isoString) {
+  if (!isoString) return "—";
+  const d = new Date(isoString);
+  return d.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+}
+
 export default function AdminAnalytics() {
   const [data, setData] = useState(null);
-  const [stats, setStats] = useState(null);
+  const [dashStats, setDashStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastFetched, setLastFetched] = useState(null);
+  const intervalRef = useRef(null);
+
+  const loadAnalytics = useCallback(async () => {
+    console.log("[AdminAnalytics] ===== FETCHING ANALYTICS =====");
+    console.log("[AdminAnalytics] Timestamp:", new Date().toISOString());
+    try {
+      const [a, s] = await Promise.all([
+        api.get("/admin/analytics").catch((err) => {
+          console.error("[AdminAnalytics] Analytics fetch failed:", err.message);
+          return { data: null };
+        }),
+        api.get("/admin/dashboard/stats").catch((err) => {
+          console.error("[AdminAnalytics] Dashboard stats fetch failed:", err.message);
+          return { data: null };
+        }),
+      ]);
+      console.log("[AdminAnalytics] Analytics response:", a.data);
+      console.log("[AdminAnalytics] Dashboard stats response:", s.data);
+      setData(a.data);
+      setDashStats(s.data);
+      setLastFetched(new Date().toISOString());
+    } catch (err) {
+      console.error("[AdminAnalytics] Load error:", err.message);
+      toast.error(err.response?.data?.message || "Failed to load");
+    } finally {
+      setLoading(false);
+      console.log("[AdminAnalytics] ===== FETCH COMPLETE =====");
+    }
+  }, []);
 
   useEffect(() => {
-    Promise.all([
-      api.get("/admin/analytics").catch(() => ({ data: null })),
-      api.get("/admin/stats").catch(() => ({ data: null })),
-    ])
-      .then(([a, s]) => {
-        setData(a.data);
-        setStats(s.data);
-      })
-      .catch((err) => toast.error(err.response?.data?.message || "Failed to load"))
-      .finally(() => setLoading(false));
-  }, []);
+    loadAnalytics();
+    intervalRef.current = setInterval(loadAnalytics, POLL_INTERVAL);
+    console.log("[AdminAnalytics] Polling started, interval:", POLL_INTERVAL + "ms");
+    const unlisten = listenDashboardRefresh((detail) => {
+      console.log("[AdminAnalytics] Immediate refresh triggered by:", detail.source);
+      loadAnalytics();
+    });
+    return () => {
+      console.log("[AdminAnalytics] Cleaning up interval + listener");
+      clearInterval(intervalRef.current);
+      unlisten();
+    };
+  }, [loadAnalytics]);
 
   if (loading)
     return (
@@ -83,37 +130,46 @@ export default function AdminAnalytics() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-ink">
-          Analytics
-        </h1>
-        <p className="mt-1 text-text-secondary text-sm">
-          Performance and engagement insights across the platform.
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-ink">
+            Analytics
+          </h1>
+          <p className="mt-1 text-text-secondary text-sm">
+            Performance and engagement insights across the platform.
+          </p>
+        </div>
+        <p className="text-xs text-text-secondary flex items-center gap-1.5">
+          <RefreshCw size={12} />
+          Updated at{" "}
+          <span className="font-mono font-medium text-ink">
+            {formatTime(lastFetched)}
+          </span>
         </p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total Students"
-          value={stats?.totalStudents || 0}
+          value={dashStats?.totalUsers ?? 0}
           icon={Users}
           color="bg-gradient-to-br from-purple-500 to-pink-500"
         />
         <StatCard
           label="Courses"
-          value={stats?.totalCourses || 0}
+          value={dashStats?.totalCourses ?? 0}
           icon={BookOpen}
           color="bg-gradient-to-br from-blue-500 to-cyan-500"
         />
         <StatCard
           label="Enrollments"
-          value={stats?.totalEnrollments || 0}
+          value={dashStats?.totalEnrollments ?? 0}
           icon={TrendingUp}
           color="bg-gradient-to-br from-emerald-500 to-teal-500"
         />
         <StatCard
           label="Completed"
-          value={stats?.completedPrograms || 0}
+          value={dashStats?.completionRate ?? 0}
           icon={Award}
           color="bg-gradient-to-br from-amber-500 to-orange-500"
         />
@@ -201,10 +257,7 @@ export default function AdminAnalytics() {
                     </td>
                     <td className="py-2.5 font-bold">
                       {r.totalScore}
-                      <span className="text-text-muted text-xs font-medium">
-                        {" "}
-                        / 100
-                      </span>
+                      <span className="text-text-muted text-xs font-medium"> / 100</span>
                     </td>
                     <td className="py-2.5">
                       <span

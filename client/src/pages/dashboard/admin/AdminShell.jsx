@@ -9,6 +9,7 @@ import {
   ListChecks,
   Trophy,
   BarChart3,
+  IndianRupee,
 } from "lucide-react";
 
 const tabs = [
@@ -19,6 +20,7 @@ const tabs = [
   { to: "/dashboard/admin/programs", label: "Internships", icon: GraduationCap },
   { to: "/dashboard/admin/applications", label: "Applications", icon: ClipboardCheck },
   { to: "/dashboard/admin/submissions", label: "Submissions", icon: FileCheck },
+  { to: "/dashboard/admin/payment-approvals", label: "Payments", icon: IndianRupee },
   { to: "/dashboard/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];
 

@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import { Plus, Pencil, Power, PowerOff, BookOpen } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Plus, Pencil, Power, PowerOff, BookOpen, RefreshCw } from "lucide-react";
 import { api } from "../../../utils/axios.js";
+import { formatLastFetched, listenDashboardRefresh } from "../../../utils/refreshEvents.js";
+import { getSocket } from "../../../utils/useSocket.js";
 import {
   Badge,
   Card,
@@ -13,6 +15,8 @@ import {
 } from "../../../components/common/index.jsx";
 import { emptyProgram, defaultTasks } from "./taskDefaults.js";
 import toast from "react-hot-toast";
+
+const POLL_INTERVAL = 5000;
 
 const submissionTypes = [
   { value: "link", label: "Live URL" },
@@ -142,18 +146,37 @@ export default function AdminPrograms() {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyProgram());
   const [saving, setSaving] = useState(false);
+  const [lastFetched, setLastFetched] = useState(null);
+  const intervalRef = useRef(null);
 
   const load = useCallback(() => {
     setLoading(true);
     api
       .get("/internships/admin/all")
-      .then((res) => setItems(res.data.items || []))
+      .then((res) => {
+        setItems(res.data.items || []);
+        setLastFetched(new Date().toISOString());
+      })
       .catch(() => toast.error("Could not load programs"))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     load();
+    intervalRef.current = setInterval(load, POLL_INTERVAL);
+    const socket = getSocket();
+    const handlers = {};
+    for (const evt of ["internship_assigned", "internship_completed", "user_registered"]) {
+      const handler = (p) => { console.log("[AdminPrograms] Socket:", evt, p); load(); };
+      socket.on(evt, handler);
+      handlers[evt] = handler;
+    }
+    const unlisten = listenDashboardRefresh(() => load());
+    return () => {
+      clearInterval(intervalRef.current);
+      for (const [evt, h] of Object.entries(handlers)) socket.off(evt, h);
+      unlisten();
+    };
   }, [load]);
 
   const openCreate = () => {
@@ -257,6 +280,10 @@ export default function AdminPrograms() {
 
   return (
     <div className="space-y-4">
+      <p className="text-xs text-text-secondary flex items-center gap-1.5">
+        <RefreshCw size={12} />
+        Updated: <span className="font-mono font-medium text-ink">{formatLastFetched(lastFetched)}</span>
+      </p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-text-secondary">
           {items.length} program{items.length !== 1 ? "s" : ""} · each needs 5 tasks

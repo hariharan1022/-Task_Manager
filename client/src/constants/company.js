@@ -13,6 +13,12 @@ export const COMPANY = {
   founderTitle: "Founder & CEO",
   coFounderName: "Maheshwaran S",
   coFounderTitle: "Co-Founder",
+  community: {
+    linkedin: "https://www.linkedin.com/in/hariharan-s-92b566381",
+    instagram: "https://www.instagram.com/skyrovix_web",
+    telegram: "9940773204",
+    whatsapp: "9940773204",
+  },
   verificationCell: "SKYROVIX Verification Cell",
   assets: {
     msmeLogo: "/msme-logo.png",
