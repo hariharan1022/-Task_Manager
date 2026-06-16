@@ -258,7 +258,7 @@ function ActiveDashboard({ app }: { app: Application }) {
               </CardHeader>
               <CardContent>
                 <Button className="brand-gradient text-white border-0" onClick={() => downloadPdf(
-                  <CertificateDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} certId={certificate.certificate_id} issuedAt={certificate.issued_at} verifyUrl={`${window.location.origin}/verify-certificate`} />,
+                  <CertificateDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} certId={certificate.certificate_id} issuedAt={certificate.issued_at} verifyUrl="https://skyrovixvirtualinternship.vercel.app/verify-certificate" />,
                   `Certificate_${certificate.certificate_id}.pdf`
                 )}><Download className="mr-1 size-4" /> Download Certificate</Button>
                 <p className="mt-3 text-sm text-muted-foreground">Verify at <Link to="/verify-certificate" className="text-primary">/verify-certificate</Link></p>
