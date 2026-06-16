@@ -92,7 +92,7 @@ function Landing() {
           {DOMAINS.slice(0, 6).map((d) => (
             <Link key={d.slug} to="/domains/$slug" params={{ slug: d.slug }} className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-6 transition hover:-translate-y-1 hover:border-primary/60">
               <div className={`absolute inset-0 -z-10 bg-gradient-to-br ${d.color} opacity-0 transition group-hover:opacity-10`} />
-              <div className="text-4xl">{d.icon}</div>
+              <div className={`grid size-12 place-items-center rounded-xl bg-gradient-to-br ${d.color} text-sm font-bold text-white`}>{d.icon}</div>
               <h3 className="mt-4 font-semibold">{d.name}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{d.description}</p>
               <div className="mt-4 inline-flex items-center text-sm font-medium text-primary">Explore <ArrowRight className="ml-1 size-4 transition group-hover:translate-x-1" /></div>
