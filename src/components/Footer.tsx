@@ -35,9 +35,12 @@ export function Footer() {
         </div>
         <div>
           <h4 className="mb-3 text-sm font-semibold">Registered with</h4>
-          <div className="flex flex-col items-center justify-center rounded-lg bg-white p-4">
-            <img src={msme} alt="MSME" className="h-12 w-auto object-contain" />
-            <p className="mt-2 text-[10px] text-gray-500 text-center leading-tight">UDYAM-TN-17-0076606</p>
+          <div className="inline-flex items-center gap-3 rounded-xl border border-border bg-white px-4 py-3 shadow-sm">
+            <img src={msme} alt="MSME Registered" className="h-10 w-auto object-contain" />
+            <div className="leading-tight">
+              <p className="text-[11px] font-semibold text-gray-700">MSME Registered</p>
+              <p className="text-[10px] font-mono text-gray-500">UDYAM-TN-17-0076606</p>
+            </div>
           </div>
         </div>
       </div>
