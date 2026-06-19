@@ -419,3 +419,98 @@ function PaymentPanel({ app, payment, onChange }: { app: Application; payment: {
     </Card>
   );
 }
+
+function ProfilePanel({ app, onChange }: { app: Application; onChange: () => void }) {
+  const { user } = useAuth();
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+
+  const save = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user) return;
+    setSaving(true);
+    const fd = new FormData(e.currentTarget);
+    try {
+      let photo_url = app.photo_url;
+      if (photoFile) {
+        const ext = photoFile.name.split(".").pop();
+        const path = `${user.id}/${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("profile-photos").upload(path, photoFile, { upsert: true });
+        if (upErr) throw upErr;
+        const { data: signed } = await supabase.storage.from("profile-photos").createSignedUrl(path, 60 * 60 * 24 * 365);
+        photo_url = signed?.signedUrl ?? photo_url;
+      }
+      const updates = {
+        full_name: String(fd.get("full_name")),
+        phone: String(fd.get("phone")),
+        college: String(fd.get("college")),
+        course: String(fd.get("course")),
+        year: String(fd.get("year")),
+        photo_url,
+      };
+      const { error } = await supabase.from("applications").update(updates).eq("id", app.id);
+      if (error) throw error;
+      await supabase.from("profiles").update(updates).eq("id", user.id);
+      toast.success("Profile updated");
+      setEditing(false);
+      setPhotoFile(null);
+      onChange();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+          <div className="flex items-center gap-4">
+            {app.photo_url ? (
+              <img src={app.photo_url} alt={app.full_name} className="size-16 rounded-full object-cover border-2 border-primary/30" />
+            ) : (
+              <div className="size-16 rounded-full bg-primary/10 grid place-items-center text-xl font-bold text-primary">
+                {app.full_name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <CardTitle>{app.full_name}</CardTitle>
+              <CardDescription className="mt-1">{app.email}</CardDescription>
+              <p className="mt-1 text-xs text-muted-foreground">{app.college} · {app.course} · {app.year}</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Edit Profile</Button>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Edit Profile</CardTitle>
+        <CardDescription>Update your details. Changes apply to your ID card and certificate.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={save} className="grid gap-4 md:grid-cols-2">
+          <div className="md:col-span-2"><Label>Full Name</Label><Input name="full_name" defaultValue={app.full_name} required /></div>
+          <div><Label>Phone</Label><Input name="phone" type="tel" defaultValue={app.phone ?? ""} required /></div>
+          <div><Label>Year</Label><Input name="year" defaultValue={app.year ?? ""} required /></div>
+          <div><Label>College / University</Label><Input name="college" defaultValue={app.college ?? ""} required /></div>
+          <div><Label>Course / Branch</Label><Input name="course" defaultValue={app.course ?? ""} required /></div>
+          <div className="md:col-span-2">
+            <Label>Profile Photo {app.photo_url && <span className="text-xs text-muted-foreground">(leave empty to keep current)</span>}</Label>
+            <Input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} />
+          </div>
+          <div className="md:col-span-2 flex gap-2">
+            <Button type="submit" disabled={saving} className="brand-gradient text-white border-0">{saving ? "Saving…" : "Save Changes"}</Button>
+            <Button type="button" variant="outline" onClick={() => { setEditing(false); setPhotoFile(null); }}>Cancel</Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
