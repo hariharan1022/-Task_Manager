@@ -7,7 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +24,16 @@ import { QRCodeSVG } from "qrcode.react";
 import { IDCard } from "@/components/IDCard";
 import { TasksSection } from "@/components/TasksSection";
 import { OfferLetterDoc, CertificateDoc, downloadPdf } from "@/components/pdf-docs";
-import { Copy, Download, FileText, CheckCircle2, Clock, XCircle, Upload, Award } from "lucide-react";
+import {
+  Copy,
+  Download,
+  FileText,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  Upload,
+  Award,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -27,9 +42,20 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 type Application = {
-  id: string; user_id: string; domain: string; intern_id: string; full_name: string; email: string;
-  phone: string | null; college: string | null; course: string | null; year: string | null;
-  photo_url: string | null; offer_issued_at: string; created_at: string; status: string;
+  id: string;
+  user_id: string;
+  domain: string;
+  intern_id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  college: string | null;
+  course: string | null;
+  year: string | null;
+  photo_url: string | null;
+  offer_issued_at: string;
+  created_at: string;
+  status: string;
 };
 
 function Dashboard() {
@@ -40,7 +66,11 @@ function Dashboard() {
     queryKey: ["my-application", user?.id],
     queryFn: async (): Promise<Application | null> => {
       if (!user) return null;
-      const { data } = await supabase.from("applications").select("*").eq("user_id", user.id).maybeSingle();
+      const { data } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
       return data;
     },
     enabled: !!user,
@@ -51,8 +81,12 @@ function Dashboard() {
       <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">My <span className="brand-text">Dashboard</span></h1>
-          <p className="mt-1 text-muted-foreground">Welcome back{user?.email ? `, ${user.email}` : ""}.</p>
+          <h1 className="text-3xl font-bold">
+            My <span className="brand-text">Dashboard</span>
+          </h1>
+          <p className="mt-1 text-muted-foreground">
+            Welcome back{user?.email ? `, ${user.email}` : ""}.
+          </p>
         </div>
 
         {isLoading ? (
@@ -83,9 +117,13 @@ function ApplyForm({ onCreated }: { onCreated: () => void }) {
       if (photoFile) {
         const ext = photoFile.name.split(".").pop();
         const path = `${user.id}/${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("profile-photos").upload(path, photoFile, { upsert: true });
+        const { error: upErr } = await supabase.storage
+          .from("profile-photos")
+          .upload(path, photoFile, { upsert: true });
         if (upErr) throw upErr;
-        const { data: signed } = await supabase.storage.from("profile-photos").createSignedUrl(path, 60 * 60 * 24 * 365);
+        const { data: signed } = await supabase.storage
+          .from("profile-photos")
+          .createSignedUrl(path, 60 * 60 * 24 * 365);
         photo_url = signed?.signedUrl ?? null;
       }
       const intern_id = generateInternId();
@@ -105,10 +143,17 @@ function ApplyForm({ onCreated }: { onCreated: () => void }) {
       const { error } = await supabase.from("applications").insert(payload);
       if (error) throw error;
       // also update profile
-      await supabase.from("profiles").update({
-        full_name: payload.full_name, phone: payload.phone, college: payload.college,
-        course: payload.course, year: payload.year, photo_url,
-      }).eq("id", user.id);
+      await supabase
+        .from("profiles")
+        .update({
+          full_name: payload.full_name,
+          phone: payload.phone,
+          college: payload.college,
+          course: payload.course,
+          year: payload.year,
+          photo_url,
+        })
+        .eq("id", user.id);
       toast.success("Application approved! Your offer letter is ready.");
       onCreated();
     } catch (err) {
@@ -122,26 +167,60 @@ function ApplyForm({ onCreated }: { onCreated: () => void }) {
     <Card>
       <CardHeader>
         <CardTitle>Apply for an Internship</CardTitle>
-        <CardDescription>Fill in your details. You'll get your offer letter and digital ID card instantly.</CardDescription>
+        <CardDescription>
+          Fill in your details. You'll get your offer letter and digital ID card instantly.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2"><Label>Full Name</Label><Input name="full_name" required /></div>
-          <div><Label>Phone</Label><Input name="phone" type="tel" required /></div>
+          <div className="md:col-span-2">
+            <Label>Full Name</Label>
+            <Input name="full_name" required />
+          </div>
+          <div>
+            <Label>Phone</Label>
+            <Input name="phone" type="tel" required />
+          </div>
           <div>
             <Label>Domain</Label>
             <Select name="domain" required>
-              <SelectTrigger><SelectValue placeholder="Select a domain" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a domain" />
+              </SelectTrigger>
               <SelectContent>
-                {DOMAINS.map((d) => <SelectItem key={d.slug} value={d.slug}>{d.icon} {d.name}</SelectItem>)}
+                {DOMAINS.map((d) => (
+                  <SelectItem key={d.slug} value={d.slug}>
+                    {d.icon} {d.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          <div><Label>College / University</Label><Input name="college" required /></div>
-          <div><Label>Course / Branch</Label><Input name="course" required /></div>
-          <div><Label>Year</Label><Input name="year" placeholder="e.g. 3rd year" required /></div>
-          <div><Label>Profile Photo</Label><Input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} /></div>
-          <Button type="submit" className="md:col-span-2 brand-gradient text-white border-0" disabled={loading}>
+          <div>
+            <Label>College / University</Label>
+            <Input name="college" required />
+          </div>
+          <div>
+            <Label>Course / Branch</Label>
+            <Input name="course" required />
+          </div>
+          <div>
+            <Label>Year</Label>
+            <Input name="year" placeholder="e.g. 3rd year" required />
+          </div>
+          <div>
+            <Label>Profile Photo</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+            />
+          </div>
+          <Button
+            type="submit"
+            className="md:col-span-2 brand-gradient text-white border-0"
+            disabled={loading}
+          >
             {loading ? "Submitting…" : "Submit Application"}
           </Button>
         </form>
@@ -157,7 +236,11 @@ function ActiveDashboard({ app }: { app: Application }) {
   const { data: tasks } = useQuery({
     queryKey: ["domain-tasks", app.domain],
     queryFn: async () => {
-      const { data } = await supabase.from("tasks").select("*").eq("domain", app.domain).order("task_number");
+      const { data } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("domain", app.domain)
+        .order("task_number");
       return data ?? [];
     },
   });
@@ -171,14 +254,22 @@ function ActiveDashboard({ app }: { app: Application }) {
   const { data: payment } = useQuery({
     queryKey: ["my-payment", app.id],
     queryFn: async () => {
-      const { data } = await supabase.from("payments").select("*").eq("application_id", app.id).maybeSingle();
+      const { data } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("application_id", app.id)
+        .maybeSingle();
       return data;
     },
   });
   const { data: certificate } = useQuery({
     queryKey: ["my-cert", app.id],
     queryFn: async () => {
-      const { data } = await supabase.from("certificates").select("*").eq("application_id", app.id).maybeSingle();
+      const { data } = await supabase
+        .from("certificates")
+        .select("*")
+        .eq("application_id", app.id)
+        .maybeSingle();
       return data;
     },
   });
@@ -193,7 +284,9 @@ function ActiveDashboard({ app }: { app: Application }) {
         <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-6">
           <div>
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Domain</p>
-            <p className="font-semibold">{domain?.icon} {domain?.name}</p>
+            <p className="font-semibold">
+              {domain?.icon} {domain?.name}
+            </p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Intern ID</p>
@@ -202,75 +295,154 @@ function ActiveDashboard({ app }: { app: Application }) {
           <div className="flex-1 min-w-[200px]">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Progress</p>
             <Progress value={(approved / total) * 100} className="mt-1" />
-            <p className="mt-1 text-xs text-muted-foreground">{approved}/{total} tasks approved</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {approved}/{total} tasks approved
+            </p>
           </div>
         </CardContent>
       </Card>
 
-      <ProfilePanel app={app} onChange={() => qc.invalidateQueries({ queryKey: ["my-application"] })} />
-
-
+      <ProfilePanel
+        app={app}
+        onChange={() => qc.invalidateQueries({ queryKey: ["my-application"] })}
+      />
 
       <Tabs defaultValue="onboarding">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="payment" disabled={!tasksComplete}>Payment {tasksComplete && "✓"}</TabsTrigger>
-          <TabsTrigger value="certificate" disabled={payment?.status !== "verified"}>Certificate</TabsTrigger>
+          <TabsTrigger value="payment" disabled={!tasksComplete}>
+            Payment {tasksComplete && "✓"}
+          </TabsTrigger>
+          <TabsTrigger value="certificate" disabled={payment?.status !== "verified"}>
+            Certificate
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="onboarding" className="grid gap-6 md:grid-cols-2 mt-6">
           <Card>
-            <CardHeader><CardTitle>Offer Letter</CardTitle><CardDescription>Your official Skyrovix offer.</CardDescription></CardHeader>
+            <CardHeader>
+              <CardTitle>Offer Letter</CardTitle>
+              <CardDescription>Your official Skyrovix offer.</CardDescription>
+            </CardHeader>
             <CardContent>
               <div className="rounded-lg border border-border/60 bg-card/50 p-6 text-center">
                 <FileText className="mx-auto size-12 text-primary" />
-                <p className="mt-3 text-sm text-muted-foreground">{app.full_name} · {domain?.name}</p>
-                <Button className="mt-4 brand-gradient text-white border-0" onClick={() => downloadPdf(<OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} />, `OfferLetter_${app.intern_id}.pdf`)}>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {app.full_name} · {domain?.name}
+                </p>
+                <Button
+                  className="mt-4 brand-gradient text-white border-0"
+                  onClick={() =>
+                    downloadPdf(
+                      <OfferLetterDoc
+                        fullName={app.full_name}
+                        internId={app.intern_id}
+                        domain={domain?.name ?? app.domain}
+                        issuedAt={app.offer_issued_at}
+                      />,
+                      `OfferLetter_${app.intern_id}.pdf`,
+                    )
+                  }
+                >
                   <Download className="mr-1 size-4" /> Download Offer Letter
                 </Button>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Digital ID Card</CardTitle><CardDescription>Show this anywhere.</CardDescription></CardHeader>
+            <CardHeader>
+              <CardTitle>Digital ID Card</CardTitle>
+              <CardDescription>Show this anywhere.</CardDescription>
+            </CardHeader>
             <CardContent>
-              <IDCard internId={app.intern_id} fullName={app.full_name} domain={domain?.name ?? app.domain} photoUrl={app.photo_url} issuedAt={app.offer_issued_at} />
+              <IDCard
+                internId={app.intern_id}
+                fullName={app.full_name}
+                domain={domain?.name ?? app.domain}
+                photoUrl={app.photo_url}
+                issuedAt={app.offer_issued_at}
+              />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="tasks" className="mt-6">
-          <TasksSection domainSlug={app.domain} submissions={submissions ?? []} appId={app.id} onChange={() => qc.invalidateQueries({ queryKey: ["my-submissions"] })} />
+          <TasksSection
+            domainSlug={app.domain}
+            tasks={tasks ?? []}
+            submissions={submissions ?? []}
+            appId={app.id}
+            onChange={() => qc.invalidateQueries({ queryKey: ["my-submissions"] })}
+          />
         </TabsContent>
 
         <TabsContent value="payment" className="mt-6">
-          <PaymentPanel app={app} payment={payment} onChange={() => qc.invalidateQueries({ queryKey: ["my-payment"] })} />
+          <PaymentPanel
+            app={app}
+            payment={payment}
+            onChange={() => qc.invalidateQueries({ queryKey: ["my-payment"] })}
+          />
         </TabsContent>
 
         <TabsContent value="certificate" className="mt-6">
           {certificate ? (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Award className="size-5 text-primary" /> Certificate Issued</CardTitle>
-                <CardDescription>Cert ID: <span className="font-mono">{certificate.certificate_id}</span></CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="size-5 text-primary" /> Certificate Issued
+                </CardTitle>
+                <CardDescription>
+                  Cert ID: <span className="font-mono">{certificate.certificate_id}</span>
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="brand-gradient text-white border-0" onClick={() => downloadPdf(
-                  <CertificateDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} certId={certificate.certificate_id} issuedAt={certificate.issued_at} verifyUrl="https://skyrovixvirtualinternship.vercel.app/verify-certificate" />,
-                  `Certificate_${certificate.certificate_id}.pdf`
-                )}><Download className="mr-1 size-4" /> Download Certificate</Button>
-                <p className="mt-3 text-sm text-muted-foreground">Verify at <Link to="/verify-certificate" className="text-primary">/verify-certificate</Link></p>
+                <Button
+                  className="brand-gradient text-white border-0"
+                  onClick={() =>
+                    downloadPdf(
+                      <CertificateDoc
+                        fullName={app.full_name}
+                        internId={app.intern_id}
+                        domain={domain?.name ?? app.domain}
+                        certId={certificate.certificate_id}
+                        issuedAt={certificate.issued_at}
+                        verifyUrl="https://skyrovixvirtualinternship.vercel.app/verify-certificate"
+                      />,
+                      `Certificate_${certificate.certificate_id}.pdf`,
+                    )
+                  }
+                >
+                  <Download className="mr-1 size-4" /> Download Certificate
+                </Button>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Verify at{" "}
+                  <Link to="/verify-certificate" className="text-primary">
+                    /verify-certificate
+                  </Link>
+                </p>
               </CardContent>
             </Card>
-          ) : <p className="text-muted-foreground">Your certificate will appear here once payment is verified.</p>}
+          ) : (
+            <p className="text-muted-foreground">
+              Your certificate will appear here once payment is verified.
+            </p>
+          )}
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function PaymentPanel({ app, payment, onChange }: { app: Application; payment: { id: string; utr_number: string; status: string } | null | undefined; onChange: () => void }) {
+function PaymentPanel({
+  app,
+  payment,
+  onChange,
+}: {
+  app: Application;
+  payment: { id: string; utr_number: string; status: string } | null | undefined;
+  onChange: () => void;
+}) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -286,19 +458,26 @@ function PaymentPanel({ app, payment, onChange }: { app: Application; payment: {
       if (file) {
         const ext = file.name.split(".").pop();
         const path = `${user.id}/${Date.now()}.${ext}`;
-        const { error } = await supabase.storage.from("payment-screenshots").upload(path, file, { upsert: true });
+        const { error } = await supabase.storage
+          .from("payment-screenshots")
+          .upload(path, file, { upsert: true });
         if (error) throw error;
         screenshot_url = path;
       }
       const { error } = await supabase.from("payments").insert({
-        application_id: app.id, utr_number: String(fd.get("utr")), screenshot_url, amount: PAYMENT.amount,
+        application_id: app.id,
+        utr_number: String(fd.get("utr")),
+        screenshot_url,
+        amount: PAYMENT.amount,
       });
       if (error) throw error;
       toast.success("Payment submitted — awaiting admin verification.");
       onChange();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (payment) {
@@ -306,15 +485,36 @@ function PaymentPanel({ app, payment, onChange }: { app: Application; payment: {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {payment.status === "verified" ? <><CheckCircle2 className="size-5 text-green-500" /> Verified</> :
-             payment.status === "rejected" ? <><XCircle className="size-5 text-destructive" /> Rejected</> :
-             <><Clock className="size-5 text-amber-500" /> Awaiting verification</>}
+            {payment.status === "verified" ? (
+              <>
+                <CheckCircle2 className="size-5 text-green-500" /> Verified
+              </>
+            ) : payment.status === "rejected" ? (
+              <>
+                <XCircle className="size-5 text-destructive" /> Rejected
+              </>
+            ) : (
+              <>
+                <Clock className="size-5 text-amber-500" /> Awaiting verification
+              </>
+            )}
           </CardTitle>
-          <CardDescription>UTR: <span className="font-mono">{payment.utr_number}</span></CardDescription>
+          <CardDescription>
+            UTR: <span className="font-mono">{payment.utr_number}</span>
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {payment.status === "pending" && <p className="text-sm text-muted-foreground">Our team will verify your payment shortly. Once verified, your certificate is issued automatically.</p>}
-          {payment.status === "rejected" && <p className="text-sm text-destructive">Payment was rejected. Please contact support.</p>}
+          {payment.status === "pending" && (
+            <p className="text-sm text-muted-foreground">
+              Our team will verify your payment shortly. Once verified, your certificate is issued
+              automatically.
+            </p>
+          )}
+          {payment.status === "rejected" && (
+            <p className="text-sm text-destructive">
+              Payment was rejected. Please contact support.
+            </p>
+          )}
         </CardContent>
       </Card>
     );
@@ -324,13 +524,25 @@ function PaymentPanel({ app, payment, onChange }: { app: Application; payment: {
     <Card>
       <CardHeader>
         <CardTitle>Certification Payment — ₹{PAYMENT.amount}</CardTitle>
-        <CardDescription>Pay via GPay / any UPI app and submit your UTR + screenshot for verification.</CardDescription>
+        <CardDescription>
+          Pay via GPay / any UPI app and submit your UTR + screenshot for verification.
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6 md:grid-cols-2">
         <div className="rounded-xl border border-border bg-card/40 p-6 text-center">
-          <div className="inline-block rounded-md bg-white p-3"><QRCodeSVG value={upiString} size={180} /></div>
+          <div className="inline-block rounded-md bg-white p-3">
+            <QRCodeSVG value={upiString} size={180} />
+          </div>
           <p className="mt-3 font-mono text-sm">{PAYMENT.upiId}</p>
-          <Button variant="ghost" size="sm" className="mt-1" onClick={() => { navigator.clipboard.writeText(PAYMENT.upiId); toast.success("UPI ID copied"); }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-1"
+            onClick={() => {
+              navigator.clipboard.writeText(PAYMENT.upiId);
+              toast.success("UPI ID copied");
+            }}
+          >
             <Copy className="mr-1 size-3" /> Copy UPI ID
           </Button>
           <Separator className="my-3" />
@@ -338,13 +550,28 @@ function PaymentPanel({ app, payment, onChange }: { app: Application; payment: {
           <p className="text-xs text-muted-foreground">Amount: ₹{PAYMENT.amount}</p>
         </div>
         <form onSubmit={submit} className="space-y-3">
-          <div><Label>UTR / Transaction ID</Label><Input name="utr" required /></div>
+          <div>
+            <Label>UTR / Transaction ID</Label>
+            <Input name="utr" required />
+          </div>
           <div>
             <Label>Payment Screenshot</Label>
-            <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-            <p className="mt-1 text-xs text-muted-foreground"><Upload className="inline size-3" /> Helps us verify faster.</p>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              <Upload className="inline size-3" /> Helps us verify faster.
+            </p>
           </div>
-          <Button type="submit" disabled={loading} className="w-full brand-gradient text-white border-0">{loading ? "Submitting…" : "Submit Payment"}</Button>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full brand-gradient text-white border-0"
+          >
+            {loading ? "Submitting…" : "Submit Payment"}
+          </Button>
         </form>
       </CardContent>
     </Card>
@@ -367,9 +594,13 @@ function ProfilePanel({ app, onChange }: { app: Application; onChange: () => voi
       if (photoFile) {
         const ext = photoFile.name.split(".").pop();
         const path = `${user.id}/${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("profile-photos").upload(path, photoFile, { upsert: true });
+        const { error: upErr } = await supabase.storage
+          .from("profile-photos")
+          .upload(path, photoFile, { upsert: true });
         if (upErr) throw upErr;
-        const { data: signed } = await supabase.storage.from("profile-photos").createSignedUrl(path, 60 * 60 * 24 * 365);
+        const { data: signed } = await supabase.storage
+          .from("profile-photos")
+          .createSignedUrl(path, 60 * 60 * 24 * 365);
         photo_url = signed?.signedUrl ?? photo_url;
       }
       const updates = {
@@ -400,7 +631,11 @@ function ProfilePanel({ app, onChange }: { app: Application; onChange: () => voi
         <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
           <div className="flex items-center gap-4">
             {app.photo_url ? (
-              <img src={app.photo_url} alt={app.full_name} className="size-16 rounded-full object-cover border-2 border-primary/30" />
+              <img
+                src={app.photo_url}
+                alt={app.full_name}
+                className="size-16 rounded-full object-cover border-2 border-primary/30"
+              />
             ) : (
               <div className="size-16 rounded-full bg-primary/10 grid place-items-center text-xl font-bold text-primary">
                 {app.full_name.charAt(0).toUpperCase()}
@@ -409,10 +644,14 @@ function ProfilePanel({ app, onChange }: { app: Application; onChange: () => voi
             <div>
               <CardTitle>{app.full_name}</CardTitle>
               <CardDescription className="mt-1">{app.email}</CardDescription>
-              <p className="mt-1 text-xs text-muted-foreground">{app.college} · {app.course} · {app.year}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {app.college} · {app.course} · {app.year}
+              </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>Edit Profile</Button>
+          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+            Edit Profile
+          </Button>
         </CardHeader>
       </Card>
     );
@@ -422,26 +661,62 @@ function ProfilePanel({ app, onChange }: { app: Application; onChange: () => voi
     <Card>
       <CardHeader>
         <CardTitle>Edit Profile</CardTitle>
-        <CardDescription>Update your details. Changes apply to your ID card and certificate.</CardDescription>
+        <CardDescription>
+          Update your details. Changes apply to your ID card and certificate.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={save} className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2"><Label>Full Name</Label><Input name="full_name" defaultValue={app.full_name} required /></div>
-          <div><Label>Phone</Label><Input name="phone" type="tel" defaultValue={app.phone ?? ""} required /></div>
-          <div><Label>Year</Label><Input name="year" defaultValue={app.year ?? ""} required /></div>
-          <div><Label>College / University</Label><Input name="college" defaultValue={app.college ?? ""} required /></div>
-          <div><Label>Course / Branch</Label><Input name="course" defaultValue={app.course ?? ""} required /></div>
           <div className="md:col-span-2">
-            <Label>Profile Photo {app.photo_url && <span className="text-xs text-muted-foreground">(leave empty to keep current)</span>}</Label>
-            <Input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} />
+            <Label>Full Name</Label>
+            <Input name="full_name" defaultValue={app.full_name} required />
+          </div>
+          <div>
+            <Label>Phone</Label>
+            <Input name="phone" type="tel" defaultValue={app.phone ?? ""} required />
+          </div>
+          <div>
+            <Label>Year</Label>
+            <Input name="year" defaultValue={app.year ?? ""} required />
+          </div>
+          <div>
+            <Label>College / University</Label>
+            <Input name="college" defaultValue={app.college ?? ""} required />
+          </div>
+          <div>
+            <Label>Course / Branch</Label>
+            <Input name="course" defaultValue={app.course ?? ""} required />
+          </div>
+          <div className="md:col-span-2">
+            <Label>
+              Profile Photo{" "}
+              {app.photo_url && (
+                <span className="text-xs text-muted-foreground">(leave empty to keep current)</span>
+              )}
+            </Label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+            />
           </div>
           <div className="md:col-span-2 flex gap-2">
-            <Button type="submit" disabled={saving} className="brand-gradient text-white border-0">{saving ? "Saving…" : "Save Changes"}</Button>
-            <Button type="button" variant="outline" onClick={() => { setEditing(false); setPhotoFile(null); }}>Cancel</Button>
+            <Button type="submit" disabled={saving} className="brand-gradient text-white border-0">
+              {saving ? "Saving…" : "Save Changes"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setEditing(false);
+                setPhotoFile(null);
+              }}
+            >
+              Cancel
+            </Button>
           </div>
         </form>
       </CardContent>
     </Card>
   );
 }
-

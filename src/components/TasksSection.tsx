@@ -179,11 +179,13 @@ function SkeletonCard() {
 /* ─────────── MAIN COMPONENT ─────────── */
 export function TasksSection({
   domainSlug,
+  tasks: supabaseTasks,
   submissions: rawSubmissions,
   appId,
   onChange,
 }: {
   domainSlug: string;
+  tasks: { id: string; task_number: number }[];
   submissions: Submission[];
   appId: string;
   onChange: () => void;
@@ -199,14 +201,15 @@ export function TasksSection({
 
   const tasksWithMeta = useMemo(() => {
     return allTasks.map((t) => {
-      const id = `${domainSlug}-${t.taskNumber}`;
+      const realTask = supabaseTasks.find((st) => st.task_number === t.taskNumber);
+      const id = realTask?.id ?? `${domainSlug}-${t.taskNumber}`;
       const sub = rawSubmissions.find((s) => s.task_id === id);
       const dueDate = computeDueDate(t.taskNumber);
       const status = getTaskStatus(sub, dueDate);
       const remaining = daysRemaining(dueDate);
       return { ...t, id, submission: sub, dueDate, status, remaining };
     });
-  }, [allTasks, rawSubmissions, domainSlug]);
+  }, [allTasks, rawSubmissions, supabaseTasks, domainSlug]);
 
   const stats = useMemo(() => {
     const completed = tasksWithMeta.filter((t) => t.status === "completed").length;
