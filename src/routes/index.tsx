@@ -11,9 +11,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ArrowRight, Award, FileCheck, Rocket, ShieldCheck, GraduationCap, IndianRupee, HelpCircle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { BookOpen, Layers, Monitor, Server, BarChart3, Brain, Palette, Code2, Shield, TrendingUp, ArrowRight, Award, FileCheck, Rocket, ShieldCheck, GraduationCap, IndianRupee, HelpCircle, ListChecks, Trophy } from "lucide-react";
 import { HeroVisual } from "@/components/HeroVisual";
 import logo from "@/assets/logo.jpg";
+
+const COURSE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  BookOpen, Layers, Monitor, Server, BarChart3, Brain, Palette, Code2, Shield, TrendingUp,
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,6 +48,19 @@ function Landing() {
   const [applyDomain, setApplyDomain] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+
+  const { data: courses } = useQuery({
+    queryKey: ["home-courses"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("id, slug, name, short_description, icon, domain, total_topics, total_tasks, quiz_marks, duration_weeks, difficulty")
+        .eq("is_published", true)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   const submitApplication = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -218,7 +238,7 @@ function Landing() {
       <section id="domains" className="mx-auto max-w-7xl px-4 py-20">
         <div className="flex items-end justify-between">
           <div>
-            <h2 className="text-3xl font-bold md:text-4xl">Choose your domain</h2>
+            <h2 className="text-3xl font-bold md:text-4xl">Choose your internship domain</h2>
             <p className="mt-2 text-muted-foreground">10 industry-aligned tracks. Each ships with a 5-task curriculum.</p>
           </div>
           <Button asChild variant="ghost" className="hidden md:inline-flex"><Link to="/domains">View all <ArrowRight className="ml-1 size-4" /></Link></Button>
@@ -284,6 +304,47 @@ function Landing() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* COURSES */}
+      <section className="mx-auto max-w-7xl px-4 py-20">
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="text-3xl font-bold md:text-4xl">Explore Courses</h2>
+            <p className="mt-2 text-muted-foreground">Topic-based learning paths with hands-on tasks and a final quiz.</p>
+          </div>
+          <Button asChild variant="ghost" className="hidden md:inline-flex"><Link to="/courses">View all <ArrowRight className="ml-1 size-4" /></Link></Button>
+        </div>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {courses?.slice(0, 6).map((c) => {
+            const Icon = COURSE_ICONS[c.icon] ?? BookOpen;
+            return (
+              <Card key={c.id} className="group transition hover:shadow-xl hover:-translate-y-0.5">
+                <CardContent className="flex flex-col gap-4 pt-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="grid size-12 shrink-0 place-items-center rounded-xl brand-gradient text-white shadow-md">
+                      <Icon className="size-6" />
+                    </div>
+                    <Badge variant="outline" className="shrink-0">{c.difficulty}</Badge>
+                  </div>
+                  <div className="space-y-1.5">
+                    <h3 className="text-xl font-semibold leading-tight">{c.name}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{c.short_description}</p>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-secondary/40 p-3 text-xs">
+                    <div className="flex flex-col"><dt className="text-muted-foreground">Topics</dt><dd className="font-semibold">{c.total_topics}</dd></div>
+                    <div className="flex flex-col"><dt className="text-muted-foreground">Tasks</dt><dd className="font-semibold">{c.total_tasks}</dd></div>
+                    <div className="flex flex-col"><dt className="text-muted-foreground">Quiz</dt><dd className="font-semibold">{c.quiz_marks} Marks</dd></div>
+                    <div className="flex flex-col"><dt className="text-muted-foreground">Duration</dt><dd className="font-semibold">{c.duration_weeks} Weeks</dd></div>
+                  </dl>
+                  <Button asChild className="brand-gradient text-white border-0">
+                    <Link to="/courses">Learn More <ArrowRight className="ml-1 size-4" /></Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
 
       {/* FAQ */}
       <section className="mx-auto max-w-3xl px-4 py-20">

@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -24,17 +25,11 @@ import { QRCodeSVG } from "qrcode.react";
 import { IDCard } from "@/components/IDCard";
 import { TasksSection } from "@/components/TasksSection";
 import { OfferLetterDoc, CertificateDoc, downloadPdf } from "@/components/pdf-docs";
-import {
-  Copy,
-  Download,
-  FileText,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  Upload,
-  Award,
-} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Copy, Download, FileText, CheckCircle2, Clock, XCircle, Upload, Award,
+  BookOpen, GraduationCap, ArrowRight, Sparkles,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Skyrovix" }] }),
@@ -42,20 +37,11 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 type Application = {
-  id: string;
-  user_id: string;
-  domain: string;
-  intern_id: string;
-  full_name: string;
-  email: string;
-  phone: string | null;
-  college: string | null;
-  course: string | null;
-  year: string | null;
-  photo_url: string | null;
-  offer_issued_at: string;
-  created_at: string;
-  status: string;
+  id: string; user_id: string; domain: string; intern_id: string;
+  full_name: string; email: string; phone: string | null;
+  college: string | null; course: string | null; year: string | null;
+  photo_url: string | null; offer_issued_at: string;
+  created_at: string; status: string;
 };
 
 function Dashboard() {
@@ -76,6 +62,46 @@ function Dashboard() {
     enabled: !!user,
   });
 
+  const { data: enrollments } = useQuery({
+    queryKey: ["my-lms-enrollments", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from("enrollments")
+        .select("id, course_id, status, progress_percent, completed_at")
+        .eq("user_id", user.id)
+        .order("started_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  const { data: courses } = useQuery({
+    queryKey: ["all-lms-courses"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("courses")
+        .select("id, slug, name, domain, icon, total_topics, total_tasks")
+        .eq("is_published", true);
+      return data ?? [];
+    },
+  });
+
+  const { data: lmsCerts } = useQuery({
+    queryKey: ["my-lms-certificates", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const enrollIds = (enrollments ?? []).map((e) => e.id);
+      if (!enrollIds.length) return [];
+      const { data } = await supabase
+        .from("course_certificates")
+        .select("certificate_id, score, issued_at, enrollment_id")
+        .in("enrollment_id", enrollIds);
+      return data ?? [];
+    },
+    enabled: !!user && (enrollments ?? []).length > 0,
+  });
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -91,13 +117,124 @@ function Dashboard() {
 
         {isLoading ? (
           <p className="text-muted-foreground">Loading…</p>
-        ) : !app ? (
-          <ApplyForm onCreated={() => qc.invalidateQueries({ queryKey: ["my-application"] })} />
         ) : (
-          <ActiveDashboard app={app} />
+          <Tabs defaultValue={app ? "internship" : "courses"}>
+            <TabsList className="mb-6 grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="internship" disabled={!app}>
+                <Award className="mr-1.5 size-4" />Internship
+              </TabsTrigger>
+              <TabsTrigger value="courses">
+                <BookOpen className="mr-1.5 size-4" />LMS Courses
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="internship">
+              {app ? <ActiveDashboard app={app} /> : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>No Internship Application</CardTitle>
+                    <CardDescription>Apply for an internship to get started.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button asChild className="brand-gradient text-white border-0">
+                      <Link to="/domains">Browse Domains</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="courses">
+              <LmsCoursesTab
+                enrollments={enrollments ?? []}
+                courses={courses ?? []}
+                lmsCerts={lmsCerts ?? []}
+              />
+            </TabsContent>
+          </Tabs>
         )}
       </main>
       <Footer />
+    </div>
+  );
+}
+
+function LmsCoursesTab({
+  enrollments, courses, lmsCerts,
+}: {
+  enrollments: any[]; courses: any[]; lmsCerts: any[];
+}) {
+  const certMap = new Map(lmsCerts.map((c: any) => [c.enrollment_id, c]));
+
+  if (!enrollments.length) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <GraduationCap className="size-5 text-primary" /> No Enrollments Yet
+          </CardTitle>
+          <CardDescription>
+            Browse our course catalog and enroll in a learning path.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild className="brand-gradient text-white border-0">
+            <Link to="/courses"><BookOpen className="mr-1.5 size-4" />Browse Courses</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {enrollments.map((enr) => {
+        const course = courses.find((c: any) => c.id === enr.course_id);
+        if (!course) return null;
+        const cert = certMap.get(enr.id);
+        return (
+          <Card key={enr.id}>
+            <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-6">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="size-5 text-primary" />
+                  <p className="font-semibold">{course.name}</p>
+                  <Badge variant="outline" className="text-xs">{course.domain}</Badge>
+                </div>
+                <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
+                  <span>{course.total_topics} topics</span>
+                  <span>{course.total_tasks} tasks</span>
+                </div>
+                <div className="mt-2 max-w-xs">
+                  <div className="flex items-center justify-between text-xs">
+                    <span>Progress</span>
+                    <span>{enr.progress_percent}%</span>
+                  </div>
+                  <Progress value={enr.progress_percent} className="mt-1 h-2" />
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {cert ? (
+                  <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">
+                    <Award className="mr-1 size-3" /> Certified
+                  </Badge>
+                ) : enr.status === "completed" ? (
+                  <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">
+                    <CheckCircle2 className="mr-1 size-3" /> Completed
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">In Progress</Badge>
+                )}
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/courses/$slug" params={{ slug: course.slug }}>
+                    Continue <ArrowRight className="ml-1 size-3" />
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
@@ -140,7 +277,6 @@ function ApplyForm({ onCreated }: { onCreated: () => void }) {
       };
       const { error } = await supabase.from("applications").insert(payload);
       if (error) throw error;
-      // also update profile
       await supabase
         .from("profiles")
         .update({
@@ -290,7 +426,7 @@ function ActiveDashboard({ app }: { app: Application }) {
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Intern ID</p>
             <p className="font-mono font-semibold">{app.intern_id}</p>
           </div>
-          <div className="flex-1 min-w-[200px]">
+          <div className="min-w-[200px] flex-1">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Progress</p>
             <Progress value={(approved / total) * 100} className="mt-1" />
             <p className="mt-1 text-xs text-muted-foreground">
@@ -317,7 +453,7 @@ function ActiveDashboard({ app }: { app: Application }) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="onboarding" className="grid gap-6 md:grid-cols-2 mt-6">
+        <TabsContent value="onboarding" className="mt-6 grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>Offer Letter</CardTitle>
@@ -433,9 +569,7 @@ function ActiveDashboard({ app }: { app: Application }) {
 }
 
 function PaymentPanel({
-  app,
-  payment,
-  onChange,
+  app, payment, onChange,
 }: {
   app: Application;
   payment: { id: string; utr_number: string; status: string } | null | undefined;
@@ -484,17 +618,11 @@ function PaymentPanel({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {payment.status === "verified" ? (
-              <>
-                <CheckCircle2 className="size-5 text-green-500" /> Verified
-              </>
+              <><CheckCircle2 className="size-5 text-green-500" /> Verified</>
             ) : payment.status === "rejected" ? (
-              <>
-                <XCircle className="size-5 text-destructive" /> Rejected
-              </>
+              <><XCircle className="size-5 text-destructive" /> Rejected</>
             ) : (
-              <>
-                <Clock className="size-5 text-amber-500" /> Awaiting verification
-              </>
+              <><Clock className="size-5 text-amber-500" /> Awaiting verification</>
             )}
           </CardTitle>
           <CardDescription>
@@ -504,14 +632,11 @@ function PaymentPanel({
         <CardContent>
           {payment.status === "pending" && (
             <p className="text-sm text-muted-foreground">
-              Our team will verify your payment shortly. Once verified, your certificate is issued
-              automatically.
+              Our team will verify your payment shortly. Once verified, your certificate is issued automatically.
             </p>
           )}
           {payment.status === "rejected" && (
-            <p className="text-sm text-destructive">
-              Payment was rejected. Please contact support.
-            </p>
+            <p className="text-sm text-destructive">Payment was rejected. Please contact support.</p>
           )}
         </CardContent>
       </Card>
@@ -532,15 +657,10 @@ function PaymentPanel({
             <QRCodeSVG value={upiString} size={180} />
           </div>
           <p className="mt-3 font-mono text-sm">{PAYMENT.upiId}</p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-1"
-            onClick={() => {
-              navigator.clipboard.writeText(PAYMENT.upiId);
-              toast.success("UPI ID copied");
-            }}
-          >
+          <Button variant="ghost" size="sm" className="mt-1" onClick={() => {
+            navigator.clipboard.writeText(PAYMENT.upiId);
+            toast.success("UPI ID copied");
+          }}>
             <Copy className="mr-1 size-3" /> Copy UPI ID
           </Button>
           <Separator className="my-3" />
@@ -554,20 +674,12 @@ function PaymentPanel({
           </div>
           <div>
             <Label>Payment Screenshot</Label>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
+            <Input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
             <p className="mt-1 text-xs text-muted-foreground">
               <Upload className="inline size-3" /> Helps us verify faster.
             </p>
           </div>
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full brand-gradient text-white border-0"
-          >
+          <Button type="submit" disabled={loading} className="w-full brand-gradient text-white border-0">
             {loading ? "Submitting…" : "Submit Payment"}
           </Button>
         </form>
@@ -627,13 +739,9 @@ function ProfilePanel({ app, onChange }: { app: Application; onChange: () => voi
         <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
           <div className="flex items-center gap-4">
             {app.photo_url ? (
-              <img
-                src={app.photo_url}
-                alt={app.full_name}
-                className="size-16 rounded-full object-cover border-2 border-primary/30"
-              />
+              <img src={app.photo_url} alt={app.full_name} className="size-16 rounded-full border-2 border-primary/30 object-cover" />
             ) : (
-              <div className="size-16 rounded-full bg-primary/10 grid place-items-center text-xl font-bold text-primary">
+              <div className="grid size-16 place-items-center rounded-full bg-primary/10 text-xl font-bold text-primary">
                 {app.full_name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -657,9 +765,7 @@ function ProfilePanel({ app, onChange }: { app: Application; onChange: () => voi
     <Card>
       <CardHeader>
         <CardTitle>Edit Profile</CardTitle>
-        <CardDescription>
-          Update your details. Changes apply to your ID card and certificate.
-        </CardDescription>
+        <CardDescription>Update your details. Changes apply to your ID card and certificate.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={save} className="grid gap-4 md:grid-cols-2">
@@ -686,28 +792,15 @@ function ProfilePanel({ app, onChange }: { app: Application; onChange: () => voi
           <div className="md:col-span-2">
             <Label>
               Profile Photo{" "}
-              {app.photo_url && (
-                <span className="text-xs text-muted-foreground">(leave empty to keep current)</span>
-              )}
+              {app.photo_url && <span className="text-xs text-muted-foreground">(leave empty to keep current)</span>}
             </Label>
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
-            />
+            <Input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} />
           </div>
           <div className="md:col-span-2 flex gap-2">
             <Button type="submit" disabled={saving} className="brand-gradient text-white border-0">
               {saving ? "Saving…" : "Save Changes"}
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setEditing(false);
-                setPhotoFile(null);
-              }}
-            >
+            <Button type="button" variant="outline" onClick={() => { setEditing(false); setPhotoFile(null); }}>
               Cancel
             </Button>
           </div>

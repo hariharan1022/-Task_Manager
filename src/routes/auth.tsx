@@ -10,17 +10,20 @@ import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: { redirect?: string }) => search,
   head: () => ({ meta: [{ title: "Sign in — Skyrovix Internship Portal" }, { name: "description", content: "Sign in or create your Skyrovix internship account." }] }),
   component: AuthPage,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
+  const redirect = search.redirect ?? "/dashboard";
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => { if (data.session) navigate({ to: "/dashboard" }); });
-  }, [navigate]);
+    supabase.auth.getSession().then(({ data }) => { if (data.session) navigate({ to: redirect }); });
+  }, [navigate, redirect]);
 
   const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,22 +33,29 @@ function AuthPage() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Welcome back!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: redirect });
   };
 
   const signUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: String(fd.get("email")),
       password: String(fd.get("password")),
       options: { emailRedirectTo: window.location.origin, data: { full_name: String(fd.get("name")) } },
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("Account created! You're signed in.");
-    navigate({ to: "/dashboard" });
+    
+    if (data?.session) {
+      toast.success("Account created! You're signed in.");
+      navigate({ to: redirect });
+    } else {
+      toast.success("Registration successful! Please check your email for the confirmation link to activate your account.", {
+        duration: 10000,
+      });
+    }
   };
 
   return (
