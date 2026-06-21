@@ -29,7 +29,7 @@ import {
   Target, BarChart3, Layers, Brain, Linkedin, Play, ChevronLeft,
   ListChecks, Flag, AlertTriangle, Zap, Hash, Circle, Loader2,
   TrendingUp, Star, Lock, Eye, LayoutDashboard, LogOut, PanelRightClose,
-  PanelRightOpen, Settings, Menu, X, Moon,
+  PanelRightOpen, Settings, Menu, X, Moon, Wallet,
 } from "lucide-react";
 
 function useInView(threshold = 0.15) {
@@ -261,6 +261,11 @@ function Dashboard() {
   const totalTasks = tasks?.length ?? 0;
   const lastAttempt = quizAttempts?.[0] ?? null;
   const cert = certificate ?? lmsCert;
+  const domain = app ? getDomain(app.domain) : null;
+  const internTotal = internTasks?.length ?? 0;
+  const internApproved = internSubmissions?.filter((s: any) => s.status === "approved").length ?? 0;
+  const internPending = internSubmissions?.filter((s: any) => s.status === "pending").length ?? 0;
+  const internCompleted = internApproved;
 
   const timelineSteps = [
     { label: "Application Submitted", done: !!app },
@@ -319,6 +324,60 @@ function Dashboard() {
             totalTasks={totalTasks} completedTaskCount={completedTaskCount}
             lastAttempt={lastAttempt} cert={cert}
           />
+          {/* Additional info cards */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Card className="rounded-2xl border-border/50 bg-white/70 backdrop-blur-xl dark:bg-[#1E293B]/70">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`grid size-10 place-items-center rounded-xl ${domain?.color ? `bg-gradient-to-br ${domain.color} text-white` : "brand-gradient text-white"}`}>
+                    <span className="text-sm font-bold">{domain?.icon ?? "?"}</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Internship Domain</p>
+                    <p className="font-semibold text-sm">{domain?.name ?? app?.domain ?? "—"}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-2">{domain?.description ?? ""}</p>
+                <div className="mt-3 flex items-center gap-2 text-xs">
+                  <Badge variant="secondary" className="rounded-lg">ID: {app?.intern_id ?? "—"}</Badge>
+                  <Badge variant={cert ? "default" : "outline"} className="rounded-lg">{cert ? "Certified" : "Active"}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl border-border/50 bg-white/70 backdrop-blur-xl dark:bg-[#1E293B]/70">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="grid size-10 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    <Wallet className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Payment</p>
+                    <p className="font-semibold text-sm">{payment ? payment.status.charAt(0).toUpperCase() + payment.status.slice(1) : "Pending"}</p>
+                  </div>
+                </div>
+                <div className="space-y-1.5 text-xs text-muted-foreground">
+                  {payment?.utr_number && <p>UTR: {payment.utr_number}</p>}
+                  {payment?.verified_at && <p>Verified: {new Date(payment.verified_at).toLocaleDateString("en-IN")}</p>}
+                  {!payment && <p>Submit payment to complete registration</p>}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl border-border/50 bg-white/70 backdrop-blur-xl dark:bg-[#1E293B]/70">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="grid size-10 place-items-center rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                    <ListChecks className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Internship Tasks</p>
+                    <p className="font-semibold text-sm">{internCompleted}/{internTotal} Done</p>
+                  </div>
+                </div>
+                <Progress value={internTotal > 0 ? Math.round((internCompleted / internTotal) * 100) : 0} className="h-2" />
+                <p className="mt-1.5 text-xs text-muted-foreground">{internPending} pending · {internApproved} approved</p>
+              </CardContent>
+            </Card>
+          </div>
           <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
             <div className="space-y-8">
               <TimelineSection steps={timelineSteps} currentStep={currentStep} />
