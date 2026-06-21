@@ -126,7 +126,7 @@ function AuthPage() {
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>
                 </TabsList>
                 <TabsContent value="signin">
-                  <form onSubmit={signIn} className="mt-4 space-y-4">
+                  <form onSubmit={signIn} method="post" action="?" autoComplete="on" className="mt-4 space-y-4">
                     <div className="space-y-2">
                       <Label>Email</Label>
                       <Input name="email" type="email" required className="h-11" />
