@@ -306,6 +306,7 @@ function Dashboard() {
   const [active, setActive] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [detailView, setDetailView] = useState<{ type: "app"; id: string } | { type: "enrollment"; id: string } | null>(null);
 
   const SIDEBAR_ITEMS = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -337,243 +338,312 @@ function Dashboard() {
     }
 
     if (active === "overview") {
+      if (detailView?.type === "app") {
+        const da = appsList!.find((a) => a.id === detailView.id)!;
+        const dd = getDomain(da.domain);
+        const daSubs = allAppSubmissions?.filter((s: any) => s.application_id === da.id) ?? [];
+        const daApproved = daSubs.filter((s: any) => s.status === "approved").length;
+        const daTotal = internTasks?.length ?? 0;
+        const daCert = allAppCerts?.find((c: any) => c.application_id === da.id) ?? null;
+        const daPayment = allPayments?.find((p: any) => p.application_id === da.id) ?? null;
+        return (
+          <div className="space-y-6">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => setDetailView(null)}>
+              <ChevronLeft className="size-4" /> Back to Dashboard
+            </Button>
+            <div className="relative overflow-hidden rounded-3xl border border-border/40 bg-white/70 backdrop-blur-xl p-6 sm:p-8 dark:bg-[#1E293B]/70">
+              <div className="absolute -right-16 -top-16 size-48 rounded-full bg-emerald-400/15 blur-[80px]" />
+              <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className={`grid size-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${dd?.color ?? "from-purple-500 to-blue-600"} text-white shadow-md`}>
+                  <span className="text-2xl font-bold">{dd?.icon ?? "?"}</span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="font-display text-2xl font-bold">{dd?.name ?? da.domain}</h2>
+                    <Badge className={`text-xs px-3 py-1 rounded-lg ${
+                      da.status === "completed" ? "bg-emerald-600 text-white" :
+                      da.status === "ongoing" ? "bg-blue-600 text-white" :
+                      da.status === "approved" ? "bg-amber-500 text-white" :
+                      "bg-gray-500 text-white"
+                    }`}>
+                      {da.status === "completed" ? "Completed" :
+                       da.status === "ongoing" ? "Ongoing" :
+                       da.status === "approved" ? "Approved" :
+                       da.status === "pending" ? "Pending" : da.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">{da.intern_id} · {da.full_name} · {dd?.description ?? ""}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Info grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
+              <div className="rounded-xl border border-border/40 bg-secondary/30 p-3"><p className="text-muted-foreground">Started</p><p className="font-semibold mt-0.5">{new Date(da.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p></div>
+              <div className="rounded-xl border border-border/40 bg-secondary/30 p-3"><p className="text-muted-foreground">Completed</p><p className="font-semibold mt-0.5">{da.completed_at ? new Date(da.completed_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</p></div>
+              <div className="rounded-xl border border-border/40 bg-secondary/30 p-3"><p className="text-muted-foreground">Tasks</p><p className="font-semibold mt-0.5">{daApproved}/{daTotal}</p></div>
+              <div className="rounded-xl border border-border/40 bg-secondary/30 p-3"><p className="text-muted-foreground">Certificate</p><p className="font-semibold mt-0.5">{daCert ? "Generated" : "—"}</p></div>
+            </div>
+
+            {/* Payment */}
+            <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+              <h3 className="flex items-center gap-2 font-bold mb-4 text-sm"><CreditCard className="size-4 text-primary" /> Payment Details</h3>
+              {daPayment ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                  <div><p className="text-muted-foreground text-xs">Status</p><Badge className={`mt-1 text-[10px] ${daPayment.status === "verified" ? "bg-emerald-600" : "bg-amber-500"} text-white`}>{daPayment.status === "verified" ? "Verified" : daPayment.status === "pending" ? "Pending" : daPayment.status}</Badge></div>
+                  <div><p className="text-muted-foreground text-xs">UTR</p><p className="font-semibold mt-0.5 font-mono text-xs">{daPayment.utr_number ?? "—"}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Amount</p><p className="font-semibold mt-0.5">{daPayment.amount ? `₹${daPayment.amount}` : "—"}</p></div>
+                  <div><p className="text-muted-foreground text-xs">Verified</p><p className="font-semibold mt-0.5">{daPayment.verified_at ? new Date(daPayment.verified_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</p></div>
+                </div>
+              ) : <p className="text-sm text-muted-foreground">No payment record.</p>}
+            </div>
+
+            {/* Offer Letter */}
+            <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="grid size-10 place-items-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"><FileText className="size-5" /></div>
+                  <div><p className="font-semibold text-sm">Offer Letter</p><p className="text-xs text-muted-foreground">Issued {new Date(da.offer_issued_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p></div>
+                </div>
+                <Button size="sm" className="brand-gradient text-white border-0 rounded-xl h-9" onClick={() => downloadPdf(<OfferLetterDoc fullName={da.full_name} internId={da.intern_id} domain={dd?.name ?? da.domain} issuedAt={da.offer_issued_at} />, `OfferLetter_${da.intern_id}.pdf`)}><Download className="mr-1.5 size-3.5" /> Download</Button>
+              </div>
+            </div>
+
+            {/* ID Card */}
+            <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+              <h3 className="flex items-center gap-2 font-bold mb-4 text-sm"><Shield className="size-4 text-primary" /> Digital ID Card</h3>
+              <IDCard internId={da.intern_id} fullName={da.full_name} domain={dd?.name ?? da.domain} photoUrl={da.photo_url} issuedAt={da.offer_issued_at} />
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs border-border/60" onClick={() => downloadPdf(<OfferLetterDoc fullName={da.full_name} internId={da.intern_id} domain={dd?.name ?? da.domain} issuedAt={da.offer_issued_at} />, `OfferLetter_${da.intern_id}.pdf`)}><FileText className="mr-1 size-3" /> Offer Letter</Button>
+                <Button size="sm" className="brand-gradient text-white border-0 rounded-lg h-8 text-xs" onClick={() => downloadPdf(<OfferLetterDoc fullName={da.full_name} internId={da.intern_id} domain={dd?.name ?? da.domain} issuedAt={da.offer_issued_at} />, `IDCard_${da.intern_id}.pdf`)}><Download className="mr-1 size-3" /> Download ID</Button>
+              </div>
+            </div>
+
+            {/* Tasks */}
+            {daTotal > 0 && (
+              <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+                <h3 className="flex items-center gap-2 font-bold mb-4 text-sm"><ListChecks className="size-4 text-primary" /> Internship Tasks</h3>
+                <div className="flex items-center gap-3 mb-3">
+                  <Progress value={daTotal > 0 ? Math.round((daApproved / daTotal) * 100) : 0} className="h-2 flex-1" />
+                  <span className="text-xs font-semibold whitespace-nowrap">{daApproved}/{daTotal} completed</span>
+                </div>
+                <div className="grid gap-2">
+                  {(internTasks ?? []).map((t: any) => {
+                    const sub = daSubs.find((s: any) => s.task_id === t.id);
+                    return (
+                      <div key={t.id} className="flex items-center justify-between rounded-xl border border-border/40 bg-secondary/30 p-3">
+                        <span className="text-xs font-medium">Task {t.task_number}</span>
+                        <Badge className={`text-[10px] ${sub?.status === "approved" ? "bg-emerald-600" : sub?.status === "pending" ? "bg-amber-500" : "bg-gray-400"}`}>
+                          {sub?.status === "approved" ? "Done" : sub?.status === "pending" ? "In Review" : "Pending"}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Certificate */}
+            {daCert && (
+              <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+                <h3 className="flex items-center gap-2 font-bold mb-4 text-sm"><Award className="size-4 text-primary" /> Certificate</h3>
+                <div className="rounded-xl bg-gradient-to-br from-purple-50 to-blue-50 p-4 text-center dark:from-purple-950/30 dark:to-blue-950/30 border border-purple-200/50 dark:border-purple-800/30">
+                  <div className="mx-auto grid size-14 place-items-center rounded-2xl brand-gradient text-white shadow-md mb-3"><Award className="size-7" /></div>
+                  <p className="font-bold text-sm">{dd?.name ?? da.domain}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono mt-1">{daCert.certificate_id}</p>
+                </div>
+                <div className="mt-4 space-y-2">
+                  <Button size="sm" className="w-full brand-gradient text-white border-0 rounded-xl h-9" onClick={() => downloadPdf(<CertificateDoc fullName={da.full_name} internId={da.intern_id} domain={dd?.name ?? da.domain} certId={daCert.certificate_id} issuedAt={daCert.issued_at} verifyUrl={`${window.location.origin}/verify-certificate`} />, `Certificate_${daCert.certificate_id}.pdf`)}><Download className="mr-1.5 size-4" /> Download PDF</Button>
+                  <Button asChild size="sm" variant="outline" className="w-full rounded-xl border-border/60 h-9"><Link to="/verify-certificate"><ExternalLink className="mr-1.5 size-4" /> Verify Certificate</Link></Button>
+                </div>
+              </div>
+            )}
+
+            {/* Summary */}
+            <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+              <h3 className="flex items-center gap-2 font-bold mb-4 text-sm"><ScrollText className="size-4 text-primary" /> Summary</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><p className="text-muted-foreground text-xs">Name</p><p className="font-semibold mt-0.5">{da.full_name}</p></div>
+                <div><p className="text-muted-foreground text-xs">Intern ID</p><p className="font-semibold mt-0.5 font-mono text-xs">{da.intern_id}</p></div>
+                <div><p className="text-muted-foreground text-xs">Domain</p><p className="font-semibold mt-0.5">{dd?.name ?? da.domain}</p></div>
+                <div><p className="text-muted-foreground text-xs">Duration</p><p className="font-semibold mt-0.5">{daCert?.issued_at ? Math.ceil((new Date(daCert.issued_at).getTime() - new Date(da.created_at).getTime()) / (1000 * 60 * 60 * 24)) : "—"} days</p></div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (detailView?.type === "enrollment") {
+        const de = enrollments?.find((e: any) => e.id === detailView.id)!;
+        const dc = courses?.find((c: any) => c.id === de?.course_id)!;
+        const dcCert = lmsCerts?.find((c: any) => c.enrollment_id === de?.id) ?? null;
+        return (
+          <div className="space-y-6">
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => setDetailView(null)}>
+              <ChevronLeft className="size-4" /> Back to Dashboard
+            </Button>
+            <div className="relative overflow-hidden rounded-3xl border border-border/40 bg-white/70 backdrop-blur-xl p-6 sm:p-8 dark:bg-[#1E293B]/70">
+              <div className="absolute -right-16 -top-16 size-48 rounded-full bg-blue-400/15 blur-[80px]" />
+              <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="grid size-16 shrink-0 place-items-center rounded-2xl brand-gradient text-white shadow-md"><GraduationCap className="size-8" /></div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="font-display text-2xl font-bold">{dc?.name ?? "Course"}</h2>
+                    {dcCert ? (
+                      <Badge className="bg-emerald-600 text-white text-xs rounded-lg px-3 py-1"><Award className="mr-1 size-3" /> Certified</Badge>
+                    ) : de?.status === "completed" ? (
+                      <Badge className="bg-emerald-600 text-white text-xs rounded-lg px-3 py-1"><CheckCircle2 className="mr-1 size-3" /> Completed</Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs rounded-lg px-3 py-1">In Progress</Badge>
+                    )}
+                  </div>
+                  {dc && <p className="text-sm text-muted-foreground mt-1">{dc.domain} · {dc.total_topics} topics · {dc.total_tasks} tasks</p>}
+                </div>
+                {dc && (
+                  <Button asChild size="sm" className="brand-gradient text-white border-0 rounded-xl h-9">
+                    <Link to="/courses/$slug" params={{ slug: dc.slug }}><Play className="mr-1.5 size-3.5" /> Continue</Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+              <h3 className="flex items-center gap-2 font-bold mb-4 text-sm"><Target className="size-4 text-primary" /> Progress</h3>
+              <div className="flex items-center gap-3 mb-2"><Progress value={de?.progress_percent ?? 0} className="h-2.5 flex-1" /><span className="text-xs font-semibold">{de?.progress_percent ?? 0}%</span></div>
+              {de && <Badge variant="outline" className="text-[10px]">{de?.status === "completed" ? "Completed" : "In Progress"}</Badge>}
+            </div>
+
+            {dcCert && (
+              <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+                <h3 className="flex items-center gap-2 font-bold mb-4 text-sm"><Award className="size-4 text-primary" /> Certificate</h3>
+                <div className="rounded-xl bg-gradient-to-br from-purple-50 to-blue-50 p-4 text-center dark:from-purple-950/30 dark:to-blue-950/30 border border-purple-200/50 dark:border-purple-800/30">
+                  <div className="mx-auto grid size-14 place-items-center rounded-2xl brand-gradient text-white shadow-md mb-3"><Award className="size-7" /></div>
+                  <p className="font-bold text-sm">{dc?.name ?? "Course"}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono mt-1">{dcCert.certificate_id}</p>
+                  {dcCert.score != null && <Badge variant="secondary" className="mt-2 text-xs">{dcCert.score}/100</Badge>}
+                </div>
+                <div className="mt-4 space-y-2">
+                  <Button size="sm" className="w-full brand-gradient text-white border-0 rounded-xl h-9" onClick={() => downloadPdf(<CourseCertificateDoc fullName={app!.full_name} courseName={dc?.name ?? "Course"} score={dcCert.score ?? 0} total={100} certId={dcCert.certificate_id} issuedAt={dcCert.issued_at} verifyUrl={`${window.location.origin}/verify-certificate`} />, `Certificate_${dcCert.certificate_id}.pdf`)}><Download className="mr-1.5 size-4" /> Download PDF</Button>
+                  <Button asChild size="sm" variant="outline" className="w-full rounded-xl border-border/60 h-9"><Link to="/verify-certificate"><ExternalLink className="mr-1.5 size-4" /> Verify Certificate</Link></Button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
       return (
-        <div className="space-y-8">
-          {/* Stats Bar */}
+        <div className="space-y-6">
+          {/* Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: "Total Internships", value: appsList?.length ?? 0, icon: Layers, color: "from-purple-500 to-blue-600" },
+              { label: "Total Internships", value: appsList?.length ?? 0, icon: Briefcase, color: "from-purple-500 to-blue-600" },
               { label: "Completed", value: completedApps.length, icon: CheckCircle2, color: "from-emerald-500 to-teal-600" },
-              { label: "Ongoing", value: app && !completedApps.includes(app as any) ? 1 : 0, icon: Clock, color: "from-amber-500 to-orange-600" },
-              { label: "Certificates Earned", value: (allAppCerts?.length ?? 0) + (lmsCerts?.length ?? 0), icon: Award, color: "from-violet-500 to-purple-600" },
+              { label: "Active Courses", value: enrollments?.filter((e: any) => e.status !== "completed").length ?? 0, icon: BookOpen, color: "from-amber-500 to-orange-600" },
+              { label: "Certificates", value: (allAppCerts?.length ?? 0) + (lmsCerts?.length ?? 0), icon: Award, color: "from-violet-500 to-purple-600" },
             ].map((stat) => {
               const Icon = stat.icon;
               return (
                 <div key={stat.label} className="rounded-2xl border border-border/50 bg-white/70 p-4 backdrop-blur-xl dark:bg-[#1E293B]/70">
                   <div className="flex items-center gap-3">
-                    <div className={`grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${stat.color} text-white shadow-sm`}>
-                      <Icon className="size-4" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                      <p className="text-[10px] text-muted-foreground leading-tight">{stat.label}</p>
-                    </div>
+                    <div className={`grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${stat.color} text-white shadow-sm`}><Icon className="size-4" /></div>
+                    <div><p className="text-2xl font-bold">{stat.value}</p><p className="text-[10px] text-muted-foreground leading-tight">{stat.label}</p></div>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Current Internship */}
-          {app && active === "overview" && (
-            <AnimatedSection>
-              <div className="relative overflow-hidden rounded-3xl border border-border/40 bg-white/70 backdrop-blur-xl p-5 sm:p-6 dark:bg-[#1E293B]/70">
-                <div className="absolute -right-12 -top-12 size-36 rounded-full bg-blue-400/10 blur-[60px]" />
-                <div className="relative flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="grid size-12 shrink-0 place-items-center rounded-2xl brand-gradient text-white shadow-md">
-                      <Briefcase className="size-6" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Current Internship</p>
-                      <h3 className="font-display text-lg font-bold">{getDomain(app.domain)?.name ?? app.domain}</h3>
-                      <p className="text-xs text-muted-foreground">{app.intern_id} · Started {new Date(app.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
-                    </div>
-                  </div>
-                  <Badge className={`text-[10px] px-3 py-1.5 rounded-lg ${
-                    app.status === "completed" ? "bg-emerald-600 text-white" :
-                    app.status === "ongoing" ? "bg-blue-600 text-white" :
-                    app.status === "approved" ? "bg-amber-500 text-white" :
-                    "bg-gray-500 text-white"
-                  }`}>
-                    {app.status === "completed" ? "Completed" :
-                     app.status === "ongoing" ? "Ongoing" :
-                     app.status === "approved" ? "Approved" :
-                     app.status === "pending" ? "Pending" : app.status}
-                  </Badge>
-                </div>
+          {/* Internships List */}
+          <AnimatedSection>
+            <h2 className="text-lg font-display font-bold mb-4 flex items-center gap-2"><Briefcase className="size-5 text-primary" /> Internships</h2>
+            {(!appsList || appsList.length === 0) ? (
+              <div className="rounded-2xl border border-dashed border-border/50 bg-white/70 p-8 text-center backdrop-blur-xl dark:bg-[#1E293B]/70">
+                <p className="text-muted-foreground text-sm">No internships yet. Apply for one to get started.</p>
               </div>
-            </AnimatedSection>
-          )}
-
-          {/* Completed Internships */}
-          {completedApps.length > 0 && (
-            <AnimatedSection delay={100}>
-              <div>
-                <h2 className="text-lg font-display font-bold mb-4">Completed Internships</h2>
-                <div className="grid gap-4">
-                  {completedApps.map((ca) => {
-                    const d = getDomain(ca.domain);
-                    const caSubmissions = allAppSubmissions?.filter((s: any) => s.application_id === ca.id) ?? [];
-                    const caApproved = caSubmissions.filter((s: any) => s.status === "approved").length;
-                    const caTotal = internTasks?.length ?? 0;
-                    const caCert = allAppCerts?.find((c: any) => c.application_id === ca.id) ?? null;
-                    const caPayment = allPayments?.find((p: any) => p.application_id === ca.id) ?? null;
-                    return (
-                      <div key={ca.id} className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div className="flex items-center gap-4">
-                            <div className={`grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${d?.color ?? "from-purple-500 to-blue-600"} text-white shadow-sm`}>
-                              <span className="text-lg font-bold">{d?.icon ?? "?"}</span>
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-semibold">{d?.name ?? ca.domain}</h3>
-                                <Badge className="bg-emerald-600 text-white text-[10px] rounded-lg px-2 py-0.5">
-                                  <CheckCircle2 className="mr-0.5 size-2.5" /> Completed
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-0.5">{ca.intern_id} · Completed {ca.completed_at ? new Date(ca.completed_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-6 text-xs text-center shrink-0">
-                            <div>
-                              <p className="text-muted-foreground">Tasks</p>
-                              <p className="font-bold text-sm">{caApproved}/{caTotal}</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Certificate</p>
-                              <p className={`font-bold text-sm ${caCert ? "text-emerald-600" : "text-muted-foreground"}`}>{caCert ? "Generated" : "—"}</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground">Payment</p>
-                              <p className={`font-bold text-sm ${caPayment?.status === "verified" ? "text-emerald-600" : "text-muted-foreground"}`}>{caPayment?.status === "verified" ? "Paid" : caPayment?.status ?? "—"}</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2 shrink-0">
-                            {caCert && (
-                              <Button size="sm" className="brand-gradient text-white border-0 rounded-xl h-8 text-xs"
-                                onClick={() => downloadPdf(
-                                  <CertificateDoc fullName={ca.full_name} internId={ca.intern_id} domain={d?.name ?? ca.domain}
-                                    certId={caCert.certificate_id} issuedAt={caCert.issued_at}
-                                    verifyUrl={`${window.location.origin}/verify-certificate`} />,
-                                  `Certificate_${caCert.certificate_id}.pdf`
-                                )}>
-                                <Download className="mr-1 size-3" /> Download PDF
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline" className="rounded-xl h-8 text-xs border-border/60"
-                              onClick={() => {
-                                setActive("certificates");
-                                setMobileOpen(false);
-                              }}>
-                              <Eye className="mr-1 size-3" /> View Details
-                            </Button>
-                          </div>
+            ) : (
+              <div className="grid gap-3">
+                {appsList.map((a) => {
+                  const d = getDomain(a.domain);
+                  const aSubs = allAppSubmissions?.filter((s: any) => s.application_id === a.id) ?? [];
+                  const aApproved = aSubs.filter((s: any) => s.status === "approved").length;
+                  const aCert = allAppCerts?.find((c: any) => c.application_id === a.id) ?? null;
+                  return (
+                    <button key={a.id} onClick={() => setDetailView({ type: "app", id: a.id })}
+                      className="w-full text-left rounded-2xl border border-border/50 bg-white/70 p-4 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-0.5 dark:bg-[#1E293B]/70 group">
+                      <div className="flex items-center gap-4">
+                        <div className={`grid size-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${d?.color ?? "from-purple-500 to-blue-600"} text-white shadow-sm`}>
+                          <span className="text-lg font-bold">{d?.icon ?? "?"}</span>
                         </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold">{d?.name ?? a.domain}</p>
+                            <Badge className={`text-[10px] px-2 py-0.5 rounded-md ${
+                              a.status === "completed" ? "bg-emerald-600 text-white" :
+                              a.status === "ongoing" ? "bg-blue-600 text-white" :
+                              a.status === "approved" ? "bg-amber-500 text-white" :
+                              "bg-gray-500 text-white"
+                            }`}>
+                              {a.status === "completed" ? "Completed" :
+                               a.status === "ongoing" ? "Ongoing" :
+                               a.status === "approved" ? "Approved" :
+                               a.status === "pending" ? "Pending" : a.status}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">{a.intern_id} · {new Date(a.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                        </div>
+                        <div className="hidden sm:flex items-center gap-4 text-xs text-center">
+                          <div><p className="text-muted-foreground">Tasks</p><p className="font-semibold">{aApproved}/{internTasks?.length ?? 0}</p></div>
+                          <div><p className="text-muted-foreground">Cert</p><p className={`font-semibold ${aCert ? "text-emerald-600" : "text-muted-foreground"}`}>{aCert ? "✓" : "—"}</p></div>
+                        </div>
+                        <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition" />
                       </div>
-                    );
-                  })}
-                </div>
+                    </button>
+                  );
+                })}
               </div>
-            </AnimatedSection>
-          )}
+            )}
+          </AnimatedSection>
 
-          <HeroSection
-            app={app} enrollment={enrollment} course={course}
-            completedTopicCount={completedTopicCount} totalTopics={totalTopics}
-            completedTaskCount={completedTaskCount} totalTasks={totalTasks}
-            lastAttempt={lastAttempt} cert={cert}
-          />
-          <StatsCards
-            totalTopics={totalTopics} completedTopicCount={completedTopicCount}
-            totalTasks={totalTasks} completedTaskCount={completedTaskCount}
-            lastAttempt={lastAttempt} cert={cert}
-          />
-          {/* Additional info cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="rounded-2xl border-border/50 bg-white/70 backdrop-blur-xl dark:bg-[#1E293B]/70">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`grid size-10 place-items-center rounded-xl ${domain?.color ? `bg-gradient-to-br ${domain.color} text-white` : "brand-gradient text-white"}`}>
-                    <span className="text-sm font-bold">{domain?.icon ?? "?"}</span>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Internship Domain</p>
-                    <p className="font-semibold text-sm">{domain?.name ?? app?.domain ?? "—"}</p>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-2">{domain?.description ?? ""}</p>
-                <div className="mt-3 flex items-center gap-2 text-xs">
-                  <Badge variant="secondary" className="rounded-lg">ID: {app?.intern_id ?? "—"}</Badge>
-                  <Badge variant={cert ? "default" : "outline"} className="rounded-lg">{cert ? "Certified" : "Active"}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="rounded-2xl border-border/50 bg-white/70 backdrop-blur-xl dark:bg-[#1E293B]/70">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="grid size-10 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                    <Wallet className="size-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Payment</p>
-                    <p className="font-semibold text-sm">{payment ? payment.status.charAt(0).toUpperCase() + payment.status.slice(1) : "Pending"}</p>
-                  </div>
-                </div>
-                <div className="space-y-1.5 text-xs text-muted-foreground">
-                  {payment?.utr_number && <p>UTR: {payment.utr_number}</p>}
-                  {payment?.verified_at && <p>Verified: {new Date(payment.verified_at).toLocaleDateString("en-IN")}</p>}
-                  {!payment && <p>Submit payment to complete registration</p>}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="rounded-2xl border-border/50 bg-white/70 backdrop-blur-xl dark:bg-[#1E293B]/70">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="grid size-10 place-items-center rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
-                    <ListChecks className="size-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Internship Tasks</p>
-                    <p className="font-semibold text-sm">{internCompleted}/{internTotal} Done</p>
-                  </div>
-                </div>
-                <Progress value={internTotal > 0 ? Math.round((internCompleted / internTotal) * 100) : 0} className="h-2" />
-                <p className="mt-1.5 text-xs text-muted-foreground">{internPending} pending · {internApproved} approved</p>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-            <div className="space-y-8">
-              <TimelineSection steps={timelineSteps} currentStep={currentStep} />
-              <LmsCoursesSection
-                enrollments={enrollments ?? []} courses={courses ?? []} lmsCerts={lmsCerts ?? []}
-                completedTopics={completedTopics} topics={topics ?? []}
-                taskSubmissions={taskSubmissions ?? []} tasks={tasks ?? []}
-                quizAttempts={quizAttempts ?? []} course={course} enrollment={enrollment}
-              />
-              {enrollment && course && <CurrentTopicWidget topics={topics ?? []} completedTopics={completedTopics} enrollment={enrollment} course={course} />}
-              {enrollment && <TasksSectionWidget tasks={tasks ?? []} submissions={taskSubmissions ?? []} enrollmentId={enrollment.id} courseSlug={course?.slug ?? ""} onChange={() => qc.invalidateQueries({ queryKey: ["my-course-subs"] })} />}
-              {enrollment && <QuizSectionWidget course={course} lastAttempt={lastAttempt} enrollment={enrollment} completedTaskCount={completedTaskCount} totalTasks={totalTasks} />}
-            </div>
-            <div className="space-y-6">
-              <ActivityFeed app={app} enrollment={enrollment} taskSubmissions={taskSubmissions ?? []} lastAttempt={lastAttempt} topics={topics ?? []} completedTopics={completedTopics} cert={cert} lmsCert={lmsCert} />
-              <div className="rounded-2xl border border-border/50 bg-white/70 p-4 backdrop-blur-xl dark:bg-[#1E293B]/70">
-                <h3 className="flex items-center gap-2 font-bold mb-3 text-sm"><FileText className="size-4 text-primary" /> Documents</h3>
-                <div className="space-y-2">
-                  <Button size="sm" variant="outline" className="w-full justify-start rounded-xl border-border/60 h-9 text-xs"
-                    onClick={() => downloadPdf(
-                      <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} />,
-                      `OfferLetter_${app.intern_id}.pdf`
-                    )}>
-                    <FileText className="mr-2 size-3.5" /> Download Offer Letter
-                  </Button>
-                  {cert && (
-                    <Button size="sm" variant="outline" className="w-full justify-start rounded-xl border-border/60 h-9 text-xs"
-                      onClick={() => downloadPdf(
-                        <CertificateDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain}
-                          certId={cert.certificate_id} issuedAt={cert.issued_at}
-                          verifyUrl={`${window.location.origin}/verify-certificate`} />,
-                        `Certificate_${cert.certificate_id}.pdf`
-                      )}>
-                      <Award className="mr-2 size-3.5" /> Download Certificate
-                    </Button>
-                  )}
-                </div>
+          {/* Courses List */}
+          <AnimatedSection delay={100}>
+            <h2 className="text-lg font-display font-bold mb-4 flex items-center gap-2"><BookOpen className="size-5 text-primary" /> Courses</h2>
+            {(!enrollments || enrollments.length === 0) ? (
+              <div className="rounded-2xl border border-dashed border-border/50 bg-white/70 p-8 text-center backdrop-blur-xl dark:bg-[#1E293B]/70">
+                <p className="text-muted-foreground text-sm">No course enrollments yet. Browse courses to start learning.</p>
               </div>
-            </div>
-          </div>
+            ) : (
+              <div className="grid gap-3">
+                {enrollments.map((e: any) => {
+                  const c = courses?.find((co: any) => co.id === e.course_id);
+                  const cCert = lmsCerts?.find((lc: any) => lc.enrollment_id === e.id) ?? null;
+                  return (
+                    <button key={e.id} onClick={() => setDetailView({ type: "enrollment", id: e.id })}
+                      className="w-full text-left rounded-2xl border border-border/50 bg-white/70 p-4 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-0.5 dark:bg-[#1E293B]/70 group">
+                      <div className="flex items-center gap-4">
+                        <div className="grid size-12 shrink-0 place-items-center rounded-xl brand-gradient text-white shadow-sm"><GraduationCap className="size-6" /></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold">{c?.name ?? "Course"}</p>
+                            {cCert ? (
+                              <Badge className="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-md"><Award className="mr-0.5 size-2.5" /> Certified</Badge>
+                            ) : e.status === "completed" ? (
+                              <Badge variant="secondary" className="text-[10px] px-2 py-0.5 rounded-md">Completed</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-md">{e.progress_percent ?? 0}%</Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">{c?.domain ?? ""} · {c?.total_topics ?? 0} topics</p>
+                        </div>
+                        <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition" />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </AnimatedSection>
         </div>
       );
     }
