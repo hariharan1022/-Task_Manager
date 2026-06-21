@@ -25,6 +25,16 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Scrub any sensitive params that leaked into the URL (e.g. from a
+    // pre-hydration native form submit or password manager autofill).
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      let dirty = false;
+      for (const key of ["email", "password", "name"]) {
+        if (url.searchParams.has(key)) { url.searchParams.delete(key); dirty = true; }
+      }
+      if (dirty) window.history.replaceState({}, "", url.pathname + (url.search ? url.search : "") + url.hash);
+    }
     supabase.auth.getSession().then(({ data }) => { if (data.session) navigate({ to: redirect }); });
   }, [navigate, redirect]);
 
