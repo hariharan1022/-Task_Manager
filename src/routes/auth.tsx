@@ -11,7 +11,9 @@ import { toast } from "sonner";
 import { GraduationCap, Sparkles, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: { redirect?: string }) => search,
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   head: () => ({ meta: [{ title: "Sign in — Skyrovix Internship Portal" }, { name: "description", content: "Sign in or create your Skyrovix internship account." }] }),
   component: AuthPage,
 });
@@ -23,6 +25,16 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Scrub any sensitive params that leaked into the URL (e.g. from a
+    // pre-hydration native form submit or password manager autofill).
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      let dirty = false;
+      for (const key of ["email", "password", "name"]) {
+        if (url.searchParams.has(key)) { url.searchParams.delete(key); dirty = true; }
+      }
+      if (dirty) window.history.replaceState({}, "", url.pathname + (url.search ? url.search : "") + url.hash);
+    }
     supabase.auth.getSession().then(({ data }) => { if (data.session) navigate({ to: redirect }); });
   }, [navigate, redirect]);
 
@@ -114,7 +126,7 @@ function AuthPage() {
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>
                 </TabsList>
                 <TabsContent value="signin">
-                  <form onSubmit={signIn} className="mt-4 space-y-4">
+                  <form onSubmit={signIn} method="post" action="?" autoComplete="on" className="mt-4 space-y-4">
                     <div className="space-y-2">
                       <Label>Email</Label>
                       <Input name="email" type="email" required className="h-11" />
@@ -129,7 +141,7 @@ function AuthPage() {
                   </form>
                 </TabsContent>
                 <TabsContent value="signup">
-                  <form onSubmit={signUp} className="mt-4 space-y-4">
+                  <form onSubmit={signUp} method="post" action="?" autoComplete="on" className="mt-4 space-y-4">
                     <div className="space-y-2">
                       <Label>Full Name</Label>
                       <Input name="name" required className="h-11" />
