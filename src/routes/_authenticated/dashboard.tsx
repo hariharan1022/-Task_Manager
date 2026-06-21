@@ -28,7 +28,8 @@ import {
   Phone, Calendar, ChevronRight, ExternalLink, Shield, Bell, Trophy,
   Target, BarChart3, Layers, Brain, Linkedin, Play, ChevronLeft,
   ListChecks, Flag, AlertTriangle, Zap, Hash, Circle, Loader2,
-  TrendingUp, Star, Lock, Eye,
+  TrendingUp, Star, Lock, Eye, LayoutDashboard, LogOut, PanelRightClose,
+  PanelRightOpen, Settings, Menu, X, Moon,
 } from "lucide-react";
 
 function useInView(threshold = 0.15) {
@@ -271,11 +272,133 @@ function Dashboard() {
   ];
   const currentStep = timelineSteps.findIndex((s) => !s.done);
 
+  const [active, setActive] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const SIDEBAR_ITEMS = [
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "courses", label: "My Courses", icon: BookOpen },
+    { id: "tasks", label: "My Tasks", icon: ListChecks },
+    { id: "certificates", label: "Certificates", icon: Award },
+    { id: "profile", label: "Profile", icon: User },
+  ] as const;
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/auth";
+  };
+
   if (authLoading || isLoading) return <LoadingSkeleton />;
+
+  const renderContent = () => {
+    if (!app) {
+      return (
+        <AnimatedSection>
+          <WelcomeDashboard
+            user={user}
+            enrollments={enrollments ?? []}
+            courses={courses ?? []}
+            onCreated={() => qc.invalidateQueries()}
+          />
+        </AnimatedSection>
+      );
+    }
+
+    if (active === "overview") {
+      return (
+        <div className="space-y-8">
+          <HeroSection
+            app={app} enrollment={enrollment} course={course}
+            completedTopicCount={completedTopicCount} totalTopics={totalTopics}
+            completedTaskCount={completedTaskCount} totalTasks={totalTasks}
+            lastAttempt={lastAttempt} cert={cert}
+          />
+          <StatsCards
+            totalTopics={totalTopics} completedTopicCount={completedTopicCount}
+            totalTasks={totalTasks} completedTaskCount={completedTaskCount}
+            lastAttempt={lastAttempt} cert={cert}
+          />
+          <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+            <div className="space-y-8">
+              <TimelineSection steps={timelineSteps} currentStep={currentStep} />
+              <LmsCoursesSection
+                enrollments={enrollments ?? []} courses={courses ?? []} lmsCerts={lmsCerts ?? []}
+                completedTopics={completedTopics} topics={topics ?? []}
+                taskSubmissions={taskSubmissions ?? []} tasks={tasks ?? []}
+                quizAttempts={quizAttempts ?? []} course={course} enrollment={enrollment}
+              />
+              {enrollment && course && <CurrentTopicWidget topics={topics ?? []} completedTopics={completedTopics} enrollment={enrollment} course={course} />}
+              {enrollment && <TasksSectionWidget tasks={tasks ?? []} submissions={taskSubmissions ?? []} enrollmentId={enrollment.id} courseSlug={course?.slug ?? ""} onChange={() => qc.invalidateQueries({ queryKey: ["my-course-subs"] })} />}
+              {enrollment && <QuizSectionWidget course={course} lastAttempt={lastAttempt} enrollment={enrollment} completedTaskCount={completedTaskCount} totalTasks={totalTasks} />}
+            </div>
+            <div className="space-y-6">
+              <ActivityFeed app={app} enrollment={enrollment} taskSubmissions={taskSubmissions ?? []} lastAttempt={lastAttempt} topics={topics ?? []} completedTopics={completedTopics} cert={cert} lmsCert={lmsCert} />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (active === "courses") {
+      return (
+        <div className="space-y-8">
+          <LmsCoursesSection
+            enrollments={enrollments ?? []} courses={courses ?? []} lmsCerts={lmsCerts ?? []}
+            completedTopics={completedTopics} topics={topics ?? []}
+            taskSubmissions={taskSubmissions ?? []} tasks={tasks ?? []}
+            quizAttempts={quizAttempts ?? []} course={course} enrollment={enrollment}
+          />
+          {enrollment && course && <CurrentTopicWidget topics={topics ?? []} completedTopics={completedTopics} enrollment={enrollment} course={course} />}
+          {enrollment && <TasksSectionWidget tasks={tasks ?? []} submissions={taskSubmissions ?? []} enrollmentId={enrollment.id} courseSlug={course?.slug ?? ""} onChange={() => qc.invalidateQueries({ queryKey: ["my-course-subs"] })} />}
+          {enrollment && <QuizSectionWidget course={course} lastAttempt={lastAttempt} enrollment={enrollment} completedTaskCount={completedTaskCount} totalTasks={totalTasks} />}
+        </div>
+      );
+    }
+
+    if (active === "tasks") {
+      return (
+        <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+          <TasksSection
+            domainSlug={app.domain}
+            tasks={internTasks ?? []}
+            submissions={internSubmissions ?? []}
+            appId={app.id}
+            onChange={() => qc.invalidateQueries({ queryKey: ["my-submissions"] })}
+          />
+        </div>
+      );
+    }
+
+    if (active === "certificates") {
+      return (
+        <div className="space-y-8">
+          <CertificateSection cert={cert} app={app} course={course} enrollment={enrollment} lastAttempt={lastAttempt} />
+          <IDCardSection app={app} />
+          {cert && (
+            <Button size="sm" variant="outline" className="rounded-full px-5 h-11 border-border/60">
+              <Download className="mr-1.5 size-4" /> Download Certificate
+            </Button>
+          )}
+        </div>
+      );
+    }
+
+    if (active === "profile") {
+      return (
+        <div className="space-y-8">
+          <ProfilePanel app={app} onChange={() => qc.invalidateQueries({ queryKey: ["my-application"] })} />
+          <IDCardSection app={app} />
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className={`min-h-screen ${dark ? "dark" : ""}`}>
-      <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] to-[#EEF2FF] dark:from-[#0B1120] dark:to-[#0F172A]">
+      <div className="flex min-h-screen bg-gradient-to-br from-[#F8FAFC] to-[#EEF2FF] dark:from-[#0B1120] dark:to-[#0F172A]">
         {/* Background blobs */}
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <div className="absolute -top-40 -left-40 size-96 rounded-full bg-purple-400/20 blur-[120px] dark:bg-purple-600/10" />
@@ -285,95 +408,91 @@ function Dashboard() {
         </div>
 
         <Confetti active={!!cert} />
-        <Navbar />
-        <main className="mx-auto max-w-6xl px-4 py-8">
-          {!app ? (
-            <AnimatedSection>
-              <WelcomeDashboard
-                user={user}
-                enrollments={enrollments ?? []}
-                courses={courses ?? []}
-                onCreated={() => qc.invalidateQueries()}
-              />
-            </AnimatedSection>
-          ) : (
-            <div className="space-y-8">
-              <AnimatedSection delay={0}>
-                <HeroSection
-                  app={app} enrollment={enrollment} course={course}
-                  completedTopicCount={completedTopicCount} totalTopics={totalTopics}
-                  completedTaskCount={completedTaskCount} totalTasks={totalTasks}
-                  lastAttempt={lastAttempt} cert={cert}
-                />
-              </AnimatedSection>
-              <AnimatedSection delay={100}>
-                <StatsCards
-                  totalTopics={totalTopics} completedTopicCount={completedTopicCount}
-                  totalTasks={totalTasks} completedTaskCount={completedTaskCount}
-                  lastAttempt={lastAttempt} cert={cert}
-                />
-              </AnimatedSection>
-              <AnimatedSection delay={200}>
-                <ProfilePanel app={app} onChange={() => qc.invalidateQueries({ queryKey: ["my-application"] })} />
-              </AnimatedSection>
-              <AnimatedSection delay={250}>
-                <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
-                  <TasksSection
-                    domainSlug={app.domain}
-                    tasks={internTasks ?? []}
-                    submissions={internSubmissions ?? []}
-                    appId={app.id}
-                    onChange={() => qc.invalidateQueries({ queryKey: ["my-submissions"] })}
-                  />
-                </div>
-              </AnimatedSection>
-            </div>
-          )}
-          <div className={`mt-8 ${app ? "grid gap-8 lg:grid-cols-[1fr_360px]" : ""}`}>
-            <div className="space-y-8">
-              <AnimatedSection delay={app ? 300 : 0}>
-                <LmsCoursesSection
-                  enrollments={enrollments ?? []} courses={courses ?? []} lmsCerts={lmsCerts ?? []}
-                  completedTopics={completedTopics} topics={topics ?? []}
-                  taskSubmissions={taskSubmissions ?? []} tasks={tasks ?? []}
-                  quizAttempts={quizAttempts ?? []} course={course} enrollment={enrollment}
-                />
-              </AnimatedSection>
-              {enrollment && course && (
-                <AnimatedSection delay={app ? 500 : 100}>
-                  <CurrentTopicWidget topics={topics ?? []} completedTopics={completedTopics} enrollment={enrollment} course={course} />
-                </AnimatedSection>
-              )}
-              {enrollment && (
-                <AnimatedSection delay={app ? 600 : 200}>
-                  <TasksSectionWidget tasks={tasks ?? []} submissions={taskSubmissions ?? []} enrollmentId={enrollment.id} courseSlug={course?.slug ?? ""} onChange={() => qc.invalidateQueries({ queryKey: ["my-course-subs"] })} />
-                </AnimatedSection>
-              )}
-              {enrollment && (
-                <AnimatedSection delay={app ? 700 : 300}>
-                  <QuizSectionWidget course={course} lastAttempt={lastAttempt} enrollment={enrollment} completedTaskCount={completedTaskCount} totalTasks={totalTasks} />
-                </AnimatedSection>
-              )}
-            </div>
-            {app && (
-              <div className="space-y-6">
-                <AnimatedSection delay={350}>
-                  <TimelineSection steps={timelineSteps} currentStep={currentStep} />
-                </AnimatedSection>
-                <AnimatedSection delay={450}>
-                  <CertificateSection cert={cert} app={app} course={course} enrollment={enrollment} lastAttempt={lastAttempt} />
-                </AnimatedSection>
-                <AnimatedSection delay={550}>
-                  <IDCardSection app={app} />
-                </AnimatedSection>
-                <AnimatedSection delay={650}>
-                  <ActivityFeed app={app} enrollment={enrollment} taskSubmissions={taskSubmissions ?? []} lastAttempt={lastAttempt} topics={topics ?? []} completedTopics={completedTopics} cert={cert} lmsCert={lmsCert} />
-                </AnimatedSection>
-              </div>
-            )}
+
+        {/* Mobile overlay */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />
+        )}
+
+        {/* ─── Sidebar ─── */}
+        <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border/60 bg-white/70 backdrop-blur-2xl transition-all duration-300 dark:bg-[#0F172A]/90 dark:border-white/5 ${
+          mobileOpen ? "translate-x-0" : sidebarOpen ? "w-64 translate-x-0" : "w-16 -translate-x-full lg:translate-x-0"
+        }`}>
+          {/* Logo */}
+          <div className="flex h-16 items-center justify-between border-b border-border/60 px-4 dark:border-white/5">
+            <Link to="/" className={`flex items-center gap-2 ${!sidebarOpen && "lg:hidden"}`}>
+              <div className="grid size-9 shrink-0 place-items-center rounded-xl brand-gradient text-[10px] font-bold text-white">S</div>
+              {sidebarOpen && <span className="text-sm font-bold">Skyrovix</span>}
+            </Link>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hidden lg:grid size-8 place-items-center rounded-lg hover:bg-accent/50 transition">
+              {sidebarOpen ? <PanelRightClose className="size-4" /> : <PanelRightOpen className="size-4" />}
+            </button>
+            <button onClick={() => setMobileOpen(false)} className="lg:hidden grid size-8 place-items-center rounded-lg hover:bg-accent/50">
+              <X className="size-4" />
+            </button>
           </div>
-        </main>
-        <Footer />
+
+          {/* Menu Items */}
+          <nav className="flex-1 overflow-y-auto px-3 py-4">
+            <ul className="space-y-1">
+              {SIDEBAR_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const isActive = active === item.id;
+                return (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => { setActive(item.id); setMobileOpen(false); }}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                        isActive
+                          ? "brand-gradient text-white shadow-md shadow-purple-500/20"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-purple-50/60 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5"
+                      }`}
+                    >
+                      <Icon className="size-5 shrink-0" />
+                      {sidebarOpen && <span className="truncate">{item.label}</span>}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* Logout */}
+          <div className="border-t border-border/60 p-3 dark:border-white/5">
+            <button
+              onClick={signOut}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 transition hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-950/30"
+            >
+              <LogOut className="size-5 shrink-0" />
+              {sidebarOpen && <span>Logout</span>}
+            </button>
+          </div>
+        </aside>
+
+        {/* ─── Main Area ─── */}
+        <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : "lg:ml-16"}`}>
+          {/* Top header */}
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border/60 bg-white/70 px-4 backdrop-blur-xl dark:bg-[#0F172A]/80 dark:border-white/5">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setMobileOpen(true)} className="lg:hidden grid size-8 place-items-center rounded-lg hover:bg-accent/50">
+                <Menu className="size-5" />
+              </button>
+              <h1 className="text-lg font-bold capitalize">{active === "overview" ? "Dashboard" : active}</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setDark(!dark)} className="size-8 rounded-lg hover:bg-accent/50 grid place-items-center">
+                {dark ? <Sparkles className="size-4" /> : <Moon className="size-4" />}
+              </button>
+              <span className="text-sm text-muted-foreground">{user?.email}</span>
+            </div>
+          </header>
+
+          {/* Content */}
+          <main className="mx-auto max-w-6xl px-4 py-8">
+            {renderContent()}
+          </main>
+          <Footer />
+        </div>
 
         {/* Quick Actions FAB */}
         {app && (
