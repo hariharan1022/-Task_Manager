@@ -272,7 +272,14 @@ function Dashboard() {
         <Navbar />
         <main className="mx-auto max-w-6xl px-4 py-8">
           {!app ? (
-            <AnimatedSection><ApplyForm onCreated={() => qc.invalidateQueries()} /></AnimatedSection>
+            <AnimatedSection>
+              <WelcomeDashboard
+                user={user}
+                enrollments={enrollments ?? []}
+                courses={courses ?? []}
+                onCreated={() => qc.invalidateQueries()}
+              />
+            </AnimatedSection>
           ) : (
             <div className="space-y-8">
               <AnimatedSection delay={0}>
@@ -1071,6 +1078,84 @@ function ActivityFeed({ app, enrollment, taskSubmissions, lastAttempt, topics, c
 }
 
 // ─── APPLY FORM ───
+
+function WelcomeDashboard({ user, enrollments, courses, onCreated }: { user: any; enrollments: any[]; courses: any[]; onCreated: () => void }) {
+  const [showApply, setShowApply] = useState(false);
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
+  const enrolledCourses = enrollments
+    .map((e) => ({ ...e, course: courses.find((c) => c.id === e.course_id) }))
+    .filter((e) => e.course);
+
+  return (
+    <div className="space-y-8">
+      {/* Hero welcome */}
+      <div className="relative overflow-hidden rounded-3xl border border-border/40 bg-white/70 backdrop-blur-xl p-6 sm:p-10 dark:bg-[#1E293B]/70 dark:border-white/5">
+        <div className="absolute -right-20 -top-20 size-64 rounded-full bg-purple-400/15 blur-[100px]" />
+        <div className="absolute -bottom-20 -left-20 size-64 rounded-full bg-blue-400/15 blur-[100px]" />
+        <div className="relative">
+          <Badge variant="secondary" className="mb-3"><Sparkles className="mr-1 size-3" /> Welcome</Badge>
+          <h1 className="font-display text-3xl font-bold sm:text-4xl">Hi {displayName} 👋</h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            Your Skyrovix learning hub. Browse courses, track your progress, and apply for an internship anytime.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button asChild size="lg" className="brand-gradient text-white border-0">
+              <Link to="/courses"><BookOpen className="mr-2 size-4" /> Explore Courses</Link>
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => setShowApply((v) => !v)}>
+              <FileText className="mr-2 size-4" /> {showApply ? "Hide application form" : "Apply for Internship"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick action tiles */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Link to="/courses" className="group rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur transition hover:shadow-lg hover:-translate-y-0.5 dark:bg-[#1E293B]/70">
+          <div className="grid size-11 place-items-center rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"><GraduationCap className="size-5" /></div>
+          <p className="mt-3 font-semibold">Browse Courses</p>
+          <p className="text-sm text-muted-foreground">Topic-wise lessons + verified certificates.</p>
+        </Link>
+        <Link to="/domains" className="group rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur transition hover:shadow-lg hover:-translate-y-0.5 dark:bg-[#1E293B]/70">
+          <div className="grid size-11 place-items-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"><Layers className="size-5" /></div>
+          <p className="mt-3 font-semibold">Internship Domains</p>
+          <p className="text-sm text-muted-foreground">Pick a domain to specialise in.</p>
+        </Link>
+        <Link to="/verify-certificate" className="group rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur transition hover:shadow-lg hover:-translate-y-0.5 dark:bg-[#1E293B]/70">
+          <div className="grid size-11 place-items-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"><Shield className="size-5" /></div>
+          <p className="mt-3 font-semibold">Verify Certificate</p>
+          <p className="text-sm text-muted-foreground">Check any Skyrovix certificate ID.</p>
+        </Link>
+      </div>
+
+      {/* My courses if any */}
+      {enrolledCourses.length > 0 && (
+        <div>
+          <h2 className="mb-3 font-display text-xl font-bold">My Courses</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {enrolledCourses.map((e) => (
+              <Link key={e.id} to="/courses/$slug" params={{ slug: e.course.slug }} className="group rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur transition hover:shadow-lg dark:bg-[#1E293B]/70">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-semibold">{e.course.name}</p>
+                  <Badge variant="secondary" className="text-xs">{e.status === "completed" ? "Completed" : "In Progress"}</Badge>
+                </div>
+                <Progress value={e.progress_percent ?? 0} className="mt-3 h-2" />
+                <p className="mt-2 text-xs text-muted-foreground">{e.progress_percent ?? 0}% complete · Continue →</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Inline apply form when toggled */}
+      {showApply && (
+        <AnimatedSection>
+          <ApplyForm onCreated={onCreated} />
+        </AnimatedSection>
+      )}
+    </div>
+  );
+}
 
 function ApplyForm({ onCreated }: { onCreated: () => void }) {
   const { user } = useAuth();

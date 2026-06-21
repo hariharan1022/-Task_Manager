@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
@@ -35,7 +35,7 @@ function CourseDetail() {
   const { slug } = Route.useParams();
   const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
-  const navigate = useNavigate();
+  
   const [currentIdx, setCurrentIdx] = useState(0);
 
   const { data: course, isLoading } = useQuery({
@@ -106,25 +106,14 @@ function CourseDetail() {
     },
   });
 
-  const [enrollOpen, setEnrollOpen] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-  const [enrollName, setEnrollName] = useState("");
-  const [enrollPhone, setEnrollPhone] = useState("");
-  const [enrollCollege, setEnrollCollege] = useState("");
-  const [enrollCourse, setEnrollCourse] = useState("");
-  const [enrollYear, setEnrollYear] = useState("");
 
-  const handleEnroll = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEnroll = async () => {
     if (!user) {
       window.location.href = `/auth?redirect=${encodeURIComponent(window.location.pathname)}`;
       return;
     }
-    if (!course) return;
-    if (!enrollName.trim() || !enrollPhone.trim()) {
-      toast.error("Name and phone are required");
-      return;
-    }
+    if (!course || enrolling) return;
     setEnrolling(true);
     try {
       const { data: existing } = await supabase
@@ -134,28 +123,27 @@ function CourseDetail() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (existing) {
-        toast.success("Already enrolled!");
-        navigate({ to: "/dashboard" });
+        toast.success("You're already enrolled — let's continue!");
+        qc.invalidateQueries({ queryKey: ["enrollment", course.id, user.id] });
+        qc.invalidateQueries({ queryKey: ["my-enrollments", user.id] });
         return;
       }
       const { error } = await supabase
         .from("enrollments")
-        .insert({ user_id: user.id, course_id: course.id, status: "in_progress" })
-        .select("id")
-        .maybeSingle();
+        .insert({ user_id: user.id, course_id: course.id, status: "in_progress" });
       if (error) {
         console.error("Enrollment insert error:", error);
         toast.error(error.message);
         return;
       }
-      toast.success(`Enrolled in ${course.name}!`);
-      navigate({ to: "/dashboard" });
+      toast.success(`Enrolled in ${course.name}! Start your first lesson.`);
+      qc.invalidateQueries({ queryKey: ["enrollment", course.id, user.id] });
+      qc.invalidateQueries({ queryKey: ["my-enrollments", user.id] });
     } catch (err) {
       console.error("Enrollment error:", err);
       toast.error(err instanceof Error ? err.message : "Enrollment failed. Try again.");
     } finally {
       setEnrolling(false);
-      setEnrollOpen(false);
     }
   };
 
@@ -218,48 +206,9 @@ function CourseDetail() {
                   {completedCount}/{totalTopics} lessons · {approvedTasks}/{tasks?.length ?? 0} tasks approved
                 </p>
               </div>
-            ) : enrollOpen ? (
-              <Card className="w-full max-w-sm">
-                <CardContent className="space-y-4 pt-6">
-                  <div className="flex items-center gap-2">
-                    <GraduationCap className="size-5 text-primary" />
-                    <p className="font-semibold">Enroll in {course.name}</p>
-                  </div>
-                  <form onSubmit={handleEnroll} className="space-y-3">
-                    <div>
-                      <Label>Full Name *</Label>
-                      <Input value={enrollName} onChange={(e) => setEnrollName(e.target.value)} placeholder="Your full name" required />
-                    </div>
-                    <div>
-                      <Label>Phone *</Label>
-                      <Input value={enrollPhone} onChange={(e) => setEnrollPhone(e.target.value)} type="tel" placeholder="Phone number" required />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label>College / University</Label>
-                        <Input value={enrollCollege} onChange={(e) => setEnrollCollege(e.target.value)} placeholder="College" />
-                      </div>
-                      <div>
-                        <Label>Course / Branch</Label>
-                        <Input value={enrollCourse} onChange={(e) => setEnrollCourse(e.target.value)} placeholder="e.g. B.Tech CSE" />
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Year</Label>
-                      <Input value={enrollYear} onChange={(e) => setEnrollYear(e.target.value)} placeholder="e.g. 3rd year" />
-                    </div>
-                    <div className="flex gap-2 pt-1">
-                      <Button type="submit" disabled={enrolling} className="brand-gradient text-white border-0 flex-1">
-                        {enrolling ? "Enrolling…" : "Confirm & Enroll"}
-                      </Button>
-                      <Button type="button" variant="outline" onClick={() => setEnrollOpen(false)}>Cancel</Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
             ) : (
-              <Button onClick={() => setEnrollOpen(true)} size="lg" className="brand-gradient text-white border-0 shadow-lg shadow-primary/25">
-                <Sparkles className="mr-2 size-5" />Enroll Now — Free
+              <Button onClick={handleEnroll} disabled={enrolling} size="lg" className="brand-gradient text-white border-0 shadow-lg shadow-primary/25">
+                <Sparkles className="mr-2 size-5" />{enrolling ? "Enrolling…" : "Enroll Now — Free"}
               </Button>
             )}
           </div>
@@ -444,7 +393,7 @@ function CourseDetail() {
                 enrollment={enrollment}
                 submissions={submissions ?? []}
                 allLessonsDone={allLessonsDone}
-                onEnroll={() => setEnrollOpen(true)}
+                onEnroll={handleEnroll}
                 user={user}
                 onChange={() => qc.invalidateQueries({ queryKey: ["course-submissions", enrollment?.id] })}
               />
