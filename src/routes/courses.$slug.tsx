@@ -106,25 +106,14 @@ function CourseDetail() {
     },
   });
 
-  const [enrollOpen, setEnrollOpen] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
-  const [enrollName, setEnrollName] = useState("");
-  const [enrollPhone, setEnrollPhone] = useState("");
-  const [enrollCollege, setEnrollCollege] = useState("");
-  const [enrollCourse, setEnrollCourse] = useState("");
-  const [enrollYear, setEnrollYear] = useState("");
 
-  const handleEnroll = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEnroll = async () => {
     if (!user) {
       window.location.href = `/auth?redirect=${encodeURIComponent(window.location.pathname)}`;
       return;
     }
-    if (!course) return;
-    if (!enrollName.trim() || !enrollPhone.trim()) {
-      toast.error("Name and phone are required");
-      return;
-    }
+    if (!course || enrolling) return;
     setEnrolling(true);
     try {
       const { data: existing } = await supabase
@@ -134,28 +123,27 @@ function CourseDetail() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (existing) {
-        toast.success("Already enrolled!");
-        navigate({ to: "/dashboard" });
+        toast.success("You're already enrolled — let's continue!");
+        qc.invalidateQueries({ queryKey: ["enrollment", course.id, user.id] });
+        qc.invalidateQueries({ queryKey: ["my-enrollments", user.id] });
         return;
       }
       const { error } = await supabase
         .from("enrollments")
-        .insert({ user_id: user.id, course_id: course.id, status: "in_progress" })
-        .select("id")
-        .maybeSingle();
+        .insert({ user_id: user.id, course_id: course.id, status: "in_progress" });
       if (error) {
         console.error("Enrollment insert error:", error);
         toast.error(error.message);
         return;
       }
-      toast.success(`Enrolled in ${course.name}!`);
-      navigate({ to: "/dashboard" });
+      toast.success(`Enrolled in ${course.name}! Start your first lesson.`);
+      qc.invalidateQueries({ queryKey: ["enrollment", course.id, user.id] });
+      qc.invalidateQueries({ queryKey: ["my-enrollments", user.id] });
     } catch (err) {
       console.error("Enrollment error:", err);
       toast.error(err instanceof Error ? err.message : "Enrollment failed. Try again.");
     } finally {
       setEnrolling(false);
-      setEnrollOpen(false);
     }
   };
 
