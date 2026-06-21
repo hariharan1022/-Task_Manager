@@ -393,6 +393,29 @@ function Dashboard() {
             </div>
             <div className="space-y-6">
               <ActivityFeed app={app} enrollment={enrollment} taskSubmissions={taskSubmissions ?? []} lastAttempt={lastAttempt} topics={topics ?? []} completedTopics={completedTopics} cert={cert} lmsCert={lmsCert} />
+              <div className="rounded-2xl border border-border/50 bg-white/70 p-4 backdrop-blur-xl dark:bg-[#1E293B]/70">
+                <h3 className="flex items-center gap-2 font-bold mb-3 text-sm"><FileText className="size-4 text-primary" /> Documents</h3>
+                <div className="space-y-2">
+                  <Button size="sm" variant="outline" className="w-full justify-start rounded-xl border-border/60 h-9 text-xs"
+                    onClick={() => downloadPdf(
+                      <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} />,
+                      `OfferLetter_${app.intern_id}.pdf`
+                    )}>
+                    <FileText className="mr-2 size-3.5" /> Download Offer Letter
+                  </Button>
+                  {cert && (
+                    <Button size="sm" variant="outline" className="w-full justify-start rounded-xl border-border/60 h-9 text-xs"
+                      onClick={() => downloadPdf(
+                        <CertificateDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain}
+                          certId={cert.certificate_id} issuedAt={cert.issued_at}
+                          verifyUrl={`${window.location.origin}/verify-certificate`} />,
+                        `Certificate_${cert.certificate_id}.pdf`
+                      )}>
+                      <Award className="mr-2 size-3.5" /> Download Certificate
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -432,13 +455,61 @@ function Dashboard() {
     if (active === "certificates") {
       return (
         <div className="space-y-8">
-          <CertificateSection cert={cert} app={app} course={course} enrollment={enrollment} lastAttempt={lastAttempt} />
+          {/* Internship completion header */}
+          <div className="relative overflow-hidden rounded-3xl border border-border/40 bg-white/70 backdrop-blur-xl p-6 sm:p-8 dark:bg-[#1E293B]/70">
+            <div className="absolute -right-16 -top-16 size-48 rounded-full bg-emerald-400/15 blur-[80px]" />
+            <div className="relative flex items-center gap-4">
+              <div className="grid size-14 shrink-0 place-items-center rounded-2xl brand-gradient text-white shadow-md">
+                <Award className="size-7" />
+              </div>
+              <div>
+                <h2 className="font-display text-xl font-bold">Internship Documents</h2>
+                <p className="text-sm text-muted-foreground">{domain?.name ?? app.domain} · {app.intern_id}</p>
+              </div>
+              <Badge className="ml-auto bg-emerald-600 text-white text-xs rounded-lg px-3 py-1.5">
+                <CheckCircle2 className="mr-1 size-3.5" /> Completed
+              </Badge>
+            </div>
+            <div className="mt-5 grid grid-cols-3 gap-3 text-center text-xs">
+              <div className="rounded-xl border border-border/40 bg-secondary/30 p-3">
+                <p className="text-muted-foreground">Started</p>
+                <p className="font-semibold mt-0.5">{new Date(app.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+              </div>
+              <div className="rounded-xl border border-border/40 bg-secondary/30 p-3">
+                <p className="text-muted-foreground">Certificate</p>
+                <p className="font-semibold mt-0.5">{cert?.issued_at ? new Date(cert.issued_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</p>
+              </div>
+              <div className="rounded-xl border border-border/40 bg-secondary/30 p-3">
+                <p className="text-muted-foreground">Payment</p>
+                <p className="font-semibold mt-0.5 capitalize">{payment?.status ?? "—"}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Offer Letter */}
+          <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="grid size-10 place-items-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                  <FileText className="size-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Offer Letter</p>
+                  <p className="text-xs text-muted-foreground">Issued {new Date(app.offer_issued_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                </div>
+              </div>
+              <Button size="sm" className="brand-gradient text-white border-0 rounded-xl h-9"
+                onClick={() => downloadPdf(
+                  <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} />,
+                  `OfferLetter_${app.intern_id}.pdf`
+                )}>
+                <Download className="mr-1.5 size-3.5" /> Download
+              </Button>
+            </div>
+          </div>
+
           <IDCardSection app={app} />
-          {cert && (
-            <Button size="sm" variant="outline" className="rounded-full px-5 h-11 border-border/60">
-              <Download className="mr-1.5 size-4" /> Download Certificate
-            </Button>
-          )}
+          <CertificateSection cert={cert} app={app} course={course} enrollment={enrollment} lastAttempt={lastAttempt} />
         </div>
       );
     }
@@ -1209,34 +1280,25 @@ function IDCardSection({ app }: { app: Application | null }) {
   return (
     <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
       <h3 className="flex items-center gap-2 font-bold mb-4"><Shield className="size-4 text-primary" /> Digital ID Card</h3>
-      <div className="rounded-xl bg-gradient-to-br from-purple-50 to-blue-50 p-4 dark:from-purple-950/30 dark:to-blue-950/30 border border-purple-200/50 dark:border-purple-800/30">
-        <div className="flex items-center gap-4">
-          {app.photo_url ? (
-            <img src={app.photo_url} alt="" className="size-12 rounded-xl border-2 border-white/50 object-cover shadow-sm" />
-          ) : (
-            <div className="grid size-12 place-items-center rounded-xl brand-gradient text-sm font-bold text-white shadow-sm">
-              {app.full_name.charAt(0).toUpperCase()}
-            </div>
-          )}
-          <div className="min-w-0">
-            <p className="font-semibold text-sm">{app.full_name}</p>
-            <p className="text-[10px] text-muted-foreground">{domain?.name ?? app.domain}</p>
-            <p className="text-[10px] font-mono text-muted-foreground">{app.intern_id}</p>
-          </div>
-          <div className="ml-auto shrink-0">
-            <QRCodeSVG value={`${window.location.origin}/verify-certificate?intern=${app.intern_id}`} size={48} />
-          </div>
-        </div>
-      </div>
-      <div className="mt-3 flex items-center justify-between">
+      <IDCard internId={app.intern_id} fullName={app.full_name} domain={domain?.name ?? app.domain} photoUrl={app.photo_url} issuedAt={app.offer_issued_at} />
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         <Badge className="bg-emerald-600 text-white text-[10px]"><CheckCircle2 className="mr-1 size-3" /> ACTIVE</Badge>
-        <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs border-border/60"
-          onClick={() => downloadPdf(
-            <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} />,
-            `IDCard_${app.intern_id}.pdf`
-          )}>
-          <Download className="mr-1 size-3" /> Download ID
-        </Button>
+        <div className="ml-auto flex gap-2">
+          <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs border-border/60"
+            onClick={() => downloadPdf(
+              <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} />,
+              `OfferLetter_${app.intern_id}.pdf`
+            )}>
+            <FileText className="mr-1 size-3" /> Offer Letter
+          </Button>
+          <Button size="sm" className="brand-gradient text-white border-0 rounded-lg h-8 text-xs"
+            onClick={() => downloadPdf(
+              <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} />,
+              `IDCard_${app.intern_id}.pdf`
+            )}>
+            <Download className="mr-1 size-3" /> Download ID
+          </Button>
+        </div>
       </div>
     </div>
   );
