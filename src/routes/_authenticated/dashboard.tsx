@@ -112,7 +112,13 @@ function Dashboard() {
     queryKey: ["my-application", user?.id],
     queryFn: async (): Promise<Application | null> => {
       if (!user) return null;
-      const { data } = await supabase.from("applications").select("*").eq("user_id", user.id).maybeSingle();
+      const { data } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
       return data;
     },
     enabled: !!user,
