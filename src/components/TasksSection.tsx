@@ -483,59 +483,66 @@ function TaskCard({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user) return toast.error("You must be logged in");
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(task.id)) return toast.error("Task is still being prepared, please wait…");
-    setLoading(true);
-    const fd = new FormData(e.currentTarget);
-    const githubUrl = String(fd.get("github_url") || "");
-    const pdfFile = fd.get("pdf") as File | null;
-    const screenshotFile = fd.get("screenshot") as File | null;
-    const notes = String(fd.get("notes") || "");
+    try {
+      if (!user) return toast.error("You must be logged in");
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(task.id)) return toast.error("Task is still being prepared, please wait…");
+      setLoading(true);
+      const fd = new FormData(e.currentTarget);
+      const githubUrl = String(fd.get("github_url") || "");
+      const pdfFile = fd.get("pdf") as File | null;
+      const screenshotFile = fd.get("screenshot") as File | null;
+      const notes = String(fd.get("notes") || "");
 
-    if (!githubUrl && !pdfFile?.size && !screenshotFile?.size)
-      return toast.error("Provide at least a GitHub link, a project PDF, or a screenshot"), setLoading(false);
+      if (task.taskNumber !== 0 && !githubUrl && !pdfFile?.size && !screenshotFile?.size)
+        return toast.error("Provide at least a GitHub link, a project PDF, or a screenshot"), setLoading(false);
 
-    let pdfUrl = "";
-    let screenshotUrl = "";
+      let pdfUrl = "";
+      let screenshotUrl = "";
 
-    if (pdfFile?.size) {
-      const path = `${user.id}/${task.id}/${Date.now()}_${pdfFile.name}`;
-      const { data: upload, error: uploadErr } = await supabase.storage.from("task-submissions").upload(path, pdfFile);
-      if (uploadErr) { setLoading(false); return toast.error("Failed to upload PDF: " + uploadErr.message); }
-      const { data: pub } = supabase.storage.from("task-submissions").getPublicUrl(upload.path);
-      pdfUrl = pub.publicUrl;
+      if (pdfFile?.size) {
+        const path = `${user.id}/${task.id}/${Date.now()}_${pdfFile.name}`;
+        const { data: upload, error: uploadErr } = await supabase.storage.from("task-submissions").upload(path, pdfFile);
+        if (uploadErr) { setLoading(false); return toast.error("Failed to upload PDF: " + uploadErr.message); }
+        const { data: pub } = supabase.storage.from("task-submissions").getPublicUrl(upload.path);
+        pdfUrl = pub.publicUrl;
+      }
+
+      if (screenshotFile?.size) {
+        const path = `${user.id}/${task.id}/${Date.now()}_${screenshotFile.name}`;
+        const { data: upload, error: uploadErr } = await supabase.storage.from("task-submissions").upload(path, screenshotFile);
+        if (uploadErr) { setLoading(false); return toast.error("Failed to upload screenshot: " + uploadErr.message); }
+        const { data: pub } = supabase.storage.from("task-submissions").getPublicUrl(upload.path);
+        screenshotUrl = pub.publicUrl;
+      }
+
+      const deployedUrl = String(fd.get("deployed_url") || "");
+      const payload: Record<string, any> = {
+        application_id: appId,
+        task_id: task.id,
+        github_url: githubUrl,
+        notes,
+        status: "pending" as const,
+      };
+      if (deployedUrl) payload.deployed_url = deployedUrl;
+      if (pdfUrl) payload.pdf_url = pdfUrl;
+      if (screenshotUrl) payload.screenshot_url = screenshotUrl;
+      const { error } = submission
+        ? await supabase
+            .from("submissions")
+            .update({ ...payload, submitted_at: new Date().toISOString() })
+            .eq("id", submission.id)
+        : await supabase.from("submissions").insert(payload);
+      setLoading(false);
+      if (error) return toast.error(error.message);
+      toast.success("Task submitted for review!");
+      setOpen(false);
+      onSubmitted();
+    } catch (err: any) {
+      setLoading(false);
+      console.error("Submission error:", err);
+      toast.error(err?.message || "Something went wrong");
     }
-
-    if (screenshotFile?.size) {
-      const path = `${user.id}/${task.id}/${Date.now()}_${screenshotFile.name}`;
-      const { data: upload, error: uploadErr } = await supabase.storage.from("task-submissions").upload(path, screenshotFile);
-      if (uploadErr) { setLoading(false); return toast.error("Failed to upload screenshot: " + uploadErr.message); }
-      const { data: pub } = supabase.storage.from("task-submissions").getPublicUrl(upload.path);
-      screenshotUrl = pub.publicUrl;
-    }
-
-    const payload: Record<string, any> = {
-      application_id: appId,
-      task_id: task.id,
-      github_url: githubUrl,
-      deployed_url: String(fd.get("deployed_url") || ""),
-      notes,
-      status: "pending" as const,
-    };
-    if (pdfUrl) payload.pdf_url = pdfUrl;
-    if (screenshotUrl) payload.screenshot_url = screenshotUrl;
-    const { error } = submission
-      ? await supabase
-          .from("submissions")
-          .update({ ...payload, submitted_at: new Date().toISOString() })
-          .eq("id", submission.id)
-      : await supabase.from("submissions").insert(payload);
-    setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Task submitted for review!");
-    setOpen(false);
-    onSubmitted();
   };
 
   return (
