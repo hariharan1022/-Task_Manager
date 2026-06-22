@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 import { getDomainTasks, LINKEDIN_TASK } from "@/lib/tasks-data";
 import {
   Search,
@@ -455,6 +456,7 @@ function TaskCard({
   tasksReady: boolean;
   onSubmitted: () => void;
 }) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { submission, status, dueDate, remaining, lockedByLinkedin } = task;
@@ -481,18 +483,48 @@ function TaskCard({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!user) return toast.error("You must be logged in");
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(task.id)) return toast.error("Task is still being prepared, please wait…");
     setLoading(true);
     const fd = new FormData(e.currentTarget);
-    const payload = {
+    const githubUrl = String(fd.get("github_url") || "");
+    const pdfFile = fd.get("pdf") as File | null;
+    const screenshotFile = fd.get("screenshot") as File | null;
+    const notes = String(fd.get("notes") || "");
+
+    if (!githubUrl && !pdfFile?.size && !screenshotFile?.size)
+      return toast.error("Provide at least a GitHub link, a project PDF, or a screenshot"), setLoading(false);
+
+    let pdfUrl = "";
+    let screenshotUrl = "";
+
+    if (pdfFile?.size) {
+      const path = `${user.id}/${task.id}/${Date.now()}_${pdfFile.name}`;
+      const { data: upload, error: uploadErr } = await supabase.storage.from("task-submissions").upload(path, pdfFile);
+      if (uploadErr) { setLoading(false); return toast.error("Failed to upload PDF: " + uploadErr.message); }
+      const { data: pub } = supabase.storage.from("task-submissions").getPublicUrl(upload.path);
+      pdfUrl = pub.publicUrl;
+    }
+
+    if (screenshotFile?.size) {
+      const path = `${user.id}/${task.id}/${Date.now()}_${screenshotFile.name}`;
+      const { data: upload, error: uploadErr } = await supabase.storage.from("task-submissions").upload(path, screenshotFile);
+      if (uploadErr) { setLoading(false); return toast.error("Failed to upload screenshot: " + uploadErr.message); }
+      const { data: pub } = supabase.storage.from("task-submissions").getPublicUrl(upload.path);
+      screenshotUrl = pub.publicUrl;
+    }
+
+    const payload: Record<string, any> = {
       application_id: appId,
       task_id: task.id,
-      github_url: String(fd.get("github_url") || ""),
+      github_url: githubUrl,
       deployed_url: String(fd.get("deployed_url") || ""),
-      notes: String(fd.get("notes") || ""),
+      notes,
       status: "pending" as const,
     };
+    if (pdfUrl) payload.pdf_url = pdfUrl;
+    if (screenshotUrl) payload.screenshot_url = screenshotUrl;
     const { error } = submission
       ? await supabase
           .from("submissions")
@@ -675,25 +707,35 @@ function TaskCard({
                   <>
                     <div>
                       <Label className="text-[11px] font-medium text-muted-foreground">
-                        GitHub URL
+                        GitHub Repo Link <span className="text-muted-foreground/60">(optional)</span>
                       </Label>
                       <Input
                         name="github_url"
                         type="url"
                         className="mt-1 h-9 text-sm"
                         defaultValue={submission?.github_url ?? ""}
-                        required
                       />
                     </div>
                     <div>
                       <Label className="text-[11px] font-medium text-muted-foreground">
-                        Live / Demo URL
+                        Project PDF <span className="text-muted-foreground/60">(optional)</span>
                       </Label>
                       <Input
-                        name="deployed_url"
-                        type="url"
-                        className="mt-1 h-9 text-sm"
-                        defaultValue={submission?.deployed_url ?? ""}
+                        name="pdf"
+                        type="file"
+                        accept=".pdf"
+                        className="mt-1 h-9 text-sm file:h-full file:border-0 file:bg-primary/10 file:px-3 file:text-xs file:font-medium file:text-primary"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[11px] font-medium text-muted-foreground">
+                        Screenshot <span className="text-muted-foreground/60">(optional)</span>
+                      </Label>
+                      <Input
+                        name="screenshot"
+                        type="file"
+                        accept="image/*"
+                        className="mt-1 h-9 text-sm file:h-full file:border-0 file:bg-primary/10 file:px-3 file:text-xs file:font-medium file:text-primary"
                       />
                     </div>
                   </>
@@ -707,6 +749,9 @@ function TaskCard({
                     defaultValue={submission?.notes ?? ""}
                   />
                 </div>
+                <p className="text-[10px] text-muted-foreground/70 text-center">
+                  Provide at least one: GitHub link, project PDF, or screenshot
+                </p>
                 <Button
                   type="submit"
                   disabled={loading}
