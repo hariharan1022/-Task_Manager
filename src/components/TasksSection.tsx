@@ -208,56 +208,18 @@ export function TasksSection({
   const domainData = getDomainTasks(domainSlug);
   const allTasks = domainData?.tasks ?? [];
 
-  // Ensure all domain tasks exist in Supabase tasks table
+  // Fetch task IDs from DB
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const fetchAll = async () => {
-        const { data } = await supabase.from("tasks").select("id, task_number").eq("domain", domainSlug);
-        return data ?? [];
-      };
-
-      let allRows = await fetchAll();
+      const { data } = await supabase.from("tasks").select("id, task_number").eq("domain", domainSlug);
       if (cancelled) return;
-
-      const existingMap: Record<number, string> = {};
-      for (const t of allRows) existingMap[t.task_number] = t.id;
-
-      const requiredNumbers = [0, ...allTasks.map((t) => t.taskNumber)];
-      let missing = requiredNumbers.filter((n) => !existingMap[n]);
-
-      if (missing.length > 0) {
-        for (const n of missing) {
-          if (n === 0) {
-            await supabase
-              .from("tasks")
-              .insert({ domain: domainSlug, task_number: 0, title: LINKEDIN_TASK.title, description: LINKEDIN_TASK.description })
-              .maybeSingle();
-          } else {
-            const t = allTasks.find((at) => at.taskNumber === n);
-            if (t) {
-              await supabase
-                .from("tasks")
-                .insert({ domain: domainSlug, task_number: n, title: t.title, description: t.description })
-                .maybeSingle();
-            }
-          }
-        }
-        // Re-fetch after inserts to get IDs (inserts may have failed due to race conditions)
-        allRows = await fetchAll();
-        if (cancelled) return;
-        for (const t of allRows) existingMap[t.task_number] = t.id;
-        missing = requiredNumbers.filter((n) => !existingMap[n]);
-      }
-
-      if (!cancelled) {
-        setTaskIdMap(existingMap);
-        setTasksReady(true);
-        if (missing.length > 0) console.warn("Tasks still missing after sync:", missing);
-      }
+      const map: Record<number, string> = {};
+      for (const t of data ?? []) map[t.task_number] = t.id;
+      if (!cancelled) { setTaskIdMap(map); setTasksReady(true); }
     })();
     return () => { cancelled = true; };
-  }, [domainSlug, allTasks]);
+  }, [domainSlug]);
 
   const tasksWithMeta = useMemo(() => {
     const linkedinId = taskIdMap[0] ?? `${domainSlug}-0`;
