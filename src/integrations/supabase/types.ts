@@ -17,7 +17,6 @@ export type Database = {
       applications: {
         Row: {
           college: string | null
-          completed_at: string | null
           course: string | null
           created_at: string
           domain: string
@@ -34,7 +33,6 @@ export type Database = {
         }
         Insert: {
           college?: string | null
-          completed_at?: string | null
           course?: string | null
           created_at?: string
           domain: string
@@ -51,7 +49,6 @@ export type Database = {
         }
         Update: {
           college?: string | null
-          completed_at?: string | null
           course?: string | null
           created_at?: string
           domain?: string
@@ -703,7 +700,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
-      application_status: "pending" | "approved" | "ongoing" | "completed"
+      application_status: "pending" | "approved"
       payment_status: "pending" | "verified" | "rejected"
       submission_status: "pending" | "approved" | "rejected"
     }
@@ -834,7 +831,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
-      application_status: ["pending", "approved", "ongoing", "completed"],
+      application_status: ["pending", "approved"],
       payment_status: ["pending", "verified", "rejected"],
       submission_status: ["pending", "approved", "rejected"],
     },
