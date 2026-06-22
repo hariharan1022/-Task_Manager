@@ -698,31 +698,46 @@ function TaskCard({
                 onSubmit={handleSubmit}
                 className="space-y-3 rounded-xl border border-border/50 bg-muted/20 p-4"
               >
-                <div>
-                  <Label className="text-[11px] font-medium text-muted-foreground">
-                    GitHub URL
-                  </Label>
-                  <Input
-                    name="github_url"
-                    type="url"
-                    size={9}
-                    className="mt-1 h-9 text-sm"
-                    defaultValue={submission?.github_url ?? ""}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label className="text-[11px] font-medium text-muted-foreground">
-                    Live / Demo URL
-                  </Label>
-                  <Input
-                    name="deployed_url"
-                    type="url"
-                    size={9}
-                    className="mt-1 h-9 text-sm"
-                    defaultValue={submission?.deployed_url ?? ""}
-                  />
-                </div>
+                {task.taskNumber === 0 ? (
+                  <div>
+                    <Label className="text-[11px] font-medium text-muted-foreground">
+                      LinkedIn Post URL
+                    </Label>
+                    <Input
+                      name="deployed_url"
+                      type="url"
+                      className="mt-1 h-9 text-sm"
+                      defaultValue={submission?.deployed_url ?? ""}
+                      required
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <Label className="text-[11px] font-medium text-muted-foreground">
+                        GitHub URL
+                      </Label>
+                      <Input
+                        name="github_url"
+                        type="url"
+                        className="mt-1 h-9 text-sm"
+                        defaultValue={submission?.github_url ?? ""}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-[11px] font-medium text-muted-foreground">
+                        Live / Demo URL
+                      </Label>
+                      <Input
+                        name="deployed_url"
+                        type="url"
+                        className="mt-1 h-9 text-sm"
+                        defaultValue={submission?.deployed_url ?? ""}
+                      />
+                    </div>
+                  </>
+                )}
                 <div>
                   <Label className="text-[11px] font-medium text-muted-foreground">Notes</Label>
                   <Textarea
