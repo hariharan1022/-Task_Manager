@@ -1,3 +1,6 @@
 {
-  "framework": "tanstack-start"
+  "buildCommand": "npm run build && node scripts/prerender.mjs",
+  "installCommand": "npm install",
+  "outputDirectory": "dist/gh-pages",
+  "framework": null
 }
