@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DOMAINS, generateInternId } from "@/lib/constants";
+import { DOMAINS, DURATIONS, durationConfig, generateInternId } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ function DomainsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [applyDomain, setApplyDomain] = useState<string | null>(null);
+  const [applyDuration, setApplyDuration] = useState(1);
   const [applying, setApplying] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -53,10 +54,13 @@ function DomainsPage() {
         }
       }
 
+      const dur = durationConfig(applyDuration);
       const intern_id = generateInternId();
       const payload = {
         user_id: currentUser.id,
         domain: applyDomain,
+        duration: applyDuration,
+        total_tasks: dur?.tasks ?? 5,
         intern_id,
         full_name: String(fd.get("full_name")),
         email: currentUser.email ?? "",
@@ -84,7 +88,8 @@ function DomainsPage() {
       setApplyDomain(null);
       if (user) navigate({ to: "/dashboard" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      const msg = (err as any)?.message || (err as any)?.error_description || "Something went wrong. Check that duration & total_tasks columns exist in the applications table.";
+      toast.error(msg);
     } finally {
       setApplying(false);
     }
@@ -110,7 +115,7 @@ function DomainsPage() {
       </main>
       <Footer />
 
-      <Dialog open={!!applyDomain} onOpenChange={(o) => { if (!o) { setApplyDomain(null); setPhotoFile(null); } }}>
+      <Dialog open={!!applyDomain} onOpenChange={(o) => { if (!o) { setApplyDomain(null); setApplyDuration(1); setPhotoFile(null); } }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Apply for {applyDomain && DOMAINS.find((d) => d.slug === applyDomain)?.name}</DialogTitle>
@@ -146,6 +151,26 @@ function DomainsPage() {
             <div>
               <Label>Year</Label>
               <Input name="year" placeholder="e.g. 3rd year" required />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Duration</Label>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {DURATIONS.map((d) => (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => setApplyDuration(d.value)}
+                    className={`rounded-xl border p-3 text-left transition-all ${
+                      applyDuration === d.value
+                        ? "border-[#07284a] bg-[#07284a]/10 dark:border-[#60a5fa] dark:bg-[#60a5fa]/10 ring-1 ring-[#07284a]/20"
+                        : "border-border/60 bg-white/50 dark:bg-[#0f172a]/50 hover:border-border"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">{d.label}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{d.desc}</p>
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <Label>Profile Photo</Label>

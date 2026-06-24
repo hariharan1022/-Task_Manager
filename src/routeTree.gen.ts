@@ -16,13 +16,13 @@ import { Route as DomainsRouteImport } from './routes/domains'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AboutRouteImport } from './routes/about'
 import { Route as NavbarLayoutRouteImport } from './routes/_navbar-layout'
 import { Route as DomainsIndexRouteImport } from './routes/domains.index'
 import { Route as CoursesIndexRouteImport } from './routes/courses.index'
 import { Route as NavbarLayoutIndexRouteImport } from './routes/_navbar-layout/index'
 import { Route as DomainsSlugRouteImport } from './routes/domains.$slug'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
+import { Route as NavbarLayoutAboutRouteImport } from './routes/_navbar-layout/about'
 import { Route as NavbarLayoutAuthenticatedRouteRouteImport } from './routes/_navbar-layout/_authenticated/route'
 import { Route as CoursesSlugQuizRouteImport } from './routes/courses.$slug_.quiz'
 import { Route as NavbarLayoutAuthenticatedDashboardRouteImport } from './routes/_navbar-layout/_authenticated/dashboard'
@@ -63,11 +63,6 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const NavbarLayoutRoute = NavbarLayoutRouteImport.update({
   id: '/_navbar-layout',
   getParentRoute: () => rootRouteImport,
@@ -97,6 +92,11 @@ const CoursesSlugRoute = CoursesSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => CoursesRoute,
 } as any)
+const NavbarLayoutAboutRoute = NavbarLayoutAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => NavbarLayoutRoute,
+} as any)
 const NavbarLayoutAuthenticatedRouteRoute =
   NavbarLayoutAuthenticatedRouteRouteImport.update({
     id: '/_authenticated',
@@ -122,7 +122,6 @@ const NavbarLayoutAuthenticatedAdminRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof NavbarLayoutIndexRoute
-  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/courses': typeof CoursesRouteWithChildren
@@ -130,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/verify-certificate': typeof VerifyCertificateRoute
+  '/about': typeof NavbarLayoutAboutRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/domains/$slug': typeof DomainsSlugRoute
   '/courses/': typeof CoursesIndexRoute
@@ -139,13 +139,13 @@ export interface FileRoutesByFullPath {
   '/courses/$slug/quiz': typeof CoursesSlugQuizRoute
 }
 export interface FileRoutesByTo {
-  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/verify-certificate': typeof VerifyCertificateRoute
   '/': typeof NavbarLayoutIndexRoute
+  '/about': typeof NavbarLayoutAboutRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/domains/$slug': typeof DomainsSlugRoute
   '/courses': typeof CoursesIndexRoute
@@ -157,7 +157,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_navbar-layout': typeof NavbarLayoutRouteWithChildren
-  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/courses': typeof CoursesRouteWithChildren
@@ -166,6 +165,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/verify-certificate': typeof VerifyCertificateRoute
   '/_navbar-layout/_authenticated': typeof NavbarLayoutAuthenticatedRouteRouteWithChildren
+  '/_navbar-layout/about': typeof NavbarLayoutAboutRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/domains/$slug': typeof DomainsSlugRoute
   '/_navbar-layout/': typeof NavbarLayoutIndexRoute
@@ -179,7 +179,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/about'
     | '/auth'
     | '/contact'
     | '/courses'
@@ -187,6 +186,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/verify-certificate'
+    | '/about'
     | '/courses/$slug'
     | '/domains/$slug'
     | '/courses/'
@@ -196,13 +196,13 @@ export interface FileRouteTypes {
     | '/courses/$slug/quiz'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/about'
     | '/auth'
     | '/contact'
     | '/privacy'
     | '/terms'
     | '/verify-certificate'
     | '/'
+    | '/about'
     | '/courses/$slug'
     | '/domains/$slug'
     | '/courses'
@@ -213,7 +213,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_navbar-layout'
-    | '/about'
     | '/auth'
     | '/contact'
     | '/courses'
@@ -222,6 +221,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/verify-certificate'
     | '/_navbar-layout/_authenticated'
+    | '/_navbar-layout/about'
     | '/courses/$slug'
     | '/domains/$slug'
     | '/_navbar-layout/'
@@ -234,7 +234,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   NavbarLayoutRoute: typeof NavbarLayoutRouteWithChildren
-  AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   CoursesRoute: typeof CoursesRouteWithChildren
@@ -295,13 +294,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_navbar-layout': {
       id: '/_navbar-layout'
       path: ''
@@ -343,6 +335,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/courses/$slug'
       preLoaderRoute: typeof CoursesSlugRouteImport
       parentRoute: typeof CoursesRoute
+    }
+    '/_navbar-layout/about': {
+      id: '/_navbar-layout/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof NavbarLayoutAboutRouteImport
+      parentRoute: typeof NavbarLayoutRoute
     }
     '/_navbar-layout/_authenticated': {
       id: '/_navbar-layout/_authenticated'
@@ -394,12 +393,14 @@ const NavbarLayoutAuthenticatedRouteRouteWithChildren =
 
 interface NavbarLayoutRouteChildren {
   NavbarLayoutAuthenticatedRouteRoute: typeof NavbarLayoutAuthenticatedRouteRouteWithChildren
+  NavbarLayoutAboutRoute: typeof NavbarLayoutAboutRoute
   NavbarLayoutIndexRoute: typeof NavbarLayoutIndexRoute
 }
 
 const NavbarLayoutRouteChildren: NavbarLayoutRouteChildren = {
   NavbarLayoutAuthenticatedRouteRoute:
     NavbarLayoutAuthenticatedRouteRouteWithChildren,
+  NavbarLayoutAboutRoute: NavbarLayoutAboutRoute,
   NavbarLayoutIndexRoute: NavbarLayoutIndexRoute,
 }
 
@@ -437,7 +438,6 @@ const DomainsRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   NavbarLayoutRoute: NavbarLayoutRouteWithChildren,
-  AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   CoursesRoute: CoursesRouteWithChildren,

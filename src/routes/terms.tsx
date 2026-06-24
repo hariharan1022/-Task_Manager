@@ -14,7 +14,7 @@ function TermsPage() {
       <Navbar />
       <main className="mx-auto max-w-3xl px-4 py-16">
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-3" /> Back</Link>
-        <h1 className="mt-6 text-4xl font-bold">Terms of Service</h1>
+        <h1 className="mt-6 text-3xl sm:text-4xl font-bold">Terms of Service</h1>
         <p className="mt-2 text-sm text-muted-foreground">Last updated: June 2026</p>
         <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted-foreground">
           <Section title="1. Acceptance of Terms">

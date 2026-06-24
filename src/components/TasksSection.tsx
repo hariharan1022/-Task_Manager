@@ -299,7 +299,7 @@ export function TasksSection({
       </div>
 
       {/* Progress Summary */}
-      <div className="sticky top-0 z-20 -mx-4 mb-8 rounded-2xl border border-border/40 bg-white/80 px-6 py-5 shadow-lg backdrop-blur-xl">
+      <div className="mb-8 rounded-2xl border border-border/40 bg-white/80 px-4 sm:px-6 py-5 shadow-lg backdrop-blur-xl">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-gradient-to-br from-primary to-primary/70 p-2.5 text-white shadow-sm">
@@ -346,8 +346,9 @@ export function TasksSection({
             className="h-10 rounded-xl border-border/60 bg-white pl-9 text-sm shadow-sm"
           />
         </div>
-        <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-white p-1 shadow-sm">
-          {(["all", "completed", "ongoing", "pending", "overdue"] as const).map((f) => (
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-white p-1 shadow-sm w-max">
+            {(["all", "completed", "ongoing", "pending", "overdue"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -360,6 +361,7 @@ export function TasksSection({
               {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           ))}
+          </div>
         </div>
         <div className="relative">
           <button
@@ -385,8 +387,8 @@ export function TasksSection({
                 >
                   {s === "default" ? "Default" : s === "due" ? "Due Date" : "Task Number"}
                 </button>
-              ))}
-            </div>
+          ))}
+          </div>
           )}
         </div>
       </div>

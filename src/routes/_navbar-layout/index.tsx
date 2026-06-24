@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DOMAINS, generateInternId } from "@/lib/constants";
+import { DOMAINS, COMPANY, DURATIONS, durationConfig, generateInternId } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -12,15 +12,19 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { AuroraBackground } from "@/components/AuroraBackground";
+import { FadeUp, Reveal, ScaleIn, FadeIn } from "@/components/motion";
 import {
   BookOpen, Layers, Monitor, Server, BarChart3, Brain, Palette,
   Code2, Shield, TrendingUp, ArrowRight, Award, FileCheck, Rocket,
-  ShieldCheck, GraduationCap, IndianRupee, HelpCircle, ListChecks, Trophy,
-  Sparkles, Star, Users, Zap, ChevronRight, CheckCircle2, Quote,
+  ShieldCheck, GraduationCap, IndianRupee, HelpCircle, Trophy,
+  Sparkles, ChevronRight, CheckCircle2, Quote, Star,
+  ArrowUpRight, Globe, Zap, Users, Target, HeartHandshake,
+  Clock, MessageSquare, Briefcase, Laptop, Building2,
 } from "lucide-react";
 import { HeroVisual } from "@/components/HeroVisual";
-import logo from "@/assets/logo.png";
+import founderPhoto from "@/assets/founder.jpeg";
+import cofounderPhoto from "@/assets/co founder.jpeg";
 
 const COURSE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   BookOpen, Layers, Monitor, Server, BarChart3, Brain, Palette, Code2, Shield, TrendingUp,
@@ -46,22 +50,11 @@ const STEPS = [
   { icon: Award, title: "Certificate", desc: "Verified certificate with QR code." },
 ];
 
-const DOMAIN_COLORS: Record<string, string> = {
-  fullstack: "from-blue-600 to-[#07284a]",
-  frontend: "from-sky-500 to-blue-600",
-  backend: "from-emerald-500 to-teal-600",
-  datascience: "from-orange-500 to-red-500",
-  aiml: "from-violet-500 to-[#07284a]",
-  uiux: "from-pink-500 to-rose-500",
-  python: "from-blue-500 to-cyan-500",
-  cybersecurity: "from-red-500 to-rose-600",
-  digitalmarketing: "from-amber-500 to-orange-500",
-};
-
 function Landing() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [applyDomain, setApplyDomain] = useState<string | null>(null);
+  const [applyDuration, setApplyDuration] = useState(1);
   const [applying, setApplying] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -108,9 +101,12 @@ function Landing() {
       }
 
       const intern_id = generateInternId();
+      const dur = durationConfig(applyDuration);
       const payload = {
         user_id: currentUser.id,
         domain: applyDomain,
+        duration: applyDuration,
+        total_tasks: dur?.tasks ?? 5,
         intern_id,
         full_name: String(fd.get("full_name")),
         email: currentUser.email ?? "",
@@ -138,7 +134,8 @@ function Landing() {
       setApplyDomain(null);
       if (user) navigate({ to: "/dashboard" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
+      const msg = (err as any)?.message || (err as any)?.error_description || "Something went wrong. Check that duration & total_tasks columns exist in the applications table.";
+      toast.error(msg);
     } finally {
       setApplying(false);
     }
@@ -146,311 +143,487 @@ function Landing() {
 
   return (
     <div className="min-h-screen">
+      {/* ─── HERO ─── */}
+      <AuroraBackground>
+        <section className="relative pb-20 pt-8 sm:pt-12 md:pb-32 md:pt-16">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
+              <FadeUp className="text-center md:text-left">
+                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#07284a]/15 bg-white/60 dark:bg-[#0f172a]/60 px-4 py-1.5 text-xs font-medium text-[#07284a] dark:text-[#60a5fa] shadow-sm backdrop-blur">
+                  <ShieldCheck className="size-3.5" /> MSME Registered · Skyrovix IT Solutions
+                </div>
 
-      {/* HERO */}
-      <section className="relative overflow-hidden pb-16 pt-12 sm:pt-16 md:pb-28 md:pt-20">
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(135deg,#FFFFFF_0%,#F8F7FF_40%,#EEF2FF_100%)]" />
-        <div className="absolute inset-0 -z-10 hero-grid" />
-        <div className="absolute -top-48 left-1/2 -z-10 size-[500px] sm:size-[800px] -translate-x-1/2 rounded-full bg-gradient-to-br from-[#07284a]/15 via-blue-400/15 to-transparent blur-[150px]" />
-        <div className="absolute -bottom-64 left-1/4 -z-10 size-[400px] sm:size-[600px] rounded-full bg-gradient-to-tr from-[#07284a]/10 via-blue-400/10 to-transparent blur-[130px]" />
-        <div className="absolute right-0 top-1/3 -z-10 size-[300px] sm:size-[500px] rounded-full bg-gradient-to-bl from-[#07284a]/10 via-transparent to-transparent blur-[120px]" />
+                <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1]">
+                  Learn by building.<br />
+                  <span className="brand-text">Get certified.</span>
+                </h1>
 
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="grid items-center gap-8 sm:gap-12 md:grid-cols-2 md:gap-16">
-            <div className="animate-fade-in-up text-center md:text-left">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#07284a]/20 bg-white/70 px-3 sm:px-4 py-1.5 text-xs text-[#07284a] shadow-sm backdrop-blur">
-                <ShieldCheck className="size-3.5" /> MSME Registered · Skyrovix IT Solutions
-              </div>
+                <div className="mt-4 h-8">
+                  <p className="text-base sm:text-lg text-muted-foreground">
+                    Build in{" "}
+                    <TypingText texts={["Full Stack Development", "Data Science", "Cyber Security", "UI/UX Design"]} />
+                  </p>
+                </div>
 
-              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight">
-                Learn by building.<br />
-                <span className="brand-text">Get certified.</span>
-              </h1>
-
-              <div className="mt-4 h-7 sm:h-8">
-                <p className="text-base sm:text-lg text-muted-foreground">
-                  Build in{" "}
-                  <TypingText texts={["Full Stack Development", "Data Science", "Cyber Security", "UI/UX Design"]} />
+                <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground mx-auto md:mx-0">
+                  Task-based virtual internships — apply in minutes, get an instant offer letter and
+                  ID card, complete real-world projects, and earn a QR-verified certificate.
                 </p>
-              </div>
 
-              <p className="mt-4 sm:mt-5 max-w-lg text-sm sm:text-base leading-relaxed text-muted-foreground mx-auto md:mx-0">
-                Task-based virtual internships — apply in minutes, get an instant offer letter and
-                ID card, complete real-world projects, and earn a QR-verified certificate.
-              </p>
-
-              <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center md:justify-start gap-3">
-                <Link to="/auth">
-                  <Button size="lg" className="brand-gradient text-white border-0 px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base font-semibold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] btn-press rounded-xl w-full sm:w-auto">
-                    Start your internship <ArrowRight className="ml-2 size-4" />
-                  </Button>
-                </Link>
-                <Link to="/domains">
-                  <Button size="lg" variant="outline" className="rounded-xl border-2 border-border px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-base font-semibold shadow-sm transition hover:border-primary/40 hover:bg-accent/30 hover:shadow-md btn-press active:btn-press-active w-full sm:w-auto">
-                    Browse domains
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="mt-10 sm:mt-12 flex items-center justify-center md:justify-start gap-6 sm:gap-8">
-                <div>
-                  <div className="text-2xl sm:text-3xl font-bold">10</div>
-                  <div className="mt-1 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground">Domains</div>
+                <div className="mt-8 flex flex-wrap items-center justify-center md:justify-start gap-3">
+                  <Link to="/auth">
+                    <Button size="lg" className="rounded-xl bg-[#07284a] hover:bg-[#07284a]/90 text-white border-0 px-7 py-5 sm:py-6 text-sm sm:text-base font-semibold shadow-lg shadow-[#07284a]/25 hover:shadow-xl transition-all btn-premium hover:btn-premium-hover active:btn-premium-active">
+                      Start your internship <ArrowRight className="ml-2 size-4" />
+                    </Button>
+                  </Link>
+                  <Link to="/domains">
+                    <Button size="lg" variant="outline" className="rounded-xl border-2 border-border px-7 py-5 sm:py-6 text-sm sm:text-base font-semibold shadow-sm transition-all hover:border-[#07284a]/30 hover:bg-[#07284a]/5 hover:shadow-md btn-premium active:btn-premium-active">
+                      Browse domains
+                    </Button>
+                  </Link>
                 </div>
-                <div className="h-8 sm:h-10 w-px bg-border" />
-                <div>
-                  <div className="text-2xl sm:text-3xl font-bold">50+</div>
-                  <div className="mt-1 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground">Projects</div>
+
+                <div className="mt-10 sm:mt-12 flex flex-wrap items-center justify-center md:justify-start gap-6 sm:gap-8">
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-bold brand-text">10</div>
+                    <div className="mt-1 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground">Domains</div>
+                  </div>
+                  <div className="h-8 sm:h-10 w-px bg-border" />
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-bold brand-text">50+</div>
+                    <div className="mt-1 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground">Projects</div>
+                  </div>
+                  <div className="h-8 sm:h-10 w-px bg-border" />
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-bold brand-text">100%</div>
+                    <div className="mt-1 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground">Online</div>
+                  </div>
                 </div>
-                <div className="h-8 sm:h-10 w-px bg-border" />
+              </FadeUp>
+
+              <FadeUp delay={0.15} className="hidden md:block">
+                <HeroVisual />
+              </FadeUp>
+            </div>
+          </div>
+        </section>
+      </AuroraBackground>
+
+      {/* ─── COMPACT ABOUT ─── */}
+      <section className="py-20 sm:py-24 overflow-hidden">
+        <div className="mx-auto max-w-6xl px-4">
+          <Reveal>
+            <div className="relative rounded-3xl border border-border/50 bg-gradient-to-br from-[#07284a]/5 via-blue-50/30 to-transparent dark:from-[#07284a]/8 dark:via-blue-950/15 p-8 sm:p-12">
+              <div className="absolute -top-20 -right-20 size-60 rounded-full bg-[#07284a]/8 blur-3xl" />
+              <div className="relative grid items-center gap-8 sm:grid-cols-2">
                 <div>
-                  <div className="text-2xl sm:text-3xl font-bold">100%</div>
-                  <div className="mt-1 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground">Online</div>
+                  <p className="inline-flex items-center gap-1.5 rounded-full border border-[#07284a]/30 bg-[#07284a]/10 px-3 py-1 text-xs font-semibold tracking-widest text-[#07284a] uppercase mb-4">About Skyrovix</p>
+                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                    MSME-registered. <span className="brand-text">Student-built.</span>
+                  </h2>
+                  <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
+                    We run a task-based virtual internship program across 10 domains. Apply free, get
+                    an instant offer letter and ID card, complete 5 real projects, earn a QR-verified
+                    certificate.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: "10+", label: "Domains" }, { value: "5", label: "Tasks per track" },
+                    { value: "100%", label: "Online" }, { value: "₹100", label: "Cert fee" },
+                  ].map((s) => (
+                    <div key={s.label} className="rounded-xl border border-border/40 bg-white/50 dark:bg-[#0f172a]/50 p-3.5 text-center">
+                      <div className="text-xl font-bold brand-text">{s.value}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{s.label}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
+          </Reveal>
+        </div>
+      </section>
 
-            <div className="hidden animate-fade-in-up md:block" style={{ animationDelay: "0.2s" }}>
-              <HeroVisual />
+      {/* ─── HOW IT WORKS ─── */}
+      <section className="border-y border-border/40 bg-[#f8fafc]/50 dark:bg-[#020617]/50 py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4">
+          <Reveal>
+            <div className="mx-auto mb-14 max-w-2xl text-center">
+              <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-xs font-medium rounded-full border border-border/60">How it works</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Your journey to certification</h2>
+              <p className="mt-3 text-muted-foreground">A simple 5-step journey from application to certification.</p>
             </div>
+          </Reveal>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {STEPS.map((s, i) => (
+              <FadeUp key={i} delay={0.1 + i * 0.08}>
+                <div className="group relative rounded-2xl border border-border/50 bg-white/60 dark:bg-[#0f172a]/60 p-6 backdrop-blur transition-all card-elevated hover:card-elevated-hover">
+                  <div className="absolute -top-3 left-5 grid size-7 place-items-center rounded-full bg-[#07284a] dark:bg-[#1d4ed8] text-xs font-bold text-white shadow-md">{i + 1}</div>
+                  <s.icon className="mt-2 size-6 text-[#07284a] dark:text-[#60a5fa]" />
+                  <h3 className="mt-4 font-semibold">{s.title}</h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{s.desc}</p>
+                </div>
+              </FadeUp>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* HOW */}
-      <ScrollReveal>
-        <section className="section-bg border-y border-border/40 py-16 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
-              <Badge variant="secondary" className="mb-3 px-3 py-1">How it works</Badge>
-              <h2 className="text-3xl font-bold md:text-4xl">Your journey to certification</h2>
-              <p className="mt-3 text-muted-foreground">A simple 5-step journey from application to certification.</p>
+      {/* ─── WHY SKYROVIX ─── */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4">
+          <Reveal>
+            <div className="mx-auto mb-14 max-w-2xl text-center">
+              <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-xs font-medium rounded-full border border-border/60">Why Skyrovix</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Built differently</h2>
+              <p className="mt-3 text-muted-foreground">Everything you need to launch your career — in one platform.</p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {STEPS.map((s, i) => (
-                <div key={i} className="group relative rounded-2xl border border-border/60 bg-card/40 p-5 backdrop-blur transition-all card-glow hover:border-primary/40 hover:bg-card/80"
-                  style={{
-                    transitionDelay: `${i * 0.1}s`,
-                    transitionProperty: "opacity, transform, border-color, background-color, box-shadow",
-                    transitionDuration: "0.5s, 0.5s, 0.3s, 0.3s, 0.3s",
-                    transitionTimingFunction: "ease-out, ease-out, ease, ease, ease",
-                  }}>
-                  <div className="absolute -top-3 left-5 grid size-7 place-items-center rounded-full brand-gradient text-xs font-bold text-white shadow-md">{i + 1}</div>
-                  <s.icon className="mt-3 size-6 text-primary" />
-                  <h3 className="mt-3 font-semibold">{s.title}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{s.desc}</p>
+          </Reveal>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { icon: Briefcase, title: "Real Projects", desc: "Build portfolio-grade work, not toy assignments. Every task ships production-quality code." },
+              { icon: MessageSquare, title: "Mentor Reviews", desc: "Get detailed feedback on every submission. Revise, improve, and ship better work." },
+              { icon: Clock, title: "Self-Paced", desc: "Learn on your schedule. Finish in 2 weeks or take 2 months — it's up to you." },
+              { icon: Award, title: "Verified Certificate", desc: "Every certificate has a unique ID and QR code. Share it with recruiters instantly." },
+              { icon: ShieldCheck, title: "MSME Registered", desc: "Issued by a registered IT company. Adds real weight to your resume and LinkedIn." },
+              { icon: IndianRupee, title: "No Hidden Fees", desc: "Apply and start for free. Pay only ₹100 at certification — no strings attached." },
+            ].map((b, i) => (
+              <FadeUp key={b.title} delay={0.1 + i * 0.08}>
+                <div className="group rounded-2xl border border-border/50 bg-white/60 dark:bg-[#0f172a]/60 p-6 transition-all card-elevated hover:card-elevated-hover">
+                  <div className="grid size-10 place-items-center rounded-xl bg-[#07284a]/10 dark:bg-[#07284a]/20 text-[#07284a] dark:text-[#60a5fa] transition-all group-hover:bg-[#07284a] group-hover:text-white">
+                    <b.icon className="size-5" />
+                  </div>
+                  <h3 className="mt-4 font-semibold">{b.title}</h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{b.desc}</p>
                 </div>
-              ))}
-            </div>
+              </FadeUp>
+            ))}
           </div>
-        </section>
-      </ScrollReveal>
+        </div>
+      </section>
 
-      {/* DOMAINS */}
-      <ScrollReveal>
-        <section className="py-16 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
-              <Badge variant="secondary" className="mb-3 px-3 py-1">Domains</Badge>
-              <h2 className="text-3xl font-bold md:text-4xl">Choose your internship domain</h2>
+      {/* ─── DOMAINS ─── */}
+      <section className="border-y border-border/40 bg-[#f8fafc]/50 dark:bg-[#020617]/50 py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4">
+          <Reveal>
+            <div className="mx-auto mb-14 max-w-2xl text-center">
+              <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-xs font-medium rounded-full border border-border/60">Domains</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Choose your internship domain</h2>
               <p className="mt-3 text-muted-foreground">10 industry-aligned tracks. Each ships with a 5-task curriculum.</p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {DOMAINS.slice(0, 6).map((d, i) => (
+          </Reveal>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {DOMAINS.slice(0, 6).map((d, i) => (
+              <FadeUp key={d.slug} delay={0.1 + i * 0.06}>
                 <button
-                  key={d.slug}
                   onClick={() => setApplyDomain(d.slug)}
-                  className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card p-6 text-left transition-all card-glow hover:border-primary/40 hover:shadow-xl"
-                  style={{
-                    opacity: 0,
-                    transform: "translateY(20px)",
-                    animation: `fade-in-up 0.5s ease-out ${0.3 + i * 0.1}s forwards`,
-                  }}
+                  className="group relative w-full text-left overflow-hidden rounded-2xl border border-border/50 bg-white/60 dark:bg-[#0f172a]/60 transition-all card-elevated hover:card-elevated-hover"
                 >
-                  <div className={`absolute inset-0 -z-10 bg-gradient-to-br ${d.color} opacity-0 transition group-hover:opacity-10`} />
-                  <div className={`grid size-12 sm:size-13 place-items-center rounded-xl bg-gradient-to-br ${d.color} text-lg font-bold text-white shadow-md`}>{d.icon}</div>
-                  <h3 className="mt-4 font-semibold text-lg">{d.name}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{d.description}</p>
-                  <div className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
-                    Apply now <ArrowRight className="size-3.5 transition group-hover:translate-x-1" />
+                  {/* Gradient top bar */}
+                  <div className={`h-2 w-full bg-gradient-to-r ${d.color}`} />
+                  <div className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div className={`grid size-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${d.color} text-base font-bold text-white shadow-md transition-all group-hover:scale-110 group-hover:shadow-lg`}>
+                        {d.icon}
+                      </div>
+                      <ArrowUpRight className="size-4 text-muted-foreground opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all" />
+                    </div>
+                    <h3 className="mt-4 font-bold">{d.name}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{d.description}</p>
+                    <div className="mt-4 flex items-center gap-3 text-[10px] font-medium text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <FileCheck className="size-3" /> 5 Tasks
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Award className="size-3" /> Certificate
+                      </span>
+                    </div>
                   </div>
                 </button>
-              ))}
-            </div>
+              </FadeUp>
+            ))}
+          </div>
+          <Reveal>
             <div className="mt-8 text-center">
-              <Button asChild variant="outline" className="rounded-xl h-11 transition-all hover:shadow-md">
+              <Button asChild variant="outline" className="rounded-xl h-11 transition-all hover:shadow-md border-border/60">
                 <Link to="/domains">View all domains <ChevronRight className="ml-1 size-4" /></Link>
               </Button>
             </div>
-          </div>
-        </section>
-      </ScrollReveal>
+          </Reveal>
+        </div>
+      </section>
 
-      {/* Apply Dialog */}
-      <Dialog open={!!applyDomain} onOpenChange={(o) => { if (!o) { setApplyDomain(null); setPhotoFile(null); } }}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Apply for {applyDomain && DOMAINS.find((d) => d.slug === applyDomain)?.name}</DialogTitle>
-            <DialogDescription>Fill in your details. You'll get your offer letter and ID card instantly.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={submitApplication} className="grid gap-4 md:grid-cols-2">
-            <div className="md:col-span-2">
-              <Label>Full Name</Label>
-              <Input name="full_name" defaultValue={user?.user_metadata?.full_name ?? ""} required />
-            </div>
-            <div>
-              <Label>Email</Label>
-              <Input name="email" type="email" defaultValue={user?.email ?? ""} required={!user} disabled={!!user} />
-            </div>
-            {!user && (
-              <div>
-                <Label>Password</Label>
-                <Input name="password" type="password" minLength={6} required={!user} />
-              </div>
-            )}
-            <div>
-              <Label>Phone</Label>
-              <Input name="phone" type="tel" required />
-            </div>
-            <div>
-              <Label>College / University</Label>
-              <Input name="college" required />
-            </div>
-            <div>
-              <Label>Course / Branch</Label>
-              <Input name="course" required />
-            </div>
-            <div>
-              <Label>Year</Label>
-              <Input name="year" placeholder="e.g. 3rd year" required />
-            </div>
-            <div>
-              <Label>Profile Photo</Label>
-              <Input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} />
-            </div>
-            <Button type="submit" className="md:col-span-2 brand-gradient text-white border-0" disabled={applying}>
-              {applying ? "Submitting…" : "Submit Application"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* COURSES */}
-      <ScrollReveal>
-        <section className="section-bg border-y border-border/40 py-16 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
-              <Badge variant="secondary" className="mb-3 px-3 py-1">Learning Paths</Badge>
-              <h2 className="text-3xl font-bold md:text-4xl">Explore Courses</h2>
+      {/* ─── COURSES ─── */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4">
+          <Reveal>
+            <div className="mx-auto mb-14 max-w-2xl text-center">
+              <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-xs font-medium rounded-full border border-border/60">Learning Paths</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Explore Courses</h2>
               <p className="mt-3 text-muted-foreground">Topic-based learning paths with hands-on tasks and a final quiz.</p>
             </div>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {courses?.slice(0, 6).map((c, i) => {
-                const Icon = COURSE_ICONS[c.icon] ?? BookOpen;
-                return (
-                  <Card key={c.id} className="group overflow-hidden transition-all card-glow hover:shadow-xl"
-                    style={{
-                      opacity: 0,
-                      transform: "translateY(20px)",
-                      animation: `fade-in-up 0.5s ease-out ${0.3 + i * 0.1}s forwards`,
-                    }}>
-                    <CardContent className="flex flex-col gap-4 pt-6">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="grid size-12 sm:size-13 shrink-0 place-items-center rounded-2xl brand-gradient text-white shadow-lg shadow-primary/20">
-                          <Icon className="size-6" />
+          </Reveal>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {courses?.slice(0, 6).map((c, i) => {
+              const Icon = COURSE_ICONS[c.icon] ?? BookOpen;
+              const diffColor = c.difficulty === "Beginner" ? "text-green-600 bg-green-50 dark:text-green-300 dark:bg-green-950/30 border-green-200/50" :
+                c.difficulty === "Intermediate" ? "text-amber-600 bg-amber-50 dark:text-amber-300 dark:bg-amber-950/30 border-amber-200/50" :
+                "text-red-600 bg-red-50 dark:text-red-300 dark:bg-red-950/30 border-red-200/50";
+              const progress = Math.min(100, Math.round((c.total_tasks / (c.total_tasks + c.total_topics + c.quiz_marks / 10)) * 100));
+              return (
+                <FadeUp key={c.id} delay={0.1 + i * 0.08}>
+                  <Card className="group overflow-hidden border border-border/50 bg-white/60 dark:bg-[#0f172a]/60 transition-all card-elevated hover:card-elevated-hover rounded-2xl">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-b from-[#07284a]/5 to-transparent dark:from-[#07284a]/10" />
+                      <CardContent className="relative flex flex-col gap-4 p-6">
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#07284a] dark:bg-[#1d4ed8] text-white shadow-md transition-all group-hover:scale-110 group-hover:shadow-lg">
+                            <Icon className="size-5" />
+                          </div>
+                          <Badge className={`shrink-0 text-[10px] font-semibold rounded-full border ${diffColor}`} variant="outline">
+                            {c.difficulty}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="shrink-0 text-xs">{c.difficulty}</Badge>
-                      </div>
-                      <div className="space-y-1.5">
-                        <h3 className="text-xl font-bold leading-tight">{c.name}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2">{c.short_description}</p>
-                      </div>
-                      <dl className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-secondary/30 p-3.5 text-xs">
-                        <div className="flex flex-col"><dt className="text-muted-foreground">Topics</dt><dd className="font-bold">{c.total_topics}</dd></div>
-                        <div className="flex flex-col"><dt className="text-muted-foreground">Tasks</dt><dd className="font-bold">{c.total_tasks}</dd></div>
-                        <div className="flex flex-col"><dt className="text-muted-foreground">Quiz</dt><dd className="font-bold">{c.quiz_marks} Marks</dd></div>
-                        <div className="flex flex-col"><dt className="text-muted-foreground">Duration</dt><dd className="font-bold">{c.duration_weeks} Weeks</dd></div>
-                      </dl>
-                      <Button asChild className="brand-gradient text-white border-0 btn-press active:btn-press-active">
-                        <Link to="/courses/$slug" params={{ slug: c.slug }}>Learn More <ArrowRight className="ml-1 size-4" /></Link>
-                      </Button>
-                    </CardContent>
+
+                        {/* Content */}
+                        <div className="space-y-1.5">
+                          <h3 className="text-lg font-bold leading-tight">{c.name}</h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{c.short_description}</p>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span>Course completion</span>
+                            <span className="font-medium text-[#07284a] dark:text-[#60a5fa]">{progress}%</span>
+                          </div>
+                          <div className="h-1.5 overflow-hidden rounded-full bg-[#07284a]/10 dark:bg-[#07284a]/20">
+                            <div className="h-full rounded-full bg-gradient-to-r from-[#07284a] to-[#1d4ed8] transition-all duration-700" style={{ width: `${progress}%` }} />
+                          </div>
+                        </div>
+
+                        {/* Stats grid */}
+                        <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2 rounded-xl border border-border/50 bg-[#f8fafc]/50 dark:bg-[#020617]/30 p-3 text-[10px]">
+                          <div className="text-center">
+                            <dt className="text-muted-foreground">Topics</dt>
+                            <dd className="mt-0.5 font-bold text-foreground">{c.total_topics}</dd>
+                          </div>
+                          <div className="text-center">
+                            <dt className="text-muted-foreground">Tasks</dt>
+                            <dd className="mt-0.5 font-bold text-foreground">{c.total_tasks}</dd>
+                          </div>
+                          <div className="text-center">
+                            <dt className="text-muted-foreground">Quiz</dt>
+                            <dd className="mt-0.5 font-bold text-foreground">{c.quiz_marks}m</dd>
+                          </div>
+                          <div className="text-center">
+                            <dt className="text-muted-foreground">Weeks</dt>
+                            <dd className="mt-0.5 font-bold text-foreground">{c.duration_weeks}</dd>
+                          </div>
+                        </dl>
+
+                        {/* CTA */}
+                        <Button asChild className="rounded-xl bg-[#07284a] hover:bg-[#07284a]/90 text-white border-0 h-11 shadow-sm shadow-[#07284a]/20 transition-all group-hover:shadow-md group-hover:shadow-[#07284a]/30">
+                          <Link to="/courses/$slug" params={{ slug: c.slug }}>
+                            <span className="flex items-center gap-1.5">
+                              Start Learning <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                            </span>
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </div>
                   </Card>
-                );
-              })}
-            </div>
-            <div className="mt-8 text-center">
-              <Button asChild variant="outline" className="rounded-xl h-11 transition-all hover:shadow-md">
+                </FadeUp>
+              );
+            })}
+          </div>
+          <Reveal>
+            <div className="mt-10 text-center">
+              <Button asChild variant="outline" className="rounded-xl h-11 transition-all hover:shadow-md border-border/60">
                 <Link to="/courses">View all courses <ChevronRight className="ml-1 size-4" /></Link>
               </Button>
             </div>
-          </div>
-        </section>
-      </ScrollReveal>
+          </Reveal>
+        </div>
+      </section>
 
-      {/* FAQ */}
-      <ScrollReveal>
-        <section className="py-16 sm:py-20">
-          <div className="mx-auto max-w-3xl px-4">
-            <div className="mx-auto mb-12 max-w-2xl text-center">
-              <Badge variant="secondary" className="mb-3 px-3 py-1">FAQ</Badge>
-              <h2 className="text-3xl font-bold md:text-4xl">Frequently Asked Questions</h2>
+      {/* ─── STATS BANNER ─── */}
+      <section className="border-y border-border/40 bg-[#f8fafc]/50 dark:bg-[#020617]/50 py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="grid gap-6 sm:grid-cols-3">
+            {[
+              { icon: Briefcase, value: "10+", label: "Internship Domains", desc: "Industry-aligned tracks" },
+              { icon: BookOpen, value: "435+", label: "Learning Topics", desc: "Comprehensive curriculum" },
+              { icon: Trophy, value: "1200+", label: "Quiz Questions", desc: "Test your knowledge" },
+            ].map((stat, i) => (
+              <FadeUp key={i} delay={i * 0.1}>
+                <div className="group relative rounded-2xl border border-border/50 bg-white/60 dark:bg-[#0f172a]/60 p-8 text-center card-elevated hover:card-elevated-hover">
+                  <div className="mx-auto grid size-12 place-items-center rounded-xl bg-[#07284a]/10 dark:bg-[#07284a]/20 text-[#07284a] dark:text-[#60a5fa] transition-all group-hover:bg-[#07284a] group-hover:text-white mb-4">
+                    <stat.icon className="size-5" />
+                  </div>
+                  <div className="text-4xl sm:text-5xl font-bold brand-text">{stat.value}</div>
+                  <div className="mt-2 text-sm font-semibold">{stat.label}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{stat.desc}</div>
+                </div>
+              </FadeUp>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── TESTIMONIALS ─── */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4">
+          <Reveal>
+            <div className="mx-auto mb-14 max-w-2xl text-center">
+              <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-xs font-medium rounded-full border border-border/60">Testimonials</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">What students say</h2>
+              <p className="mt-3 text-muted-foreground">Hear from interns who've been through the program.</p>
+            </div>
+          </Reveal>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { name: "Priya K.", role: "Full Stack Intern", quote: "The task-based format is exactly what I needed. Building real projects gave me the confidence to crack my first job interview.", stars: 5 },
+              { name: "Rahul M.", role: "Data Science Intern", quote: "I loved the mentor reviews. Every task submission came with actionable feedback. Learned more in 4 weeks than a semester.", stars: 5 },
+              { name: "Divya S.", role: "UI/UX Intern", quote: "The instant offer letter and ID card made it feel official from day one. The certificate with QR code is a nice touch.", stars: 5 },
+            ].map((t, i) => (
+              <FadeUp key={t.name} delay={0.1 + i * 0.1}>
+                <div className="group rounded-2xl border border-border/50 bg-white/60 dark:bg-[#0f172a]/60 p-6 transition-all card-elevated hover:card-elevated-hover">
+                  <div className="flex gap-1 mb-4">
+                    {Array.from({ length: t.stars }).map((_, si) => (
+                      <Star key={si} className="size-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <Quote className="size-5 text-[#07284a]/20 dark:text-[#60a5fa]/20 mb-2" />
+                  <p className="text-sm text-muted-foreground leading-relaxed italic">&ldquo;{t.quote}&rdquo;</p>
+                  <div className="mt-4 pt-4 border-t border-border/40">
+                    <p className="text-sm font-semibold">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
+              </FadeUp>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FAQ ─── */}
+      <section className="border-y border-border/40 bg-[#f8fafc]/50 dark:bg-[#020617]/50 py-20 sm:py-24">
+        <div className="mx-auto max-w-3xl px-4">
+          <Reveal>
+            <div className="mx-auto mb-14 max-w-2xl text-center">
+              <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-xs font-medium rounded-full border border-border/60">FAQ</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Frequently Asked Questions</h2>
               <p className="mt-3 text-muted-foreground">Everything you need to know about the Skyrovix internship program.</p>
             </div>
-            <Accordion type="single" collapsible className="space-y-3">
-              {FAQ_ITEMS.map((item, i) => (
-                <AccordionItem key={i} value={`faq-${i}`} className="rounded-xl border border-border/60 bg-card/40 px-4 sm:px-6 transition hover:border-border">
+          </Reveal>
+          <Accordion type="single" collapsible className="space-y-3">
+            {FAQ_ITEMS.map((item, i) => (
+              <Reveal key={i} delay={i * 0.05}>
+                <AccordionItem value={`faq-${i}`} className="rounded-2xl border border-border/50 bg-white/60 dark:bg-[#0f172a]/60 px-5 sm:px-6 transition-all hover:border-border">
                   <AccordionTrigger className="py-4 text-left text-sm sm:text-base font-medium hover:no-underline">{item.q}</AccordionTrigger>
                   <AccordionContent className="pb-4 text-sm leading-relaxed text-muted-foreground">{item.a}</AccordionContent>
                 </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
-        </section>
-      </ScrollReveal>
+              </Reveal>
+            ))}
+          </Accordion>
+        </div>
+      </section>
 
-      {/* CTA */}
-      <ScrollReveal>
-        <section className="px-4 pb-20">
-          <div className="mx-auto max-w-5xl">
-            <div className="relative overflow-hidden rounded-3xl border border-border/40 brand-gradient p-8 sm:p-12 md:p-16 text-center text-white shadow-2xl shadow-primary/20">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
-              <div className="absolute -right-16 -top-16 size-64 rounded-full bg-white/5 blur-3xl" />
-              <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-white/5 blur-3xl" />
+      {/* ─── CTA ─── */}
+      <section className="px-4 py-20 sm:py-24">
+        <div className="mx-auto max-w-6xl">
+          <Reveal>
+            <div className="relative overflow-hidden rounded-3xl border border-[#07284a]/20 bg-gradient-to-br from-[#07284a] via-[#0d3b66] to-[#1d4ed8] p-8 sm:p-12 md:p-16 text-center text-white shadow-2xl shadow-[#07284a]/25">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)]" />
+              <div className="absolute -right-20 -top-20 size-80 rounded-full bg-white/5 blur-3xl" />
+              <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-white/5 blur-3xl" />
               <div className="relative">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">Ready to build something real?</h2>
                 <p className="mt-3 text-sm sm:text-base text-white/80 max-w-lg mx-auto">Get your offer letter in seconds. No application fee — pay only ₹100 at certification.</p>
                 <div className="mt-8 flex flex-wrap justify-center gap-3">
-                  <Button asChild size="lg" className="bg-white text-[#07284a] hover:bg-white/90 border-0 shadow-lg font-semibold btn-press active:btn-press-active rounded-xl">
-                    <Link to="/auth">Apply now <ArrowRight className="ml-1 size-4" /></Link>
+                  <Button asChild size="lg" className="rounded-xl bg-white text-[#07284a] hover:bg-white/90 border-0 shadow-lg font-semibold h-12 px-8 btn-premium hover:btn-premium-hover active:btn-premium-active">
+                    <Link to="/auth">Apply now <ArrowRight className="ml-1.5 size-4" /></Link>
                   </Button>
-                  <Button asChild size="lg" variant="outline" className="bg-transparent border-white/40 text-white hover:bg-white/10 hover:text-white btn-press active:btn-press-active rounded-xl">
+                  <Button asChild size="lg" variant="outline" className="rounded-xl bg-transparent border-2 border-white/30 text-white hover:bg-white/10 hover:text-white h-12 px-8 btn-premium active:btn-premium-active">
                     <Link to="/courses">Explore courses</Link>
                   </Button>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-      </ScrollReveal>
-    </div>
-  );
-}
+          </Reveal>
+        </div>
+      </section>
 
-function ScrollReveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
-  const { ref, visible } = useScrollReveal<HTMLDivElement>();
-
-  return (
-    <div
-      ref={ref}
-      className={`${className}`}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(30px)",
-        transition: `opacity 0.7s ease-out ${delay}s, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`,
-      }}
-    >
-      {children}
+      {/* ─── APPLY DIALOG ─── */}
+      <Dialog open={!!applyDomain} onOpenChange={(o) => { if (!o) { setApplyDomain(null); setApplyDuration(1); setPhotoFile(null); } }}>
+        <DialogContent className="sm:max-w-lg rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Apply for {applyDomain && DOMAINS.find((d) => d.slug === applyDomain)?.name}</DialogTitle>
+            <DialogDescription>Fill in your details. You'll get your offer letter and ID card instantly.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={submitApplication} className="grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <Label>Full Name</Label>
+              <Input name="full_name" defaultValue={user?.user_metadata?.full_name ?? ""} required className="rounded-xl" />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input name="email" type="email" defaultValue={user?.email ?? ""} required={!user} disabled={!!user} className="rounded-xl" />
+            </div>
+            {!user && (
+              <div>
+                <Label>Password</Label>
+                <Input name="password" type="password" minLength={6} required={!user} className="rounded-xl" />
+              </div>
+            )}
+            <div>
+              <Label>Phone</Label>
+              <Input name="phone" type="tel" required className="rounded-xl" />
+            </div>
+            <div>
+              <Label>College / University</Label>
+              <Input name="college" required className="rounded-xl" />
+            </div>
+            <div>
+              <Label>Course / Branch</Label>
+              <Input name="course" required className="rounded-xl" />
+            </div>
+            <div>
+              <Label>Year</Label>
+              <Input name="year" placeholder="e.g. 3rd year" required className="rounded-xl" />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Duration</Label>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {DURATIONS.map((d) => (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => setApplyDuration(d.value)}
+                    className={`rounded-xl border p-3 text-left transition-all ${
+                      applyDuration === d.value
+                        ? "border-[#07284a] bg-[#07284a]/10 dark:border-[#60a5fa] dark:bg-[#60a5fa]/10 ring-1 ring-[#07284a]/20"
+                        : "border-border/60 bg-white/50 dark:bg-[#0f172a]/50 hover:border-border"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">{d.label}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{d.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label>Profile Photo</Label>
+              <Input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} className="rounded-xl" />
+            </div>
+            <Button type="submit" className="md:col-span-2 rounded-xl bg-[#07284a] hover:bg-[#07284a]/90 text-white border-0 h-11" disabled={applying}>
+              {applying ? "Submitting..." : "Submit Application"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

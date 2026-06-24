@@ -273,7 +273,7 @@ export function CodeEditor({ code, language = "javascript", courseSlug, readOnly
           </Button>
         </div>
       </div>
-      <div ref={editorRef} className="text-sm" />
+      <div ref={editorRef} className="text-sm overflow-x-auto max-w-full" />
       {showOutput && (
         <div className="border-t border-white/10">
           <div className="flex items-center justify-between px-3 py-1.5 bg-[#1a1a1a]">

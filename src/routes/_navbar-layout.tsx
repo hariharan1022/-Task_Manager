@@ -6,7 +6,9 @@ export const Route = createFileRoute("/_navbar-layout")({
   component: () => (
     <div className="min-h-screen">
       <Navbar />
-      <Outlet />
+      <main className="pt-20 sm:pt-24">
+        <Outlet />
+      </main>
       <Footer />
     </div>
   ),

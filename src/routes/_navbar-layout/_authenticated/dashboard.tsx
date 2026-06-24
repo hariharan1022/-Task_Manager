@@ -95,6 +95,7 @@ type Application = {
   college: string | null; course: string | null; year: string | null;
   photo_url: string | null; offer_issued_at: string;
   created_at: string; status: string; completed_at?: string | null;
+  duration?: number; total_tasks?: number;
 };
 
 function Dashboard() {
@@ -534,23 +535,23 @@ function Dashboard() {
             </div>
 
             {/* Offer Letter */}
-            <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+            <div className="group cursor-pointer rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl transition-all hover:border-blue-300 hover:shadow-lg hover:shadow-blue-100/50 dark:bg-[#1E293B]/70 dark:hover:border-blue-700 dark:hover:shadow-blue-900/20" onClick={() => downloadPdf(<OfferLetterDoc fullName={da.full_name} internId={da.intern_id} domain={dd?.name ?? da.domain} issuedAt={da.offer_issued_at} duration={da.duration ?? 1} />, `OfferLetter_${da.intern_id}.pdf`)}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="grid size-10 place-items-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"><FileText className="size-5" /></div>
+                  <div className="grid size-12 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md transition-transform group-hover:scale-105"><FileText className="size-6" /></div>
                   <div><p className="font-semibold text-sm">Offer Letter</p><p className="text-xs text-muted-foreground">Issued {new Date(da.offer_issued_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p></div>
                 </div>
-                <Button size="sm" className="brand-gradient text-white border-0 rounded-xl h-9" onClick={() => downloadPdf(<OfferLetterDoc fullName={da.full_name} internId={da.intern_id} domain={dd?.name ?? da.domain} issuedAt={da.offer_issued_at} />, `OfferLetter_${da.intern_id}.pdf`)}><Download className="mr-1.5 size-3.5" /> Download</Button>
+                <div className="flex items-center gap-1.5 rounded-full bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 transition-all group-hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:group-hover:bg-blue-900/50"><Download className="size-3.5" /> Download</div>
               </div>
             </div>
 
             {/* ID Card */}
             <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
               <h3 className="flex items-center gap-2 font-bold mb-4 text-sm"><Shield className="size-4 text-primary" /> Digital ID Card</h3>
-              <IDCard internId={da.intern_id} fullName={da.full_name} domain={dd?.name ?? da.domain} photoUrl={da.photo_url} issuedAt={da.offer_issued_at} />
+              <IDCard internId={da.intern_id} fullName={da.full_name} domain={dd?.name ?? da.domain} photoUrl={da.photo_url} issuedAt={da.offer_issued_at} duration={da.duration ?? 1} />
               <div className="mt-3 flex gap-2">
-                <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs border-border/60" onClick={() => downloadPdf(<OfferLetterDoc fullName={da.full_name} internId={da.intern_id} domain={dd?.name ?? da.domain} issuedAt={da.offer_issued_at} />, `OfferLetter_${da.intern_id}.pdf`)}><FileText className="mr-1 size-3" /> Offer Letter</Button>
-                <Button size="sm" className="brand-gradient text-white border-0 rounded-lg h-8 text-xs" onClick={() => downloadPdf(<OfferLetterDoc fullName={da.full_name} internId={da.intern_id} domain={dd?.name ?? da.domain} issuedAt={da.offer_issued_at} />, `IDCard_${da.intern_id}.pdf`)}><Download className="mr-1 size-3" /> Download ID</Button>
+                <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs border-border/60" onClick={() => downloadPdf(<OfferLetterDoc fullName={da.full_name} internId={da.intern_id} domain={dd?.name ?? da.domain} issuedAt={da.offer_issued_at} duration={da.duration ?? 1} />, `OfferLetter_${da.intern_id}.pdf`)}><FileText className="mr-1 size-3" /> Offer Letter</Button>
+                <Button size="sm" className="brand-gradient text-white border-0 rounded-lg h-8 text-xs" onClick={() => downloadPdf(<OfferLetterDoc fullName={da.full_name} internId={da.intern_id} domain={dd?.name ?? da.domain} issuedAt={da.offer_issued_at} duration={da.duration ?? 1} />, `IDCard_${da.intern_id}.pdf`)}><Download className="mr-1 size-3" /> Download ID</Button>
               </div>
             </div>
 
@@ -849,17 +850,17 @@ function Dashboard() {
                 <div className="grid size-10 place-items-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"><FileText className="size-5" /></div>
                 <div><p className="font-semibold text-sm">Offer Letter</p><p className="text-xs text-muted-foreground">Issued {new Date(app.offer_issued_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p></div>
               </div>
-              <Button size="sm" className="brand-gradient text-white border-0 rounded-xl h-9" onClick={() => downloadPdf(<OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={dd?.name ?? app.domain} issuedAt={app.offer_issued_at} />, `OfferLetter_${app.intern_id}.pdf`)}><Download className="mr-1.5 size-3.5" /> Download</Button>
+              <Button size="sm" className="brand-gradient text-white border-0 rounded-xl h-9" onClick={() => downloadPdf(<OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={dd?.name ?? app.domain} issuedAt={app.offer_issued_at} duration={app.duration ?? 1} />, `OfferLetter_${app.intern_id}.pdf`)}><Download className="mr-1.5 size-3.5" /> Download</Button>
             </div>
           </div>
 
           {/* ID Card */}
           <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
             <h3 className="flex items-center gap-2 font-bold mb-4 text-sm"><Shield className="size-4 text-primary" /> Digital ID Card</h3>
-            <IDCard internId={app.intern_id} fullName={app.full_name} domain={dd?.name ?? app.domain} photoUrl={app.photo_url} issuedAt={app.offer_issued_at} />
+            <IDCard internId={app.intern_id} fullName={app.full_name} domain={dd?.name ?? app.domain} photoUrl={app.photo_url} issuedAt={app.offer_issued_at} duration={app.duration ?? 1} />
             <div className="mt-3 flex gap-2">
-              <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs border-border/60" onClick={() => downloadPdf(<OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={dd?.name ?? app.domain} issuedAt={app.offer_issued_at} />, `OfferLetter_${app.intern_id}.pdf`)}><FileText className="mr-1 size-3" /> Offer Letter</Button>
-              <Button size="sm" className="brand-gradient text-white border-0 rounded-lg h-8 text-xs" onClick={() => downloadPdf(<OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={dd?.name ?? app.domain} issuedAt={app.offer_issued_at} />, `IDCard_${app.intern_id}.pdf`)}><Download className="mr-1 size-3" /> Download ID</Button>
+              <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs border-border/60" onClick={() => downloadPdf(<OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={dd?.name ?? app.domain} issuedAt={app.offer_issued_at} duration={app.duration ?? 1} />, `OfferLetter_${app.intern_id}.pdf`)}><FileText className="mr-1 size-3" /> Offer Letter</Button>
+              <Button size="sm" className="brand-gradient text-white border-0 rounded-lg h-8 text-xs" onClick={() => downloadPdf(<OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={dd?.name ?? app.domain} issuedAt={app.offer_issued_at} duration={app.duration ?? 1} />, `IDCard_${app.intern_id}.pdf`)}><Download className="mr-1 size-3" /> Download ID</Button>
             </div>
           </div>
 
@@ -1029,7 +1030,7 @@ function Dashboard() {
               </div>
               <Button size="sm" className="brand-gradient text-white border-0 rounded-xl h-9"
                 onClick={() => downloadPdf(
-                  <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} />,
+                  <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} duration={app.duration ?? 1} />,
                   `OfferLetter_${app.intern_id}.pdf`
                 )}>
                 <Download className="mr-1.5 size-3.5" /> Download
@@ -1145,14 +1146,14 @@ function Dashboard() {
         )}
 
         {/* ─── Sidebar ─── */}
-        <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border/60 bg-white/70 backdrop-blur-2xl transition-all duration-300 dark:bg-[#0F172A]/90 dark:border-white/5 ${
-          mobileOpen ? "translate-x-0" : sidebarOpen ? "w-64 translate-x-0" : "w-16 -translate-x-full lg:translate-x-0"
-        }`}>
+        <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border/60 bg-white/80 dark:bg-[#0f172a]/90 backdrop-blur-2xl transition-all duration-300 dark:border-white/5 ${
+          mobileOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"
+        } ${sidebarOpen ? "lg:w-64" : "lg:w-16"}`}>
           {/* Logo */}
           <div className="flex h-16 items-center justify-between border-b border-border/60 px-4 dark:border-white/5">
-            <Link to="/" className={`flex items-center gap-2 ${!sidebarOpen && "lg:hidden"}`}>
+            <Link to="/" className={`flex items-center gap-2 ${!sidebarOpen && !mobileOpen && "lg:hidden"}`}>
               <div className="grid size-9 shrink-0 place-items-center rounded-xl brand-gradient text-[10px] font-bold text-white">S</div>
-              {sidebarOpen && <span className="text-sm font-bold">Skyrovix</span>}
+              {(sidebarOpen || mobileOpen) && <span className="text-sm font-bold">Skyrovix</span>}
             </Link>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="hidden lg:grid size-8 place-items-center rounded-lg hover:bg-accent/50 transition">
               {sidebarOpen ? <PanelRightClose className="size-4" /> : <PanelRightOpen className="size-4" />}
@@ -1174,12 +1175,12 @@ function Dashboard() {
                       onClick={() => { setActive(item.id); setMobileOpen(false); }}
                       className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                         isActive
-                          ? "brand-gradient text-white shadow-md shadow-[#07284a]/20"
+                          ? "bg-[#07284a] dark:bg-[#1d4ed8] text-white shadow-md shadow-[#07284a]/20 dark:shadow-[#1d4ed8]/20"
                           : "text-gray-600 hover:text-gray-900 hover:bg-[#07284a]/5 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5"
                       }`}
                     >
                       <Icon className="size-5 shrink-0" />
-                      {sidebarOpen && <span className="truncate">{item.label}</span>}
+                      {(sidebarOpen || mobileOpen) && <span className="truncate">{item.label}</span>}
                     </button>
                   </li>
                 );
@@ -1194,7 +1195,7 @@ function Dashboard() {
               className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 transition hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-950/30"
             >
               <LogOut className="size-5 shrink-0" />
-              {sidebarOpen && <span>Logout</span>}
+              {(sidebarOpen || mobileOpen) && <span>Logout</span>}
             </button>
           </div>
         </aside>
@@ -1202,7 +1203,7 @@ function Dashboard() {
         {/* ─── Main Area ─── */}
         <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : "lg:ml-16"}`}>
           {/* Top header */}
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border/60 bg-white/70 px-4 backdrop-blur-xl dark:bg-[#0F172A]/80 dark:border-white/5">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border/50 bg-white/80 dark:bg-[#0f172a]/80 px-4 backdrop-blur-xl dark:border-white/5">
             <div className="flex items-center gap-3">
               <button onClick={() => setMobileOpen(true)} className="lg:hidden grid size-8 place-items-center rounded-lg hover:bg-accent/50">
                 <Menu className="size-5" />
@@ -1218,14 +1219,14 @@ function Dashboard() {
           </header>
 
           {/* Content */}
-          <main className="mx-auto max-w-6xl px-4 py-8">
+          <main className="mx-auto max-w-6xl px-4 py-8 space-y-8">
             {renderContent()}
           </main>
         </div>
 
         {/* Quick Actions FAB */}
         {app && (
-          <div className="fixed bottom-8 right-8 z-40 flex flex-col items-end gap-3">
+          <div className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-40 flex flex-col items-end gap-3">
             {enrollment && course && (
               <>
                 <Button size="sm" className="brand-gradient text-white border-0 shadow-lg shadow-[#07284a]/25 rounded-full px-5 h-11" asChild>
@@ -1886,20 +1887,20 @@ function IDCardSection({ app }: { app: Application | null }) {
   return (
     <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
       <h3 className="flex items-center gap-2 font-bold mb-4"><Shield className="size-4 text-primary" /> Digital ID Card</h3>
-      <IDCard internId={app.intern_id} fullName={app.full_name} domain={domain?.name ?? app.domain} photoUrl={app.photo_url} issuedAt={app.offer_issued_at} />
+      <IDCard internId={app.intern_id} fullName={app.full_name} domain={domain?.name ?? app.domain} photoUrl={app.photo_url} issuedAt={app.offer_issued_at} duration={app.duration ?? 1} />
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Badge className="bg-emerald-600 text-white text-[10px]"><CheckCircle2 className="mr-1 size-3" /> ACTIVE</Badge>
         <div className="ml-auto flex gap-2">
           <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs border-border/60"
             onClick={() => downloadPdf(
-              <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} />,
+              <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} duration={app.duration ?? 1} />,
               `OfferLetter_${app.intern_id}.pdf`
             )}>
             <FileText className="mr-1 size-3" /> Offer Letter
           </Button>
           <Button size="sm" className="brand-gradient text-white border-0 rounded-lg h-8 text-xs"
             onClick={() => downloadPdf(
-              <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} />,
+              <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} duration={app.duration ?? 1} />,
               `IDCard_${app.intern_id}.pdf`
             )}>
             <Download className="mr-1 size-3" /> Download ID

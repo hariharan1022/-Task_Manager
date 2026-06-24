@@ -28,7 +28,7 @@ export function IDCard({ internId, fullName, domain, photoUrl, issuedAt }: Props
       </div>
 
       <div className="mt-4 flex items-center gap-4">
-        <div className="size-20 overflow-hidden rounded-xl border-2 border-white/40 bg-white/10">
+        <div className="size-16 sm:size-20 overflow-hidden rounded-xl border-2 border-white/40 bg-white/10">
           {photoUrl ? <img src={photoUrl} alt={fullName} className="size-full object-cover" /> : <div className="grid size-full place-items-center text-2xl font-bold">{fullName.charAt(0)}</div>}
         </div>
         <div className="flex-1 min-w-0">

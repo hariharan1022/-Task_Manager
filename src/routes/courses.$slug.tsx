@@ -291,6 +291,10 @@ function CourseDetail() {
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
       <Navbar />
       <div className="flex">
+        {/* Sidebar backdrop for mobile */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-20 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
         {/* ─── Topic Sidebar ─── */}
         <aside className={`fixed left-0 top-14 z-30 h-[calc(100vh-3.5rem)] border-r border-border/60 bg-white/70 backdrop-blur-xl transition-all duration-300 dark:bg-[#0F172A]/90 ${
           sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:w-16 lg:translate-x-0"
@@ -375,12 +379,12 @@ function CourseDetail() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" className="h-8 text-xs rounded-lg gap-1"
+                <Button size="sm" variant="outline" className="h-10 text-xs rounded-lg gap-1"
                   onClick={() => window.location.href = `/courses/${slug}/quiz`}>
                   <Trophy className="size-3.5" /> Final Quiz
                 </Button>
                 {!enrollment ? (
-                  <Button size="sm" className="h-8 text-xs gap-1 brand-gradient text-white border-0 rounded-lg"
+                  <Button size="sm" className="h-10 text-xs gap-1 brand-gradient text-white border-0 rounded-lg"
                     onClick={handleEnroll}>
                     <Sparkles className="size-3.5" /> Enroll Free
                   </Button>
@@ -390,7 +394,7 @@ function CourseDetail() {
                       <GraduationCap className="size-3" /> {enrollment.progress_percent}%
                     </Badge>
                     {enrollment.status === "completed" && (
-                      <Button size="sm" variant="outline" className="h-8 text-xs rounded-lg gap-1"
+                      <Button size="sm" variant="outline" className="h-10 text-xs rounded-lg gap-1"
                         onClick={() => window.location.href = `/courses/${slug}/quiz`}>
                         <Trophy className="size-3.5" /> Certificate
                       </Button>
@@ -534,7 +538,7 @@ function CourseDetail() {
                 {/* Navigation */}
                 <div className="flex items-center justify-between pt-4 border-t border-border/40">
                   <Button
-                    variant="outline" size="sm" className="h-9 text-xs gap-1 rounded-xl"
+                    variant="outline" size="sm" className="h-10 text-xs gap-1 rounded-xl"
                     disabled={currentIdx === 0}
                     onClick={() => { setCurrentIdx((i) => i - 1); setShowQuiz(false); if (enrollment?.id) supabase.from("enrollments").update({ current_topic_id: topics?.[currentIdx - 1]?.id }).eq("id", enrollment.id); }}
                   >
@@ -545,14 +549,14 @@ function CourseDetail() {
                   </span>
                   {currentIdx < (topics?.length ?? 1) - 1 ? (
                     <Button
-                      size="sm" className="h-9 text-xs gap-1 rounded-xl brand-gradient text-white border-0"
+                      size="sm" className="h-10 text-xs gap-1 rounded-xl brand-gradient text-white border-0"
                       disabled={isLocked(currentIdx + 1)}
                       onClick={() => { setCurrentIdx((i) => i + 1); setShowQuiz(false); if (enrollment?.id) supabase.from("enrollments").update({ current_topic_id: topics?.[currentIdx + 1]?.id }).eq("id", enrollment.id); }}
                     >
                       Next <ChevronRight className="size-3.5" />
                     </Button>
                   ) : (
-                    <Button size="sm" className="h-9 text-xs gap-1 rounded-xl brand-gradient text-white border-0"
+                    <Button size="sm" className="h-10 text-xs gap-1 rounded-xl brand-gradient text-white border-0"
                       onClick={() => window.location.href = `/courses/${slug}/quiz`}>
                       <Trophy className="size-3.5" /> Final Quiz
                     </Button>

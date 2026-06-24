@@ -482,7 +482,7 @@ function ApplicationsSection() {
                       )}
                       <a href={`mailto:${a.email}`} className="grid size-8 place-items-center rounded-lg hover:bg-accent/50 transition" title="Send Email"><Mail className="size-4" /></a>
                       <button onClick={() => downloadPdf(
-                        <OfferLetterDoc fullName={a.full_name} internId={a.intern_id} domain={dd?.name ?? a.domain} issuedAt={a.offer_issued_at} />,
+                        <OfferLetterDoc fullName={a.full_name} internId={a.intern_id} domain={dd?.name ?? a.domain} issuedAt={a.offer_issued_at} duration={(a as any).duration ?? 1} />,
                         `OfferLetter_${a.intern_id}.pdf`
                       )} className="grid size-8 place-items-center rounded-lg hover:bg-accent/50 transition" title="Generate Offer"><Download className="size-4" /></button>
                     </div>
@@ -556,7 +556,7 @@ function CoursesSection() {
               <div><span className="text-muted-foreground">Quiz</span><p className="font-bold">{c.quiz_marks}m</p></div>
             </div>
             <div className="mt-4 flex gap-2">
-              <Button size="sm" variant="outline" className="flex-1 h-8 rounded-xl border-border/60" onClick={() => setDialog({ mode: "edit", course: c })}><Edit className="mr-1 size-3" /> Edit</Button>
+              <Button size="sm" variant="outline" className="flex-1 h-10 rounded-xl border-border/60" onClick={() => setDialog({ mode: "edit", course: c })}><Edit className="mr-1 size-3" /> Edit</Button>
               <Button size="sm" variant="outline" className="size-8 rounded-xl border-border/60 text-red-500 hover:text-red-600" onClick={() => deleteCourse(c.id)}><Trash2 className="size-3" /></Button>
             </div>
           </div>
@@ -760,7 +760,7 @@ function TopicsSection() {
               <div className="border-t border-border/40 px-4 pb-4 pt-2">
                 <div className="mb-3 flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{topics?.length ?? 0} topics</span>
-                  <Button size="sm" className="h-8 brand-gradient text-white border-0" onClick={() => setDialog({ mode: "create", courseId: c.id })}>
+                  <Button size="sm" className="h-10 brand-gradient text-white border-0" onClick={() => setDialog({ mode: "create", courseId: c.id })}>
                     <Plus className="mr-1 size-3" /> Add Topic
                   </Button>
                 </div>
@@ -929,7 +929,7 @@ function TasksSection() {
               <span className="ml-auto flex items-center gap-1"><Clock className="size-3" /> {t.due_days}d</span>
             </div>
             <div className="mt-4 flex gap-2">
-              <Button size="sm" variant="outline" className="flex-1 h-8 rounded-xl border-border/60" onClick={() => setDialog({ mode: "edit", task: t })}><Edit className="mr-1 size-3" /> Edit</Button>
+              <Button size="sm" variant="outline" className="flex-1 h-10 rounded-xl border-border/60" onClick={() => setDialog({ mode: "edit", task: t })}><Edit className="mr-1 size-3" /> Edit</Button>
               <Button size="sm" variant="outline" className="size-8 rounded-xl border-border/60 text-red-500 hover:text-red-600" onClick={() => deleteTask(t.id)}><Trash2 className="size-3" /></Button>
             </div>
           </div>
@@ -1107,8 +1107,8 @@ function SubmissionCard({ sub, review }: { sub: any; review: (id: string, status
         <div className="mt-3 space-y-2 rounded-xl border border-border/40 bg-secondary/30 p-3">
           <Textarea placeholder="Feedback (optional)" value={feedback} onChange={(e) => setFeedback(e.target.value)} rows={2} className="text-xs" />
           <div className="flex gap-2">
-            <Button size="sm" className="bg-green-600 hover:bg-green-700 h-8 text-xs" onClick={() => review(sub.id, "approved", feedback)}><CheckCircle2 className="mr-1 size-3" /> Approve</Button>
-            <Button size="sm" variant="destructive" className="h-8 text-xs" onClick={() => review(sub.id, "rejected", feedback)}><XCircle className="mr-1 size-3" /> Reject</Button>
+            <Button size="sm" className="bg-green-600 hover:bg-green-700 h-10 text-xs" onClick={() => review(sub.id, "approved", feedback)}><CheckCircle2 className="mr-1 size-3" /> Approve</Button>
+            <Button size="sm" variant="destructive" className="h-10 text-xs" onClick={() => review(sub.id, "rejected", feedback)}><XCircle className="mr-1 size-3" /> Reject</Button>
           </div>
         </div>
       )}
@@ -1196,7 +1196,7 @@ function QuizSection() {
                 <div className="border-t border-border/40 px-4 pb-4 pt-2">
                   <div className="mb-3 flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">{questions?.length ?? 0} questions</span>
-                    <Button size="sm" className="h-8 brand-gradient text-white border-0" onClick={() => setDialog({ mode: "create", courseId: c.id })}>
+                    <Button size="sm" className="h-10 brand-gradient text-white border-0" onClick={() => setDialog({ mode: "create", courseId: c.id })}>
                       <Plus className="mr-1 size-3" /> Add Question
                     </Button>
                   </div>

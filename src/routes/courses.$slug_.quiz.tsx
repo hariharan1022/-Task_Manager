@@ -340,16 +340,16 @@ function QuizPage() {
               })}
 
               <div className="flex flex-wrap items-center justify-between gap-2 pt-5">
-                <Button variant="outline" size="sm" disabled={current === 0} onClick={() => setCurrent((c) => Math.max(0, c - 1))}>
+                <Button variant="outline" size="sm" className="h-10" disabled={current === 0} onClick={() => setCurrent((c) => Math.max(0, c - 1))}>
                   <ChevronLeft className="mr-1 size-4" />Previous
                 </Button>
                 <div className="flex gap-2">
                   {current < questions.length - 1 ? (
-                    <Button size="sm" onClick={() => setCurrent((c) => c + 1)} className="brand-gradient text-white border-0">
+                    <Button size="sm" className="h-10 brand-gradient text-white border-0" onClick={() => setCurrent((c) => c + 1)}>
                       Next<ChevronRight className="ml-1 size-4" />
                     </Button>
                   ) : (
-                    <Button size="sm" onClick={handleSubmit} className="bg-emerald-600 text-white hover:bg-emerald-700">
+                    <Button size="sm" className="h-10 bg-emerald-600 text-white hover:bg-emerald-700" onClick={handleSubmit}>
                       Submit Quiz
                     </Button>
                   )}

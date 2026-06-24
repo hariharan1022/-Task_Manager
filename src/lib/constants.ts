@@ -34,6 +34,17 @@ export function getDomain(slug: string) {
   return DOMAIN_MAP[slug];
 }
 
+export const DURATIONS = [
+  { value: 1, label: "1 Month", tasks: 5, desc: "5 tasks — perfect for a quick start" },
+  { value: 2, label: "2 Months", tasks: 8, desc: "8 tasks — more depth and practice" },
+  { value: 3, label: "3 Months", tasks: 10, desc: "10 tasks — build a solid portfolio" },
+  { value: 6, label: "6 Months", tasks: 12, desc: "12 tasks — master the domain" },
+] as const;
+
+export function durationConfig(months?: number) {
+  return DURATIONS.find((d) => d.value === months) ?? DURATIONS[0];
+}
+
 export function generateInternId() {
   const year = new Date().getFullYear();
   const n = Math.floor(1000 + Math.random() * 9000);

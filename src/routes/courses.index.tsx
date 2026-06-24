@@ -127,15 +127,15 @@ function CoursesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617]">
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:py-14">
+      <main className="mx-auto max-w-7xl px-4 py-10 sm:py-16">
         {/* Hero */}
-        <header className="mx-auto mb-10 max-w-3xl text-center">
-          <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-xs">
+        <header className="mx-auto mb-14 max-w-3xl text-center">
+          <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-xs font-medium rounded-full border border-border/60">
             <GraduationCap className="mr-1 size-3.5" /> Interactive Learning Platform
           </Badge>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Master Coding with Interactive Courses</h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">Master Coding with Interactive Courses</h1>
           <p className="mt-3 text-muted-foreground text-sm max-w-xl mx-auto">
             Topic-wise lessons with live code editor, quizzes, and verified certificates.
           </p>
@@ -143,7 +143,7 @@ function CoursesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               type="text" placeholder="Search courses..." value={search} onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-11 pl-10 pr-4 rounded-xl border border-border/60 bg-white/70 backdrop-blur text-sm focus:outline-none focus:ring-2 focus:ring-[#07284a]/30 dark:bg-[#1E293B]/70"
+              className="w-full h-12 pl-10 pr-4 rounded-xl border border-border/60 bg-white/60 dark:bg-[#0f172a]/60 backdrop-blur text-sm focus:outline-none focus:ring-2 focus:ring-[#07284a]/30"
             />
           </div>
         </header>
@@ -165,7 +165,7 @@ function CoursesPage() {
                 <Link
                   key={course.id}
                   to="/courses/$slug" params={{ slug: course.slug }}
-                  className="group block rounded-2xl border border-border/50 bg-white/70 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-[#1E293B]/70"
+                  className="group block rounded-2xl border border-border/50 bg-white/60 dark:bg-[#0f172a]/60 overflow-hidden transition-all card-elevated hover:card-elevated-hover"
                 >
                   <div className={`h-32 bg-gradient-to-br ${hero.gradient} p-5 flex items-end justify-between`}>
                     <div>
@@ -179,7 +179,7 @@ function CoursesPage() {
                   <div className="p-5 space-y-3">
                     <p className="text-xs text-muted-foreground line-clamp-2">{course.short_description}</p>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className={`text-[10px] border ${DIFFICULTY_COLORS[course.difficulty] ?? ""}`}>{course.difficulty}</Badge>
+                      <Badge variant="outline" className={`text-[10px] border rounded-full ${DIFFICULTY_COLORS[course.difficulty] ?? ""}`}>{course.difficulty}</Badge>
                       <span className="text-[10px] text-muted-foreground flex items-center gap-1"><BookOpen className="size-3" />{course.total_topics} topics</span>
                       <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Clock className="size-3" />{course.duration_weeks} weeks</span>
                     </div>
@@ -190,14 +190,14 @@ function CoursesPage() {
                           <span className="font-semibold">{enrolled.progress_percent}%</span>
                         </div>
                         <Progress value={enrolled.progress_percent} className="h-1.5" />
-                        <div className="w-full rounded-xl h-9 text-xs gap-1 brand-gradient text-white border-0 flex items-center justify-center font-medium shadow-sm">
+                        <div className="w-full rounded-xl h-9 text-xs gap-1 bg-[#07284a] dark:bg-[#1d4ed8] text-white flex items-center justify-center font-medium shadow-sm">
                           {enrolled.status === "completed" ? <CheckCircle2 className="size-3.5" /> : <ArrowRight className="size-3.5" />}
                           {enrolled.status === "completed" ? "Completed" : "Continue Learning"}
                         </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 pt-1">
-                        <Button size="sm" className="rounded-xl h-9 text-xs gap-1 brand-gradient text-white border-0"
+                        <Button size="sm" className="rounded-xl h-10 text-xs gap-1 bg-[#07284a] dark:bg-[#1d4ed8] text-white border-0 shadow-sm shadow-[#07284a]/20"
                           onClick={(e) => handleEnroll(e, course.id, course.slug)}>
                           <Sparkles className="size-3.5" /> Enroll Free
                         </Button>
