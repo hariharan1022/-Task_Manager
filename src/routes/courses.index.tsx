@@ -132,7 +132,7 @@ function CoursesPage() {
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617]">
       <Navbar />
       <AuroraBackground>
-        <section className="relative pb-16 pt-8 sm:pt-12 md:pb-24 md:pt-16">
+        <section className="relative pb-8 sm:pb-12 pt-12 sm:pt-20 md:pt-28">
           <div className="mx-auto max-w-7xl px-4">
             <FadeUp className="text-center">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#07284a]/15 bg-white/60 dark:bg-[#0f172a]/60 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium text-[#07284a] dark:text-[#60a5fa] shadow-sm backdrop-blur">
@@ -144,18 +144,19 @@ function CoursesPage() {
               <p className="mt-5 mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground">
                 Topic-wise lessons with live code editor, quizzes, and verified certificates.
               </p>
-              <div className="mt-6 relative max-w-md mx-auto">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <input
-                  type="text" placeholder="Search courses..." value={search} onChange={(e) => setSearch(e.target.value)}
-                  className="w-full h-12 pl-10 pr-4 rounded-xl border border-border/60 bg-white/60 dark:bg-[#0f172a]/60 backdrop-blur text-sm focus:outline-none focus:ring-2 focus:ring-[#07284a]/30"
-                />
-              </div>
             </FadeUp>
           </div>
         </section>
       </AuroraBackground>
       <main className="mx-auto max-w-7xl px-4 py-10 sm:py-16">
+        {/* Search */}
+        <div className="mx-auto max-w-md mb-10 sm:mb-14 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <input
+            type="text" placeholder="Search courses..." value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-12 pl-10 pr-4 rounded-xl border border-border/60 bg-white/60 dark:bg-[#0f172a]/60 backdrop-blur text-sm focus:outline-none focus:ring-2 focus:ring-[#07284a]/30"
+          />
+        </div>
 
         {/* Course Grid */}
         {isLoading ? (

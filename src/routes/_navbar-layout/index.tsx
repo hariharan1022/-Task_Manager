@@ -145,7 +145,7 @@ function Landing() {
     <div className="min-h-screen">
       {/* ─── HERO ─── */}
       <AuroraBackground>
-        <section className="relative pb-20 pt-8 sm:pt-12 md:pb-32 md:pt-16">
+        <section className="relative pb-8 sm:pb-12 pt-12 sm:pt-20 md:pt-28">
           <div className="mx-auto max-w-7xl px-4">
             <div className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
               <FadeUp className="text-center md:text-left">

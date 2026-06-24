@@ -132,7 +132,7 @@ function VerifyPage() {
     <div className="min-h-screen">
       <Navbar />
       <AuroraBackground>
-        <section className="relative pb-16 pt-8 sm:pt-12 md:pb-24 md:pt-16">
+        <section className="relative pb-8 sm:pb-12 pt-12 sm:pt-20 md:pt-28">
           <div className="mx-auto max-w-2xl px-4">
             <FadeUp className="text-center">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#07284a]/15 bg-white/60 dark:bg-[#0f172a]/60 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium text-[#07284a] dark:text-[#60a5fa] shadow-sm backdrop-blur">
