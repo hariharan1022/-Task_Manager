@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,9 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   BookOpen, Layers, Monitor, Server, BarChart3, Brain, Palette,
-  Code2, Shield, TrendingUp, GraduationCap, Trophy, Clock, Star, Users, ArrowRight, CheckCircle2, Sparkles, Search,
+  Code2, Shield, TrendingUp, Database, GraduationCap, Trophy, Clock, Star, Users, ArrowRight, CheckCircle2, Sparkles, Search,
 } from "lucide-react";
+import { getLocalCourseContent, getLocalCourseSlugs, getLocalTopicCount } from "@/lib/course-content";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   BookOpen, Layers, Monitor, Server, BarChart3, Brain, Palette, Code2, Shield, TrendingUp,
@@ -49,6 +50,12 @@ const COURSE_HERO: Record<string, { gradient: string; icon: string }> = {
   javascript: { gradient: "from-yellow-500 to-amber-600", icon: "JS" },
   php: { gradient: "from-indigo-500 to-[#07284a]", icon: "PHP" },
   sql: { gradient: "from-cyan-500 to-blue-600", icon: "SQL" },
+  mysql: { gradient: "from-cyan-600 to-blue-700", icon: "SQL" },
+  django: { gradient: "from-green-700 to-green-500", icon: "Dj" },
+  numpy: { gradient: "from-blue-600 to-indigo-500", icon: "Np" },
+  pandas: { gradient: "from-indigo-600 to-purple-600", icon: "Pd" },
+  scipy: { gradient: "from-teal-600 to-cyan-500", icon: "Sc" },
+  matplotlib: { gradient: "from-orange-500 to-rose-500", icon: "Mp" },
 };
 
 function CoursesPage() {
@@ -60,12 +67,19 @@ function CoursesPage() {
     e.preventDefault();
     e.stopPropagation();
     if (!user) { toast.error("Please sign in to enroll"); return; }
+    if (courseId.startsWith("local-")) {
+      toast.success("Content available — start learning!");
+      window.location.href = `/courses/${courseSlug}`;
+      return;
+    }
     const { error } = await supabase.from("enrollments").insert({ user_id: user.id, course_id: courseId });
     if (error && error.code !== "23505") { toast.error(error.message); return; }
     toast.success("Enrolled! Start learning.");
     qc.invalidateQueries({ queryKey: ["my-enrollments"] });
     window.location.href = `/courses/${courseSlug}`;
   };
+
+  const localSlugs = useMemo(() => getLocalCourseSlugs(), []);
 
   const { data: courses, isLoading } = useQuery({
     queryKey: ["courses-list"],
@@ -76,7 +90,20 @@ function CoursesPage() {
         .eq("is_published", true)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as CourseRow[];
+      const dbCourses = (data ?? []) as CourseRow[];
+      const dbSlugs = new Set(dbCourses.map((c) => c.slug));
+      for (const slug of localSlugs) {
+        if (!dbSlugs.has(slug)) {
+          const totalTopics = getLocalTopicCount(slug);
+          dbCourses.push({
+            id: `local-${slug}`, slug, name: slug.charAt(0).toUpperCase() + slug.slice(1),
+            short_description: "Comprehensive course content included with your learning platform.",
+            icon: "Database", domain: slug, total_topics: totalTopics, total_tasks: 5,
+            quiz_marks: 100, duration_weeks: 6, difficulty: "Intermediate",
+          });
+        }
+      }
+      return dbCourses;
     },
   });
 
