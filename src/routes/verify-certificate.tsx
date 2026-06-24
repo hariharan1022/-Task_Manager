@@ -129,13 +129,13 @@ function VerifyPage() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="mx-auto max-w-2xl px-4 py-16">
-        <h1 className="text-4xl font-bold">Verify <span className="brand-text">Certificate</span></h1>
-        <p className="mt-3 text-muted-foreground">Enter a Certificate ID or Intern ID to verify authenticity.</p>
+      <main className="mx-auto max-w-2xl px-4 py-12 sm:py-16">
+        <h1 className="text-3xl sm:text-4xl font-bold">Verify <span className="brand-text">Certificate</span></h1>
+        <p className="mt-3 text-sm sm:text-base text-muted-foreground">Enter a Certificate ID or Intern ID to verify authenticity.</p>
 
-        <form onSubmit={verify} className="mt-8 flex gap-2">
-          <Input value={id} onChange={(e) => setId(e.target.value)} placeholder="e.g. SKY-FULL-2026-123456 or SKX-2026-XXXX" />
-          <Button type="submit" className="brand-gradient text-white border-0"><Search className="size-4" /> Verify</Button>
+        <form onSubmit={verify} className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-2">
+          <Input value={id} onChange={(e) => setId(e.target.value)} placeholder="e.g. SKY-FULL-2026-123456 or SKX-2026-XXXX" className="w-full" />
+          <Button type="submit" className="w-full sm:w-auto brand-gradient text-white border-0"><Search className="size-4" /> Verify</Button>
         </form>
 
         {result.state === "loading" && <p className="mt-6 text-muted-foreground">Checking…</p>}

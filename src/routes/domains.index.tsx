@@ -98,9 +98,9 @@ function DomainsPage() {
   return (
     <div>
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-16">
-        <h1 className="text-4xl font-bold md:text-5xl">All <span className="brand-text">Domains</span></h1>
-        <p className="mt-3 text-muted-foreground max-w-2xl">Each domain offers a 5-task curriculum designed to build real, portfolio-ready skills.</p>
+      <main className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">All <span className="brand-text">Domains</span></h1>
+        <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl">Each domain offers a 5-task curriculum designed to build real, portfolio-ready skills.</p>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {DOMAINS.map((d) => (
             <button key={d.slug} onClick={() => setApplyDomain(d.slug)} className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-6 text-left transition hover:-translate-y-1 hover:border-primary/60">

@@ -131,11 +131,11 @@ function CoursesPage() {
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-10 sm:py-16">
         {/* Hero */}
-        <header className="mx-auto mb-14 max-w-3xl text-center">
-          <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-xs font-medium rounded-full border border-border/60">
-            <GraduationCap className="mr-1 size-3.5" /> Interactive Learning Platform
+        <header className="mx-auto mb-10 sm:mb-14 max-w-3xl text-center">
+          <Badge variant="secondary" className="mb-4 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium rounded-full border border-border/60">
+            <GraduationCap className="mr-1 size-3 sm:size-3.5" /> Interactive Learning Platform
           </Badge>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">Master Coding with Interactive Courses</h1>
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight">Master Coding with Interactive Courses</h1>
           <p className="mt-3 text-muted-foreground text-sm max-w-xl mx-auto">
             Topic-wise lessons with live code editor, quizzes, and verified certificates.
           </p>

@@ -26,12 +26,12 @@ function ContactPage() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="mx-auto max-w-5xl px-4 pt-16 pb-16 sm:pt-24">
+      <main className="mx-auto max-w-5xl px-4 pt-12 pb-12 sm:pt-24">
         <p className="text-sm font-medium text-primary">Contact</p>
-        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight sm:text-5xl">
+        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-5xl">
           Talk to <span className="brand-text">Skyrovix</span>.
         </h1>
-        <p className="mt-4 max-w-2xl text-muted-foreground">
+        <p className="mt-4 max-w-2xl text-sm sm:text-base text-muted-foreground">
           Questions about your internship, certificate verification, or partnerships? Send
           us a message and our team will get back within 1–2 business days.
         </p>
