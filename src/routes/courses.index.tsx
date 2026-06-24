@@ -14,6 +14,8 @@ import {
   Code2, Shield, TrendingUp, Database, GraduationCap, Trophy, Clock, Star, Users, ArrowRight, CheckCircle2, Sparkles, Search,
 } from "lucide-react";
 import { getLocalCourseContent, getLocalCourseSlugs, getLocalTopicCount } from "@/lib/course-content";
+import { AuroraBackground } from "@/components/AuroraBackground";
+import { FadeUp } from "@/components/motion";
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   BookOpen, Layers, Monitor, Server, BarChart3, Brain, Palette, Code2, Shield, TrendingUp,
@@ -129,24 +131,31 @@ function CoursesPage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#020617]">
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:py-16">
-        {/* Hero */}
-        <header className="mx-auto mb-10 sm:mb-14 max-w-3xl text-center">
-          <Badge variant="secondary" className="mb-4 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium rounded-full border border-border/60">
-            <GraduationCap className="mr-1 size-3 sm:size-3.5" /> Interactive Learning Platform
-          </Badge>
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight">Master Coding with Interactive Courses</h1>
-          <p className="mt-3 text-muted-foreground text-sm max-w-xl mx-auto">
-            Topic-wise lessons with live code editor, quizzes, and verified certificates.
-          </p>
-          <div className="mt-6 relative max-w-md mx-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <input
-              type="text" placeholder="Search courses..." value={search} onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-12 pl-10 pr-4 rounded-xl border border-border/60 bg-white/60 dark:bg-[#0f172a]/60 backdrop-blur text-sm focus:outline-none focus:ring-2 focus:ring-[#07284a]/30"
-            />
+      <AuroraBackground>
+        <section className="relative pb-16 pt-8 sm:pt-12 md:pb-24 md:pt-16">
+          <div className="mx-auto max-w-7xl px-4">
+            <FadeUp className="text-center">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#07284a]/15 bg-white/60 dark:bg-[#0f172a]/60 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium text-[#07284a] dark:text-[#60a5fa] shadow-sm backdrop-blur">
+                <GraduationCap className="size-3 sm:size-3.5" /> Interactive Learning Platform
+              </div>
+              <h1 className="font-display text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1]">
+                Master Coding with Interactive Courses
+              </h1>
+              <p className="mt-5 mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground">
+                Topic-wise lessons with live code editor, quizzes, and verified certificates.
+              </p>
+              <div className="mt-6 relative max-w-md mx-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <input
+                  type="text" placeholder="Search courses..." value={search} onChange={(e) => setSearch(e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 rounded-xl border border-border/60 bg-white/60 dark:bg-[#0f172a]/60 backdrop-blur text-sm focus:outline-none focus:ring-2 focus:ring-[#07284a]/30"
+                />
+              </div>
+            </FadeUp>
           </div>
-        </header>
+        </section>
+      </AuroraBackground>
+      <main className="mx-auto max-w-7xl px-4 py-10 sm:py-16">
 
         {/* Course Grid */}
         {isLoading ? (

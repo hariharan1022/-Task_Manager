@@ -10,7 +10,9 @@ import { DOMAINS, DURATIONS, durationConfig, generateInternId } from "@/lib/cons
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
+import { AuroraBackground } from "@/components/AuroraBackground";
+import { FadeUp } from "@/components/motion";
 
 export const Route = createFileRoute("/domains/")({
   head: () => ({ meta: [{ title: "Internship Domains — Skyrovix" }, { name: "description", content: "Browse 10 internship domains: Full Stack, Frontend, Backend, Data Science, AI/ML, UI/UX, Python, Java, Cyber Security, Digital Marketing." }] }),
@@ -96,12 +98,27 @@ function DomainsPage() {
   };
 
   return (
-    <div>
+    <div className="min-h-screen">
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">All <span className="brand-text">Domains</span></h1>
-        <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-2xl">Each domain offers a 5-task curriculum designed to build real, portfolio-ready skills.</p>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <AuroraBackground>
+        <section className="relative pb-16 pt-8 sm:pt-12 md:pb-24 md:pt-16">
+          <div className="mx-auto max-w-7xl px-4">
+            <FadeUp className="text-center">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#07284a]/15 bg-white/60 dark:bg-[#0f172a]/60 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium text-[#07284a] dark:text-[#60a5fa] shadow-sm backdrop-blur">
+                <ShieldCheck className="size-3 sm:size-3.5" /> Internship Programs
+              </div>
+              <h1 className="font-display text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1]">
+                All <span className="brand-text">Domains</span>
+              </h1>
+              <p className="mt-5 mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground">
+                Each domain offers a 5-task curriculum designed to build real, portfolio-ready skills.
+              </p>
+            </FadeUp>
+          </div>
+        </section>
+      </AuroraBackground>
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {DOMAINS.map((d) => (
             <button key={d.slug} onClick={() => setApplyDomain(d.slug)} className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-6 text-left transition hover:-translate-y-1 hover:border-primary/60">
               <div className={`absolute inset-0 -z-10 bg-gradient-to-br ${d.color} opacity-0 transition group-hover:opacity-10`} />
@@ -112,7 +129,7 @@ function DomainsPage() {
             </button>
           ))}
         </div>
-      </main>
+      </div>
       <Footer />
 
       <Dialog open={!!applyDomain} onOpenChange={(o) => { if (!o) { setApplyDomain(null); setApplyDuration(1); setPhotoFile(null); } }}>

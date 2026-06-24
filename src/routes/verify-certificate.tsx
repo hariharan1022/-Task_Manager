@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, XCircle, Search, Clock, GraduationCap, Award } from "lucide-react";
+import { CheckCircle2, XCircle, Search, Clock, GraduationCap, Award, ShieldCheck } from "lucide-react";
 import { getDomain } from "@/lib/constants";
+import { AuroraBackground } from "@/components/AuroraBackground";
+import { FadeUp } from "@/components/motion";
 
 export const Route = createFileRoute("/verify-certificate")({
   head: () => ({ meta: [{ title: "Verify Certificate — Skyrovix" }, { name: "description", content: "Verify the authenticity of a Skyrovix internship or course certificate by ID." }] }),
@@ -129,9 +131,24 @@ function VerifyPage() {
   return (
     <div className="min-h-screen">
       <Navbar />
+      <AuroraBackground>
+        <section className="relative pb-16 pt-8 sm:pt-12 md:pb-24 md:pt-16">
+          <div className="mx-auto max-w-2xl px-4">
+            <FadeUp className="text-center">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#07284a]/15 bg-white/60 dark:bg-[#0f172a]/60 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium text-[#07284a] dark:text-[#60a5fa] shadow-sm backdrop-blur">
+                <ShieldCheck className="size-3 sm:size-3.5" /> Certificate Verification
+              </div>
+              <h1 className="font-display text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1]">
+                Verify <span className="brand-text">Certificate</span>
+              </h1>
+              <p className="mt-5 mx-auto max-w-xl text-sm sm:text-base text-muted-foreground">
+                Enter a Certificate ID or Intern ID to verify authenticity.
+              </p>
+            </FadeUp>
+          </div>
+        </section>
+      </AuroraBackground>
       <main className="mx-auto max-w-2xl px-4 py-12 sm:py-16">
-        <h1 className="text-3xl sm:text-4xl font-bold">Verify <span className="brand-text">Certificate</span></h1>
-        <p className="mt-3 text-sm sm:text-base text-muted-foreground">Enter a Certificate ID or Intern ID to verify authenticity.</p>
 
         <form onSubmit={verify} className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-2">
           <Input value={id} onChange={(e) => setId(e.target.value)} placeholder="e.g. SKY-FULL-2026-123456 or SKX-2026-XXXX" className="w-full" />

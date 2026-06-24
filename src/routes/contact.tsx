@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { COMPANY } from "@/lib/constants";
-import { Mail, MapPin, Globe } from "lucide-react";
+import { Mail, MapPin, Globe, Sparkles } from "lucide-react";
+import { AuroraBackground } from "@/components/AuroraBackground";
+import { FadeUp } from "@/components/motion";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -26,15 +28,25 @@ function ContactPage() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="mx-auto max-w-5xl px-4 pt-12 pb-12 sm:pt-24">
-        <p className="text-sm font-medium text-primary">Contact</p>
-        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-5xl">
-          Talk to <span className="brand-text">Skyrovix</span>.
-        </h1>
-        <p className="mt-4 max-w-2xl text-sm sm:text-base text-muted-foreground">
-          Questions about your internship, certificate verification, or partnerships? Send
-          us a message and our team will get back within 1–2 business days.
-        </p>
+      <AuroraBackground>
+        <section className="relative pb-16 pt-8 sm:pt-12 md:pb-24 md:pt-16">
+          <div className="mx-auto max-w-5xl px-4">
+            <FadeUp className="text-center">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#07284a]/15 bg-white/60 dark:bg-[#0f172a]/60 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium text-[#07284a] dark:text-[#60a5fa] shadow-sm backdrop-blur">
+                <Sparkles className="size-3 sm:size-3.5" /> Get in Touch
+              </div>
+              <h1 className="font-display text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1]">
+                Talk to <span className="brand-text">Skyrovix</span>.
+              </h1>
+              <p className="mt-5 mx-auto max-w-2xl text-sm sm:text-base text-muted-foreground">
+                Questions about your internship, certificate verification, or partnerships? Send
+                us a message and our team will get back within 1–2 business days.
+              </p>
+            </FadeUp>
+          </div>
+        </section>
+      </AuroraBackground>
+      <main className="mx-auto max-w-5xl px-4 py-12 sm:pt-16 sm:pb-16">
 
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <div className="space-y-3">
