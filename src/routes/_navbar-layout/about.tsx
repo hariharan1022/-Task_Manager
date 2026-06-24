@@ -22,7 +22,7 @@ function AboutPage() {
 
       {/* ─── HERO ─── */}
       <AuroraBackground>
-        <section className="mx-auto max-w-5xl px-4 pt-20 sm:pt-36 md:pt-44 pb-16 sm:pb-20 md:pb-24 text-center">
+        <section className="mx-auto max-w-5xl px-4 pt-6 sm:pt-10 pb-16 sm:pb-20 md:pb-24 text-center">
           <FadeUp>
             <div className="inline-flex items-center gap-2 rounded-full border border-[#07284a]/15 bg-white/60 dark:bg-[#0f172a]/60 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium text-[#07284a] dark:text-[#60a5fa] shadow-sm backdrop-blur mb-6">
               <Sparkles className="size-3 sm:size-3.5" /> About Skyrovix
