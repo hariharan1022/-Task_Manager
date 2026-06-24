@@ -3,16 +3,24 @@ import { Logo } from "./Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, LayoutDashboard, Shield, Menu, X, BookOpen, ListChecks, Award, User, Home } from "lucide-react";
+import { LogOut, LayoutDashboard, Shield, Menu, X, BookOpen, ListChecks, Award, User, Home, Briefcase, Mail, BadgeCheck, Info } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 const NAV = [
-  { to: "/", label: "Home" },
-  { to: "/domains", label: "Internship" },
-  { to: "/courses", label: "Courses" },
-  { to: "/about", label: "About" },
-  { to: "/contact", label: "Contact" },
-  { to: "/verify-certificate", label: "Verify" },
+  { to: "/", label: "Home", icon: Home },
+  { to: "/domains", label: "Internship", icon: Briefcase },
+  { to: "/courses", label: "Courses", icon: BookOpen },
+  { to: "/about", label: "About", icon: Info },
+  { to: "/contact", label: "Contact", icon: Mail },
+  { to: "/verify-certificate", label: "Verify", icon: BadgeCheck },
+] as const;
+
+const DASHBOARD_ITEMS = [
+  { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { to: "/dashboard", label: "My Courses", icon: BookOpen, search: { tab: "courses" } },
+  { to: "/dashboard", label: "My Tasks", icon: ListChecks, search: { tab: "tasks" } },
+  { to: "/dashboard", label: "Certificates", icon: Award, search: { tab: "certificates" } },
+  { to: "/dashboard", label: "Profile", icon: User, search: { tab: "profile" } },
 ] as const;
 
 export function Navbar() {
@@ -43,13 +51,16 @@ export function Navbar() {
     navigate({ to: "/" });
   };
 
+  const goTo = (to: string, search?: Record<string, string>) => {
+    navigate({ to, search });
+    setOpen(false);
+  };
+
   return (
     <>
       <header
         className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-7xl transition-all duration-500 ${
-          scrolled
-            ? "top-3"
-            : ""
+          scrolled ? "top-3" : ""
         }`}
       >
         <nav
@@ -64,25 +75,39 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1 overflow-x-auto">
             {NAV.map((n) => {
               const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+              const Icon = n.icon;
               return (
                 <Link
                   key={n.to}
                   to={n.to}
                   activeOptions={{ exact: n.to === "/" }}
-                  className={`relative rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                  className={`relative whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 ${
                     active
                       ? "text-[#07284a] dark:text-white bg-[#07284a]/8 dark:bg-white/10"
                       : "text-muted-foreground hover:text-foreground hover:bg-[#07284a]/5 dark:hover:bg-white/5"
                   }`}
                 >
-                  {n.label}
-                  {active && (
-                    <span className="absolute -bottom-px left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-[#07284a] dark:bg-white" />
-                  )}
+                  <Icon className="inline size-4 mr-1.5 -mt-0.5" />{n.label}
                 </Link>
+              );
+            })}
+            {user && DASHBOARD_ITEMS.map((item) => {
+              const isActive = item.to === "/dashboard" && !item.search
+                ? pathname === "/dashboard" && !pathname.includes("?tab=")
+                : pathname.startsWith("/dashboard") && pathname.includes(item.search?.tab ?? "");
+              return (
+                <button key={item.label} onClick={() => goTo(item.to, item.search)}
+                  className={`relative whitespace-nowrap rounded-xl px-3 py-2 text-xs font-medium transition-all duration-200 ${
+                    isActive
+                      ? "text-[#07284a] dark:text-white bg-[#07284a]/8 dark:bg-white/10"
+                      : "text-muted-foreground hover:text-foreground hover:bg-[#07284a]/5 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <item.icon className="inline size-3.5 mr-1 -mt-0.5" />{item.label}
+                </button>
               );
             })}
           </div>
@@ -96,9 +121,6 @@ export function Navbar() {
                     <Link to="/admin"><Shield className="mr-1.5 size-4" />Admin</Link>
                   </Button>
                 )}
-                <Button asChild size="sm" className="hidden md:inline-flex rounded-xl h-9 bg-[#07284a] hover:bg-[#07284a]/90 text-white shadow-sm shadow-[#07284a]/20">
-                  <Link to="/dashboard"><LayoutDashboard className="mr-1.5 size-4" />Dashboard</Link>
-                </Button>
                 <button
                   onClick={signOut}
                   className="hidden md:inline-flex items-center justify-center rounded-xl h-9 px-3 text-sm text-muted-foreground hover:text-foreground hover:bg-[#07284a]/5 dark:hover:bg-white/5 transition-all"
@@ -141,78 +163,55 @@ export function Navbar() {
           }}
         >
           <div className="flex flex-col gap-1 p-3">
-            {/* ── Unified list: public + dashboard items ── */}
             {user ? (
               <>
                 {[
-                  { to: "/", label: "Home", icon: Home },
-                  { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
-                  { to: "/dashboard", label: "My Courses", icon: BookOpen, search: { tab: "courses" } },
-                  { to: "/dashboard", label: "My Tasks", icon: ListChecks, search: { tab: "tasks" } },
-                  { to: "/dashboard", label: "Certificates", icon: Award, search: { tab: "certificates" } },
-                  { to: "/dashboard", label: "Profile", icon: User, search: { tab: "profile" } },
+                  ...NAV,
+                  ...DASHBOARD_ITEMS,
                 ].map((item, i) => {
-                  const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to) && (!item.search || pathname.includes("dashboard"));
+                  const Icon = item.icon;
+                  const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
                   return (
-                    <Link key={item.label} to={item.to} search={item.search} onClick={() => setOpen(false)}
-                      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
+                    <button key={item.label} onClick={() => goTo(item.to, "search" in item ? item.search : undefined)}
+                      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all w-full text-left ${
                         active
                           ? "bg-[#07284a]/8 dark:bg-white/10 text-[#07284a] dark:text-white"
                           : "text-muted-foreground hover:text-foreground hover:bg-[#07284a]/5 dark:hover:bg-white/5"
                       }`}
                       style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out ${0.03 * i}s forwards` }}
                     >
-                      <item.icon className="size-4 shrink-0" /> {item.label}
-                    </Link>
+                      <Icon className="size-4 shrink-0" />{item.label}
+                    </button>
                   );
                 })}
-                <div className="my-2 border-t border-border" style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out ${0.18}s forwards` }} />
-                {NAV.map((n, i) => {
-                  const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
-                  return (
-                    <Link key={n.to} to={n.to} onClick={() => setOpen(false)}
-                      className={`rounded-xl px-4 py-3 text-sm font-medium transition-all ${
-                        active
-                          ? "bg-[#07284a]/8 dark:bg-white/10 text-[#07284a] dark:text-white"
-                          : "text-muted-foreground hover:text-foreground hover:bg-[#07284a]/5 dark:hover:bg-white/5"
-                      }`}
-                      style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out ${0.03 * (i + 7)}s forwards` }}
-                    >
-                      {n.label}
-                    </Link>
-                  );
-                })}
-                <div className="my-2 border-t border-border" style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out ${0.39}s forwards` }} />
-                <Link to="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-[#07284a]/5 dark:hover:bg-white/5 transition-all"
-                  style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out 0.42s forwards` }}>
-                  <LayoutDashboard className="size-4" /> Dashboard
-                </Link>
+                <div className="my-2 border-t border-border" style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out ${0.33}s forwards` }} />
                 {isAdmin && (
                   <Link to="/admin" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-[#07284a]/5 dark:hover:bg-white/5 transition-all"
-                    style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out 0.45s forwards` }}>
+                    style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out 0.36s forwards` }}>
                     <Shield className="size-4" /> Admin
                   </Link>
                 )}
                 <button onClick={() => { signOut(); setOpen(false); }} className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-[#07284a]/5 dark:hover:bg-white/5 transition-all w-full text-left"
-                  style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out 0.48s forwards` }}>
+                  style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out 0.39s forwards` }}>
                   <LogOut className="size-4" /> Sign out
                 </button>
               </>
             ) : (
               <>
                 {NAV.map((n, i) => {
+                  const Icon = n.icon;
                   const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
                   return (
-                    <Link key={n.to} to={n.to} onClick={() => setOpen(false)}
-                      className={`rounded-xl px-4 py-3 text-sm font-medium transition-all ${
+                    <button key={n.to} onClick={() => goTo(n.to)}
+                      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all w-full text-left ${
                         active
                           ? "bg-[#07284a]/8 dark:bg-white/10 text-[#07284a] dark:text-white"
                           : "text-muted-foreground hover:text-foreground hover:bg-[#07284a]/5 dark:hover:bg-white/5"
                       }`}
                       style={{ opacity: 0, animation: `fade-in-up 0.25s ease-out ${0.03 * i}s forwards` }}
                     >
-                      {n.label}
-                    </Link>
+                      <Icon className="size-4 shrink-0" />{n.label}
+                    </button>
                   );
                 })}
                 <div className="my-2 border-t border-border" />

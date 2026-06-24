@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +26,8 @@ import {
   Phone, Calendar, ChevronRight, ExternalLink, Shield, Bell, Trophy,
   Target, BarChart3, Layers, Brain, Linkedin, Play, ChevronLeft,
   ListChecks, Flag, AlertTriangle, Zap, Hash, Circle, Loader2,
-  TrendingUp, Star, Lock, Eye, LayoutDashboard, LogOut, PanelRightClose,
-  PanelRightOpen, Settings, Moon, Wallet, CreditCard, ScrollText, Briefcase,
+  TrendingUp, Star, Lock, Eye, LogOut,
+  Settings, Moon, Wallet, CreditCard, ScrollText, Briefcase,
 } from "lucide-react";
 
 function useInView(threshold = 0.15) {
@@ -105,6 +105,7 @@ function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
   const [dark, setDark] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (dark) document.documentElement.classList.add("dark");
@@ -370,8 +371,7 @@ function Dashboard() {
   const currentStep = timelineSteps.findIndex((s) => !s.done);
 
   const searchParams = Route.useSearch();
-  const [active, setActive] = useState(searchParams.tab ?? "overview");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const active = searchParams.tab ?? "overview";
   const [detailView, setDetailView] = useState<{ type: "app"; id: string } | { type: "enrollment"; id: string } | null>(null);
   const [utrNumber, setUtrNumber] = useState("");
   const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
@@ -414,14 +414,6 @@ function Dashboard() {
     }
   };
 
-  const SIDEBAR_ITEMS = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "courses", label: "My Courses", icon: BookOpen },
-    { id: "tasks", label: "My Tasks", icon: ListChecks },
-    { id: "certificates", label: "Certificates", icon: Award },
-    { id: "profile", label: "Profile", icon: User },
-  ] as const;
-
   const signOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/auth";
@@ -451,7 +443,7 @@ function Dashboard() {
           <div className="rounded-2xl border border-dashed border-border/50 bg-white/70 p-12 text-center backdrop-blur-xl dark:bg-[#1E293B]/70">
             <User className="size-10 mx-auto mb-3 opacity-40 text-muted-foreground" />
             <p className="font-semibold text-muted-foreground">Apply for an internship to set up your profile.</p>
-            <Button size="sm" className="mt-4 brand-gradient text-white border-0 rounded-xl" onClick={() => setActive("overview")}>Go to Overview</Button>
+            <Button size="sm" className="mt-4 brand-gradient text-white border-0 rounded-xl" onClick={() => navigate({ to: "/dashboard" })}>Go to Overview</Button>
           </div>
         );
       }
@@ -460,7 +452,7 @@ function Dashboard() {
           <div className="rounded-2xl border border-dashed border-border/50 bg-white/70 p-12 text-center backdrop-blur-xl dark:bg-[#1E293B]/70">
             <Briefcase className="size-10 mx-auto mb-3 opacity-40 text-muted-foreground" />
             <p className="font-semibold text-muted-foreground">Apply for an internship to access this section.</p>
-            <Button size="sm" className="mt-4 brand-gradient text-white border-0 rounded-xl" onClick={() => setActive("overview")}>Go to Overview</Button>
+            <Button size="sm" className="mt-4 brand-gradient text-white border-0 rounded-xl" onClick={() => navigate({ to: "/dashboard" })}>Go to Overview</Button>
           </div>
         );
       }
@@ -1143,62 +1135,10 @@ function Dashboard() {
 
         <Confetti active={!!cert} />
 
-        {/* ─── Sidebar ─── */}
-        <aside className={`hidden lg:flex lg:flex-col fixed inset-y-0 left-0 z-50 border-r border-border/60 bg-white/80 dark:bg-[#0f172a]/90 backdrop-blur-2xl transition-all duration-300 dark:border-white/5 ${
-          sidebarOpen ? "w-64" : "w-16"
-        }`}>
-          {/* Logo */}
-          <div className="flex h-16 items-center justify-between border-b border-border/60 px-4 dark:border-white/5">
-            <Link to="/" className={`flex items-center gap-2 ${!sidebarOpen && "lg:hidden"}`}>
-              <div className="grid size-9 shrink-0 place-items-center rounded-xl brand-gradient text-[10px] font-bold text-white">S</div>
-              {sidebarOpen && <span className="text-sm font-bold">Skyrovix</span>}
-            </Link>
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="grid size-8 place-items-center rounded-lg hover:bg-accent/50 transition">
-              {sidebarOpen ? <PanelRightClose className="size-4" /> : <PanelRightOpen className="size-4" />}
-            </button>
-          </div>
-
-          {/* Menu Items */}
-          <nav className="flex-1 overflow-y-auto px-3 py-4">
-            <ul className="space-y-1">
-              {SIDEBAR_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = active === item.id;
-                return (
-                  <li key={item.id}>
-                    <button
-                      onClick={() => setActive(item.id)}
-                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                        isActive
-                          ? "bg-[#07284a] dark:bg-[#1d4ed8] text-white shadow-md shadow-[#07284a]/20 dark:shadow-[#1d4ed8]/20"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-[#07284a]/5 dark:text-gray-400 dark:hover:text-white dark:hover:bg-white/5"
-                      }`}
-                    >
-                      <Icon className="size-5 shrink-0" />
-                      {sidebarOpen && <span className="truncate">{item.label}</span>}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          {/* Logout */}
-          <div className="border-t border-border/60 p-3 dark:border-white/5">
-            <button
-              onClick={signOut}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-500 transition hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-950/30"
-            >
-              <LogOut className="size-5 shrink-0" />
-              {sidebarOpen && <span>Logout</span>}
-            </button>
-          </div>
-        </aside>
-
         {/* ─── Main Area ─── */}
-        <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : "lg:ml-16"}`}>
+        <div className="flex-1">
           {/* Top header */}
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border/50 bg-white/80 dark:bg-[#0f172a]/80 px-4 backdrop-blur-xl dark:border-white/5">
+          <header className="sticky top-20 sm:top-24 z-30 flex h-16 items-center justify-between gap-4 border-b border-border/50 bg-white/80 dark:bg-[#0f172a]/80 px-4 backdrop-blur-xl dark:border-white/5">
             <div className="flex items-center gap-3">
               <h1 className="text-lg font-bold capitalize">{active === "overview" ? "Dashboard" : active}</h1>
             </div>
