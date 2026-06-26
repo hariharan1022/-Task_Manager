@@ -26,6 +26,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { HeroVisual } from "@/components/HeroVisual";
+import { MobileFloatingIcons } from "@/components/MobileFloatingIcons";
 import founderPhoto from "@/assets/founder.jpeg";
 import cofounderPhoto from "@/assets/co founder.jpeg";
 
@@ -148,7 +149,8 @@ function Landing() {
     <div className="min-h-screen">
       {/* ─── HERO ─── */}
       <AuroraBackground>
-        <section className="relative pt-4 sm:pt-6 pb-20 sm:pb-24 md:pb-32">
+        <section className="relative min-h-[90vh] sm:min-h-[92vh] pt-18 sm:pt-20 pb-52 sm:pb-56 md:pb-64">
+          <MobileFloatingIcons />
           <div className="mx-auto max-w-7xl px-4">
             <div className="grid items-center gap-12 md:grid-cols-2 md:gap-16">
               <FadeUp className="text-center md:text-left">
@@ -204,6 +206,7 @@ function Landing() {
                     <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-muted-foreground">Online</div>
                   </div>
                 </div>
+
               </FadeUp>
 
               <FadeUp delay={0.15} className="hidden md:block">

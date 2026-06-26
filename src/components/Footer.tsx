@@ -8,10 +8,10 @@ export function Footer() {
 
   return (
     <footer className="relative border-t border-border/50 bg-[#f8fafc] dark:bg-[#020617]">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:py-20">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:py-16">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <Logo />
             <p className="text-sm leading-relaxed text-muted-foreground max-w-xs">
               A task-based virtual internship platform by Skyrovix — build real skills, earn a recognised certificate.
@@ -31,8 +31,8 @@ export function Footer() {
 
           {/* Platform */}
           <div>
-            <h4 className="text-sm font-semibold mb-4">Platform</h4>
-            <ul className="space-y-3">
+            <h4 className="text-sm font-semibold mb-3">Platform</h4>
+            <ul className="space-y-2.5">
               {[
                 { to: "/domains", label: "Internship Domains" },
                 { to: "/courses", label: "Courses" },
@@ -52,8 +52,8 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="text-sm font-semibold mb-4">Contact</h4>
-            <ul className="space-y-3">
+            <h4 className="text-sm font-semibold mb-3">Contact</h4>
+            <ul className="space-y-2.5">
               <li>
                 <a href="mailto:skyrovix@gmail.com" className="group inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                   <Mail className="size-3.5" /> skyrovix@gmail.com
@@ -65,8 +65,8 @@ export function Footer() {
 
           {/* MSME */}
           <div>
-            <h4 className="text-sm font-semibold mb-4">Registered with</h4>
-            <div className="inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-white/60 dark:bg-[#0f172a]/60 px-4 py-3.5 shadow-sm">
+            <h4 className="text-sm font-semibold mb-3">Registered with</h4>
+            <div className="inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-white/60 dark:bg-[#0f172a]/60 px-3 py-3 shadow-sm">
               <img src={msme} alt="MSME Registered" className="h-10 w-auto object-contain" />
               <div className="leading-tight">
                 <p className="text-xs font-semibold text-foreground">MSME Registered</p>
@@ -78,8 +78,8 @@ export function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-border/50 py-5">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 sm:flex-row">
+      <div className="border-t border-border/50 py-4">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 sm:flex-row sm:py-1">
           <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Skyrovix. All rights reserved.
           </p>
