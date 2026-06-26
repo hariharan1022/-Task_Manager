@@ -87,39 +87,13 @@ export const sendEmail = createServerFn({ method: "POST" })
     console.log("[Email] Step 2: Loading assets for PDF...");
     const imageAssets: Record<string, string> = {};
     try {
-      const fs = await import("fs");
-      const nodePath = await import("path");
-      const images: { key: string; file: string; mime: string }[] = [
-        { key: "logo", file: "logo.png", mime: "image/png" },
-        { key: "seal", file: "seal.jpg", mime: "image/jpeg" },
-        { key: "msme", file: "msme.png", mime: "image/png" },
-        { key: "sigFounder", file: "sig-founder.jpg", mime: "image/jpeg" },
-        { key: "sigCofounder", file: "sig-cofounder.jpeg", mime: "image/jpeg" },
-      ];
-      const cwd = process.cwd();
-      const searchDirs = [
-        nodePath.join(cwd, ".output", "public", "images"),
-        nodePath.join(cwd, "public", "images"),
-        nodePath.join(cwd, "src", "assets"),
-      ];
-      for (const img of images) {
-        let loaded = false;
-        for (const dir of searchDirs) {
-          const imgPath = nodePath.join(dir, img.file);
-          if (fs.existsSync(imgPath)) {
-            const buffer = fs.readFileSync(imgPath);
-            imageAssets[img.key] = `data:${img.mime};base64,${buffer.toString("base64")}`;
-            console.log(`[Email] Asset loaded: ${img.file} from ${dir} (${buffer.length} bytes)`);
-            loaded = true;
-            break;
-          }
-        }
-        if (!loaded) {
-          console.warn(`[Email] Asset not found: ${img.file} in any directory`);
-        }
+      const { EMAIL_ASSETS } = await import("./email-assets");
+      for (const [key, dataUri] of Object.entries(EMAIL_ASSETS)) {
+        imageAssets[key] = dataUri;
+        console.log(`[Email] Asset loaded: ${key} (${dataUri.length} chars)`);
       }
     } catch (assetErr: any) {
-      console.warn("[Email] Asset loading error:", assetErr?.message);
+      console.warn("[Email] Build-time email assets not available:", assetErr?.message);
     }
 
     console.log("[Email] Step 3: Generating QR code...");

@@ -16,6 +16,9 @@ dist-ssr
 .nitro
 *.local
 
+# Auto-generated
+src/lib/email-assets.ts
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
