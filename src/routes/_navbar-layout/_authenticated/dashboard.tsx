@@ -461,7 +461,7 @@ function Dashboard() {
         return (
           <div className="space-y-8">
             <DashboardHero badge="Profile" title="Your Profile" description="Manage your personal details, photo, and internship information." icon={User} />
-            <div className="rounded-2xl border border-dashed border-border/50 bg-white/70 p-12 text-center backdrop-blur-xl dark:bg-[#1E293B]/70">
+            <div className="rounded-2xl border border-dashed border-border/50 bg-white/70 p-6 sm:p-12 text-center backdrop-blur-xl dark:bg-[#1E293B]/70">
               <User className="size-10 mx-auto mb-3 opacity-40 text-muted-foreground" />
               <p className="font-semibold text-muted-foreground">Apply for an internship to set up your profile.</p>
               <Button size="sm" className="mt-4 brand-gradient text-white border-0 rounded-xl" onClick={() => navigate({ to: "/dashboard" })}>Go to Overview</Button>
@@ -478,7 +478,7 @@ function Dashboard() {
               description={active === "tasks" ? "Track and complete your internship tasks with mentor feedback." : "View and download your verified internship and course certificates."}
               icon={active === "tasks" ? ListChecks : Award}
             />
-            <div className="rounded-2xl border border-dashed border-border/50 bg-white/70 p-12 text-center backdrop-blur-xl dark:bg-[#1E293B]/70">
+            <div className="rounded-2xl border border-dashed border-border/50 bg-white/70 p-6 sm:p-12 text-center backdrop-blur-xl dark:bg-[#1E293B]/70">
               <Briefcase className="size-10 mx-auto mb-3 opacity-40 text-muted-foreground" />
               <p className="font-semibold text-muted-foreground">Apply for an internship to access this section.</p>
               <Button size="sm" className="mt-4 brand-gradient text-white border-0 rounded-xl" onClick={() => navigate({ to: "/dashboard" })}>Go to Overview</Button>
@@ -1170,43 +1170,43 @@ function Dashboard() {
           {/* Detail Grid */}
           <div className="grid gap-6 md:grid-cols-2">
             {/* Personal Info */}
-            <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+            <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70 overflow-hidden">
               <h3 className="flex items-center gap-2 text-sm font-bold mb-4"><User className="size-4 text-primary" /> Personal Details</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                  <span className="text-muted-foreground">College</span>
-                  <span className="font-medium text-right">{app.college || "—"}</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0 gap-2">
+              <span className="text-muted-foreground shrink-0">College</span>
+              <span className="font-medium text-right min-w-0 truncate">{app.college || "—"}</span>
                 </div>
-                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                  <span className="text-muted-foreground">Course</span>
-                  <span className="font-medium text-right">{app.course || "—"}</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0 gap-2">
+                  <span className="text-muted-foreground shrink-0">Course</span>
+                  <span className="font-medium text-right min-w-0 truncate">{app.course || "—"}</span>
                 </div>
-                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                  <span className="text-muted-foreground">Year</span>
-                  <span className="font-medium text-right">{app.year || "—"}</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0 gap-2">
+                  <span className="text-muted-foreground shrink-0">Year</span>
+                  <span className="font-medium text-right min-w-0 truncate">{app.year || "—"}</span>
                 </div>
-                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                  <span className="text-muted-foreground">Phone</span>
-                  <span className="font-medium text-right">{app.phone || "—"}</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0 gap-2">
+                  <span className="text-muted-foreground shrink-0">Phone</span>
+                  <span className="font-medium text-right min-w-0 truncate">{app.phone || "—"}</span>
                 </div>
               </div>
             </div>
 
             {/* Internship Info */}
-            <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70">
+            <div className="rounded-2xl border border-border/50 bg-white/70 p-5 backdrop-blur-xl dark:bg-[#1E293B]/70 overflow-hidden">
               <h3 className="flex items-center gap-2 text-sm font-bold mb-4"><Briefcase className="size-4 text-primary" /> Internship Details</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                  <span className="text-muted-foreground">Domain</span>
-                  <span className="font-medium text-right">{domain?.name ?? app.domain}</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0 gap-2">
+                  <span className="text-muted-foreground shrink-0">Domain</span>
+                  <span className="font-medium text-right min-w-0 truncate">{domain?.name ?? app.domain}</span>
                 </div>
-                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                  <span className="text-muted-foreground">Intern ID</span>
-                  <span className="font-medium font-mono text-xs text-right">{app.intern_id}</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0 gap-2">
+                  <span className="text-muted-foreground shrink-0">Intern ID</span>
+                  <span className="font-medium font-mono text-xs text-right min-w-0 truncate">{app.intern_id}</span>
                 </div>
-                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                  <span className="text-muted-foreground">Duration</span>
-                  <span className="font-medium text-right">{app.duration ?? 1} month{app.duration !== 1 ? "s" : ""}</span>
+                <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0 gap-2">
+                  <span className="text-muted-foreground shrink-0">Duration</span>
+                  <span className="font-medium text-right min-w-0 truncate">{app.duration ?? 1} month{app.duration !== 1 ? "s" : ""}</span>
                 </div>
                 <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
                   <span className="text-muted-foreground">Status</span>
@@ -1231,8 +1231,8 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="flex min-h-screen bg-gradient-to-br from-[#F8FAFC] to-[#EEF2FF] dark:from-[#0B1120] dark:to-[#0F172A]">
+    <div className="min-h-screen overflow-x-hidden">
+      <div className="flex min-h-screen overflow-x-hidden bg-gradient-to-br from-[#F8FAFC] to-[#EEF2FF] dark:from-[#0B1120] dark:to-[#0F172A]">
         {/* Background blobs */}
         <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <div className="absolute -top-40 -left-40 size-96 rounded-full bg-[#07284a]/15 blur-[120px] dark:bg-[#07284a]/20" />
@@ -1246,7 +1246,7 @@ function Dashboard() {
         {/* ─── Main Area ─── */}
         <div className="flex-1">
           {/* Content */}
-          <main className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+          <main className="mx-auto max-w-6xl px-4 py-8 space-y-8 min-w-0">
             {renderContent()}
           </main>
         </div>
@@ -1493,8 +1493,8 @@ function ProfilePanel({ app, onChange }: { app: Application; onChange: () => voi
     <Card className="overflow-hidden rounded-2xl border-border/50 bg-white/70 backdrop-blur-xl dark:bg-[#1E293B]/70">
       <div className="h-1.5 brand-gradient" />
       <CardContent className="pt-6">
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-start justify-between gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5 min-w-0">
             {app.photo_url ? (
               <img src={app.photo_url} alt="" className="size-16 rounded-2xl border-2 border-[#07284a]/20 object-cover dark:border-[#07284a]/40" />
             ) : (
@@ -1503,10 +1503,10 @@ function ProfilePanel({ app, onChange }: { app: Application; onChange: () => voi
               </div>
             )}
             <div>
-              <h3 className="text-lg font-bold">{app.full_name}</h3>
-              <p className="text-sm text-muted-foreground flex items-center gap-1.5"><Mail className="size-3.5" />{app.email}</p>
-              <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                {app.college && <span className="flex items-center gap-1"><Building className="size-3" />{app.college}</span>}
+              <h3 className="text-lg font-bold truncate">{app.full_name}</h3>
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5 min-w-0"><Mail className="size-3.5 shrink-0" /><span className="truncate">{app.email}</span></p>
+              <div className="mt-2 flex flex-wrap gap-2 sm:gap-3 text-xs text-muted-foreground min-w-0">
+                {app.college && <span className="flex items-center gap-1 min-w-0"><Building className="size-3 shrink-0" /><span className="truncate">{app.college}</span></span>}
                 {app.course && <span>{app.course}</span>}
                 {app.year && <span className="flex items-center gap-1"><Calendar className="size-3" />{app.year}</span>}
               </div>
@@ -1917,7 +1917,7 @@ function IDCardSection({ app }: { app: Application | null }) {
       <IDCard internId={app.intern_id} fullName={app.full_name} domain={domain?.name ?? app.domain} photoUrl={app.photo_url} issuedAt={app.offer_issued_at} duration={app.duration ?? 1} />
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Badge className="bg-emerald-600 text-white text-[10px]"><CheckCircle2 className="mr-1 size-3" /> ACTIVE</Badge>
-        <div className="ml-auto flex gap-2">
+        <div className="flex flex-wrap gap-2 ml-auto">
           <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs border-border/60"
             onClick={() => downloadPdf(
               <OfferLetterDoc fullName={app.full_name} internId={app.intern_id} domain={domain?.name ?? app.domain} issuedAt={app.offer_issued_at} duration={app.duration ?? 1} />,
