@@ -44,7 +44,26 @@ export const Route = createFileRoute("/domains/$slug")({
   ssr: false,
   head: ({ params }) => {
     const d = getDomain(params.slug);
-    return { meta: [{ title: `${d?.name ?? "Domain"} Internship — Skyrovix` }, { name: "description", content: d?.description ?? "Skyrovix internship domain." }] };
+    const name = d?.name ?? "Domain";
+    const desc = d?.description ?? "Skyrovix internship domain.";
+    return {
+      meta: [
+        { title: `${name} Internship — Virtual Internship | Skyrovix` },
+        { name: "description", content: `Join the ${name} virtual internship at Skyrovix. ${desc} Earn a verified certificate with offer letter and digital ID card.` },
+        { name: "keywords", content: `${name.toLowerCase()} internship, ${params.slug} virtual internship, ${name} online training, Skyrovix ${name}` },
+        { name: "robots", content: "index, follow" },
+        { property: "og:type", content: "website" },
+        { property: "og:title", content: `${name} Internship — Skyrovix` },
+        { property: "og:description", content: `${desc} Earn a verified certificate.` },
+        { property: "og:url", content: `https://skyrovix.online/domains/${params.slug}` },
+        { property: "og:image", content: "https://skyrovix.online/og-default.png" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: `${name} Internship — Skyrovix` },
+        { name: "twitter:description", content: desc },
+        { name: "twitter:image", content: "https://skyrovix.online/og-default.png" },
+        { rel: "canonical", href: `https://skyrovix.online/domains/${params.slug}` },
+      ],
+    };
   },
   component: InternshipDetailsPage,
 });

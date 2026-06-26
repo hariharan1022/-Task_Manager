@@ -4,7 +4,16 @@ import { Footer } from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => ({ meta: [{ title: "Privacy Policy — Skyrovix" }] }),
+  head: () => ({
+    meta: [
+      { title: "Privacy Policy — Skyrovix" },
+      { name: "description", content: "Skyrovix privacy policy. Learn how we collect, use, and protect your personal information including name, email, phone, college details, and payment data." },
+      { name: "robots", content: "index, follow" },
+      { property: "og:title", content: "Privacy Policy — Skyrovix" },
+      { property: "og:description", content: "Skyrovix privacy policy for data collection and protection." },
+      { rel: "canonical", href: "https://skyrovix.online/privacy" },
+    ],
+  }),
   component: PrivacyPage,
 });
 

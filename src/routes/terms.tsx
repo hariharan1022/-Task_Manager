@@ -4,7 +4,16 @@ import { Footer } from "@/components/Footer";
 import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({ meta: [{ title: "Terms of Service — Skyrovix" }] }),
+  head: () => ({
+    meta: [
+      { title: "Terms of Service — Skyrovix" },
+      { name: "description", content: "Skyrovix terms of service. Read the terms and conditions governing your use of the Skyrovix virtual internship and training platform." },
+      { name: "robots", content: "index, follow" },
+      { property: "og:title", content: "Terms of Service — Skyrovix" },
+      { property: "og:description", content: "Skyrovix terms and conditions for platform usage." },
+      { rel: "canonical", href: "https://skyrovix.online/terms" },
+    ],
+  }),
   component: TermsPage,
 });
 

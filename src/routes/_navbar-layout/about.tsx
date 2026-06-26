@@ -9,8 +9,21 @@ import cofounderPhoto from "@/assets/co founder.jpeg";
 export const Route = createFileRoute("/_navbar-layout/about")({
   head: () => ({
     meta: [
-      { title: "About — Skyrovix" },
-      { name: "description", content: "Learn about Skyrovix, our mission, founders, and the task-based internship platform." },
+      { title: "About Skyrovix — Empowering Future Innovators" },
+      { name: "description", content: "Learn about Skyrovix, an MSME-registered virtual internship and training platform helping college students, fresh graduates, and job seekers gain real-world skills through task-based projects." },
+      { name: "keywords", content: "about skyrovix, skyrovix internship platform, virtual internship company India, MSME registered training, skill development platform" },
+      { name: "robots", content: "index, follow" },
+      { property: "og:type", content: "website" },
+      { property: "og:title", content: "About Skyrovix — Empowering Future Innovators" },
+      { property: "og:description", content: "MSME-registered virtual internship platform helping students gain real-world skills through task-based projects." },
+      { property: "og:url", content: "https://skyrovix.online/about" },
+      { property: "og:image", content: "https://skyrovix.online/og-default.png" },
+      { property: "og:locale", content: "en_IN" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "About Skyrovix — Empowering Future Innovators" },
+      { name: "twitter:description", content: "MSME-registered virtual internship platform helping students gain real-world skills." },
+      { name: "twitter:image", content: "https://skyrovix.online/og-default.png" },
+      { rel: "canonical", href: "https://skyrovix.online/about" },
     ],
   }),
   component: AboutPage,

@@ -13,7 +13,20 @@ import { AuroraBackground } from "@/components/AuroraBackground";
 import { FadeUp } from "@/components/motion";
 
 export const Route = createFileRoute("/verify-certificate")({
-  head: () => ({ meta: [{ title: "Verify Certificate — Skyrovix" }, { name: "description", content: "Verify the authenticity of a Skyrovix internship or course certificate by ID." }] }),
+  head: () => ({
+    meta: [
+      { title: "Verify Certificate — Skyrovix Online Certificate Verification" },
+      { name: "description", content: "Verify the authenticity of a Skyrovix internship or course certificate online. Enter your certificate ID or intern ID to confirm authenticity instantly." },
+      { name: "keywords", content: "verify certificate, certificate verification, skyrovix certificate check, internship certificate verify, online certificate verification" },
+      { name: "robots", content: "index, follow" },
+      { property: "og:title", content: "Verify Certificate — Skyrovix" },
+      { property: "og:description", content: "Verify your Skyrovix internship or course certificate online." },
+      { property: "og:url", content: "https://skyrovix.online/verify-certificate" },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Verify Certificate — Skyrovix" },
+      { rel: "canonical", href: "https://skyrovix.online/verify-certificate" },
+    ],
+  }),
   component: VerifyPage,
 });
 

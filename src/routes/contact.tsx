@@ -9,10 +9,19 @@ import { FadeUp } from "@/components/motion";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — Skyrovix Internship Portal" },
-      { name: "description", content: "Get in touch with Skyrovix for support, partnerships, or internship questions." },
-      { property: "og:title", content: "Contact Skyrovix" },
-      { property: "og:description", content: "Reach the Skyrovix team for internship support and partnerships." },
+      { title: "Contact Skyrovix — Get in Touch | Internship Support" },
+      { name: "description", content: "Have questions about Skyrovix internships or courses? Contact our team for support with applications, payments, certificates, and general inquiries." },
+      { name: "keywords", content: "contact skyrovix, internship support, help skyrovix, skyrovix contact, internship queries" },
+      { name: "robots", content: "index, follow" },
+      { property: "og:type", content: "website" },
+      { property: "og:title", content: "Contact Skyrovix — Get in Touch" },
+      { property: "og:description", content: "Contact Skyrovix for internship support, applications, and inquiries." },
+      { property: "og:url", content: "https://skyrovix.online/contact" },
+      { property: "og:image", content: "https://skyrovix.online/og-default.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Contact Skyrovix" },
+      { name: "twitter:image", content: "https://skyrovix.online/og-default.png" },
+      { rel: "canonical", href: "https://skyrovix.online/contact" },
     ],
   }),
   component: ContactPage,

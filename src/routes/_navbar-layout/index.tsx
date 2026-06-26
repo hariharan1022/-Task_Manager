@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { HeroVisual } from "@/components/HeroVisual";
 import { MobileFloatingIcons } from "@/components/MobileFloatingIcons";
+import { FAQJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
+import { FAQ_DATA } from "@/lib/seo";
 import founderPhoto from "@/assets/founder.jpeg";
 import cofounderPhoto from "@/assets/co founder.jpeg";
 
@@ -37,10 +39,24 @@ const COURSE_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
 export const Route = createFileRoute("/_navbar-layout/")({
   head: () => ({
     meta: [
-      { title: "Skyrovix Internship Portal — Task-based virtual internships" },
-      { name: "description", content: "Apply, complete 5 hands-on tasks, get a verified certificate. Internships in Full Stack, AI/ML, UI/UX, Cyber Security and more." },
-      { property: "og:title", content: "Skyrovix Internship Portal" },
-      { property: "og:description", content: "Task-based virtual internships with offer letters, digital ID cards, and verified certificates." },
+      { title: "Skyrovix — Virtual Internship & Training Platform for Students" },
+      { name: "description", content: "Join Skyrovix for task-based virtual internships in Full Stack, AI/ML, Data Science, UI/UX, Cyber Security and more. Get offer letters, digital ID cards, and QR-verified certificates. Apply in minutes — 100% online." },
+      { name: "keywords", content: "virtual internship, online internship, internship with certificate, free internship for students, full stack development internship, data science internship, AI ML internship, UI UX design internship, cyber security internship, python internship, java internship, online courses, skill development, Skyrovix" },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Skyrovix" },
+      { property: "og:title", content: "Skyrovix — Virtual Internship & Training Platform" },
+      { property: "og:description", content: "Task-based virtual internships with offer letters, digital ID cards, and QR-verified certificates. 10+ domains. Apply in minutes." },
+      { property: "og:url", content: "https://skyrovix.online/" },
+      { property: "og:image", content: "https://skyrovix.online/og-default.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:locale", content: "en_IN" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Skyrovix — Virtual Internship & Training Platform" },
+      { name: "twitter:description", content: "Task-based virtual internships with offer letters, digital ID cards, and QR-verified certificates." },
+      { name: "twitter:image", content: "https://skyrovix.online/og-default.png" },
+      { rel: "canonical", href: "https://skyrovix.online/" },
     ],
   }),
   component: Landing,
@@ -147,6 +163,8 @@ function Landing() {
 
   return (
     <div className="min-h-screen">
+      <FAQJsonLd faqs={FAQ_DATA} />
+      <BreadcrumbJsonLd items={[{ name: "Home", url: "https://skyrovix.online/" }]} />
       {/* ─── HERO ─── */}
       <AuroraBackground>
         <section className="relative min-h-[90vh] sm:min-h-[92vh] pt-18 sm:pt-20 pb-52 sm:pb-56 md:pb-64">

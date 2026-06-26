@@ -18,7 +18,23 @@ import { FadeUp } from "@/components/motion";
 
 export const Route = createFileRoute("/domains/")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Internship Domains — Skyrovix" }, { name: "description", content: "Browse 10 internship domains: Full Stack, Frontend, Backend, Data Science, AI/ML, UI/UX, Python, Java, Cyber Security, Digital Marketing." }] }),
+  head: () => ({
+    meta: [
+      { title: "Internship Domains — Full Stack, AI/ML, Data Science, UI/UX | Skyrovix" },
+      { name: "description", content: "Explore 10+ internship domains at Skyrovix: Full Stack Development, AI & Machine Learning, Data Science, UI/UX Design, Cyber Security, Python, Java, and more. Find your perfect domain." },
+      { name: "keywords", content: "internship domains, full stack internship, AI ML internship, data science internship, cyber security training, python internship, java internship, frontend development, backend development" },
+      { name: "robots", content: "index, follow" },
+      { property: "og:type", content: "website" },
+      { property: "og:title", content: "Internship Domains — Full Stack, AI/ML, Data Science | Skyrovix" },
+      { property: "og:description", content: "Explore 10+ internship domains at Skyrovix. Find your perfect domain." },
+      { property: "og:url", content: "https://skyrovix.online/domains" },
+      { property: "og:image", content: "https://skyrovix.online/og-default.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Internship Domains — Skyrovix" },
+      { name: "twitter:image", content: "https://skyrovix.online/og-default.png" },
+      { rel: "canonical", href: "https://skyrovix.online/domains" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>) => ({
     apply: typeof search.apply === "string" ? search.apply : undefined,
   }),

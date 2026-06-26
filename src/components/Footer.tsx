@@ -7,7 +7,7 @@ export function Footer() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
-    <footer className="relative border-t border-border/50 bg-[#f8fafc] dark:bg-[#020617]">
+    <footer className="relative border-t border-border/50 bg-[#f8fafc] dark:bg-[#020617]" role="contentinfo">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:py-16">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
@@ -16,26 +16,26 @@ export function Footer() {
             <p className="text-sm leading-relaxed text-muted-foreground max-w-xs">
               A task-based virtual internship platform by Skyrovix — build real skills, earn a recognised certificate.
             </p>
-            <div className="flex items-center gap-2.5 pt-2">
-              <a href="https://www.linkedin.com/in/hariharan-s-92b566381" target="_blank" rel="noopener noreferrer" className="grid size-9 place-items-center rounded-xl border border-border/60 bg-white/50 dark:bg-[#0f172a]/50 text-muted-foreground hover:text-[#0A66C2] hover:border-[#0A66C2]/30 hover:bg-[#0A66C2]/5 transition-all">
+            <nav aria-label="Social media links" className="flex items-center gap-2.5 pt-2">
+              <a href="https://www.linkedin.com/in/hariharan-s-92b566381" target="_blank" rel="noopener noreferrer" aria-label="Skyrovix on LinkedIn" className="grid size-9 place-items-center rounded-xl border border-border/60 bg-white/50 dark:bg-[#0f172a]/50 text-muted-foreground hover:text-[#0A66C2] hover:border-[#0A66C2]/30 hover:bg-[#0A66C2]/5 transition-all">
                 <Linkedin className="size-4" />
               </a>
-              <a href="https://www.instagram.com/skyrovix_web" target="_blank" rel="noopener noreferrer" className="grid size-9 place-items-center rounded-xl border border-border/60 bg-white/50 dark:bg-[#0f172a]/50 text-muted-foreground hover:text-[#E4405F] hover:border-[#E4405F]/30 hover:bg-[#E4405F]/5 transition-all">
+              <a href="https://www.instagram.com/skyrovix_web" target="_blank" rel="noopener noreferrer" aria-label="Skyrovix on Instagram" className="grid size-9 place-items-center rounded-xl border border-border/60 bg-white/50 dark:bg-[#0f172a]/50 text-muted-foreground hover:text-[#E4405F] hover:border-[#E4405F]/30 hover:bg-[#E4405F]/5 transition-all">
                 <Instagram className="size-4" />
               </a>
-              <a href="https://wa.me/919940773204" target="_blank" rel="noopener noreferrer" className="grid size-9 place-items-center rounded-xl border border-border/60 bg-white/50 dark:bg-[#0f172a]/50 text-muted-foreground hover:text-[#25D366] hover:border-[#25D366]/30 hover:bg-[#25D366]/5 transition-all">
+              <a href="https://wa.me/919940773204" target="_blank" rel="noopener noreferrer" aria-label="Skyrovix on WhatsApp" className="grid size-9 place-items-center rounded-xl border border-border/60 bg-white/50 dark:bg-[#0f172a]/50 text-muted-foreground hover:text-[#25D366] hover:border-[#25D366]/30 hover:bg-[#25D366]/5 transition-all">
                 <MessageCircle className="size-4" />
               </a>
-            </div>
+            </nav>
           </div>
 
           {/* Platform */}
-          <div>
+          <nav aria-label="Platform links">
             <h4 className="text-sm font-semibold mb-3">Platform</h4>
             <ul className="space-y-2.5">
               {[
                 { to: "/domains", label: "Internship Domains" },
-                { to: "/courses", label: "Courses" },
+                { to: "/courses", label: "Online Courses" },
                 { to: "/about", label: "About Us" },
                 { to: "/contact", label: "Contact" },
                 { to: "/verify-certificate", label: "Verify Certificate" },
@@ -48,7 +48,7 @@ export function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
 
           {/* Contact */}
           <div>
@@ -67,7 +67,7 @@ export function Footer() {
           <div>
             <h4 className="text-sm font-semibold mb-3">Registered with</h4>
             <div className="inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-white/60 dark:bg-[#0f172a]/60 px-3 py-3 shadow-sm">
-              <img src={msme} alt="MSME Registered" className="h-10 w-auto object-contain" />
+              <img src={msme} alt="MSME Government of India registration logo" className="h-10 w-auto object-contain" loading="lazy" />
               <div className="leading-tight">
                 <p className="text-xs font-semibold text-foreground">MSME Registered</p>
                 <p className="text-[10px] font-mono text-muted-foreground">UDYAM-TN-17-0076606</p>
@@ -83,11 +83,11 @@ export function Footer() {
           <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Skyrovix. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
+          <nav aria-label="Legal links" className="flex items-center gap-4">
             <Link to="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2">Privacy Policy</Link>
             <Link to="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2">Terms of Service</Link>
-            <button onClick={scrollToTop} className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2">Back to top</button>
-          </div>
+            <button onClick={scrollToTop} className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2" aria-label="Scroll back to top">Back to top</button>
+          </nav>
         </div>
       </div>
     </footer>
