@@ -1,9 +1,9 @@
 export const COMPANY = {
   name: "Skyrovix",
   shortName: "Skyrovix",
-  tagline: "Build the Future",
+  tagline: "Empowering Future Innovators",
   email: "skyrovix@gmail.com",
-  website: "www.skyrovix.com",
+  website: "www.skyrovix.online",
   founder: { name: "Hariharan S", title: "Founder & CEO" },
   cofounder: { name: "Maheshwaran S", title: "Co-Founder" },
 };

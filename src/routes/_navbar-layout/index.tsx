@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { DOMAINS, COMPANY, DURATIONS, durationConfig, generateInternId } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useRecentReviews, computeStats } from "@/lib/reviews";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +23,7 @@ import {
   Sparkles, ChevronRight, CheckCircle2, Quote, Star,
   ArrowUpRight, Globe, Zap, Users, Target, HeartHandshake,
   Clock, MessageSquare, Briefcase, Laptop, Building2,
+  Loader2,
 } from "lucide-react";
 import { HeroVisual } from "@/components/HeroVisual";
 import founderPhoto from "@/assets/founder.jpeg";
@@ -151,7 +154,7 @@ function Landing() {
               <FadeUp className="text-center md:text-left">
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#07284a]/15 bg-white/60 dark:bg-[#0f172a]/60 px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-medium text-[#07284a] dark:text-[#60a5fa] shadow-sm backdrop-blur">
                   <ShieldCheck className="size-3 sm:size-3.5" />
-                  <span className="hidden sm:inline">MSME Registered · Skyrovix IT Solutions</span>
+                  <span className="hidden sm:inline">MSME Registered · Skyrovix</span>
                   <span className="sm:hidden">MSME Registered</span>
                 </div>
 
@@ -484,29 +487,7 @@ function Landing() {
               <p className="mt-3 text-muted-foreground">Hear from interns who've been through the program.</p>
             </div>
           </Reveal>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { name: "Priya K.", role: "Full Stack Intern", quote: "The task-based format is exactly what I needed. Building real projects gave me the confidence to crack my first job interview.", stars: 5 },
-              { name: "Rahul M.", role: "Data Science Intern", quote: "I loved the mentor reviews. Every task submission came with actionable feedback. Learned more in 4 weeks than a semester.", stars: 5 },
-              { name: "Divya S.", role: "UI/UX Intern", quote: "The instant offer letter and ID card made it feel official from day one. The certificate with QR code is a nice touch.", stars: 5 },
-            ].map((t, i) => (
-              <FadeUp key={t.name} delay={0.1 + i * 0.1}>
-                <div className="group rounded-2xl border border-border/50 bg-white/60 dark:bg-[#0f172a]/60 p-6 transition-all card-elevated hover:card-elevated-hover">
-                  <div className="flex gap-1 mb-4">
-                    {Array.from({ length: t.stars }).map((_, si) => (
-                      <Star key={si} className="size-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <Quote className="size-5 text-[#07284a]/20 dark:text-[#60a5fa]/20 mb-2" />
-                  <p className="text-sm text-muted-foreground leading-relaxed italic">&ldquo;{t.quote}&rdquo;</p>
-                  <div className="mt-4 pt-4 border-t border-border/40">
-                    <p className="text-sm font-semibold">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </div>
-              </FadeUp>
-            ))}
-          </div>
+          <ReviewsGrid />
         </div>
       </section>
 
@@ -640,6 +621,83 @@ const FAQ_ITEMS = [
   { q: "Who reviews my task submissions?", a: "Each task is reviewed by our mentor team. You'll receive feedback and can resubmit if needed. A task is marked approved once it meets the required standards." },
   { q: "Do I get a certificate if I don't complete all tasks?", a: "The certificate is issued only after you complete and get approval on all 5 tasks and pay the ₹100 certification fee." },
 ];
+
+function ReviewsGrid() {
+  const { data: reviews = [], isLoading } = useRecentReviews(6);
+  const stats = computeStats(reviews);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (reviews.length === 0) {
+    return (
+      <div className="text-center py-16 space-y-3">
+        <MessageSquare className="size-10 mx-auto text-muted-foreground/40" />
+        <p className="text-muted-foreground">No reviews yet. Be the first student to share your experience.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Summary */}
+      <div className="flex flex-wrap items-center justify-center gap-6 text-center">
+        <div>
+          <span className="text-3xl font-bold">{stats.average > 0 ? stats.average : "—"}</span>
+          <div className="flex gap-0.5 mt-1 justify-center">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} className={`size-4 ${i < Math.round(stats.average) ? "text-amber-400" : "text-muted-foreground/30"}`} fill={i < Math.round(stats.average) ? "currentColor" : "none"} />
+            ))}
+          </div>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          <span className="text-2xl font-bold text-foreground">{stats.total}</span><br />
+          review{stats.total !== 1 ? "s" : ""}
+        </div>
+      </div>
+      {/* Cards */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {reviews.map((r, i) => {
+          const name = r.profiles?.full_name ?? "Anonymous";
+          const initials = name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+          const avatarUrl = r.profiles?.photo_url;
+          const date = new Date(r.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+          return (
+            <FadeUp key={r.id} delay={0.1 + i * 0.1}>
+              <div className="group rounded-2xl border border-border/50 bg-white/60 dark:bg-[#0f172a]/60 p-6 transition-all card-elevated hover:card-elevated-hover">
+                <div className="flex gap-1 mb-3">
+                  {Array.from({ length: 5 }).map((_, si) => (
+                    <Star key={si} className={`size-4 ${si < r.rating ? "text-amber-400" : "text-muted-foreground/20"}`} fill={si < r.rating ? "currentColor" : "none"} />
+                  ))}
+                </div>
+                <Quote className="size-5 text-[#07284a]/20 dark:text-[#60a5fa]/20 mb-2" />
+                <p className="text-sm text-muted-foreground leading-relaxed italic">&ldquo;{r.content}&rdquo;</p>
+                <div className="mt-4 pt-4 border-t border-border/40 flex items-center gap-3">
+                  <Avatar className="size-8">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={name} className="size-full object-cover rounded-full" />
+                    ) : (
+                      <AvatarFallback className="text-[9px] bg-[#07284a]/10 dark:bg-[#1d4ed8]/10 text-[#07284a] dark:text-[#60a5fa]">{initials}</AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-semibold">{name}</p>
+                    <p className="text-[11px] text-muted-foreground">{date}</p>
+                  </div>
+                </div>
+              </div>
+            </FadeUp>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function TypingText({ texts }: { texts: string[] }) {
   const [index, setIndex] = useState(0);

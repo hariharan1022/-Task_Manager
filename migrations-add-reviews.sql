@@ -18,24 +18,23 @@ CREATE INDEX IF NOT EXISTS idx_reviews_user ON public.reviews(user_id);
 
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies to allow re-running this migration
+DROP POLICY IF EXISTS "Reviews are publicly readable" ON public.reviews;
+DROP POLICY IF EXISTS "Enrolled users can insert reviews" ON public.reviews;
+DROP POLICY IF EXISTS "Authenticated users can insert reviews" ON public.reviews;
+DROP POLICY IF EXISTS "Users can update own reviews" ON public.reviews;
+DROP POLICY IF EXISTS "Users can delete own reviews" ON public.reviews;
+DROP POLICY IF EXISTS "Admins can moderate reviews" ON public.reviews;
+
 -- Everyone can read approved reviews
 CREATE POLICY "Reviews are publicly readable" ON public.reviews
   FOR SELECT TO anon, authenticated
   USING (status = 'approved');
 
--- Only enrolled users can insert reviews
-CREATE POLICY "Enrolled users can insert reviews" ON public.reviews
+-- Any authenticated user can insert reviews (no enrollment check)
+CREATE POLICY "Authenticated users can insert reviews" ON public.reviews
   FOR INSERT TO authenticated WITH CHECK (
-    auth.uid() = user_id AND
-    CASE target_type
-      WHEN 'course' THEN EXISTS (
-        SELECT 1 FROM public.enrollments WHERE user_id = auth.uid() AND course_id = target_id::uuid
-      )
-      WHEN 'internship' THEN EXISTS (
-        SELECT 1 FROM public.applications WHERE user_id = auth.uid() AND domain = target_id
-      )
-      ELSE false
-    END
+    auth.uid() = user_id
   );
 
 -- Users can update their own reviews
@@ -44,16 +43,22 @@ CREATE POLICY "Users can update own reviews" ON public.reviews
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- Admins can moderate (update status / delete)
+-- Users can delete their own reviews
+CREATE POLICY "Users can delete own reviews" ON public.reviews
+  FOR DELETE TO authenticated
+  USING (auth.uid() = user_id);
+
+-- Admins can moderate (update status / delete any review)
 CREATE POLICY "Admins can moderate reviews" ON public.reviews
   FOR ALL TO authenticated
   USING (public.has_role(auth.uid(), 'admin'))
   WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
 GRANT SELECT ON public.reviews TO anon, authenticated;
-GRANT INSERT, UPDATE ON public.reviews TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.reviews TO authenticated;
 GRANT ALL ON public.reviews TO service_role;
 
 -- Auto-update updated_at on row modification
+DROP TRIGGER IF EXISTS reviews_updated_at ON public.reviews;
 CREATE TRIGGER reviews_updated_at BEFORE UPDATE ON public.reviews
   FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();

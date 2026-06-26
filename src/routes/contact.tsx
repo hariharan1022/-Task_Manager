@@ -10,7 +10,7 @@ export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
       { title: "Contact — Skyrovix Internship Portal" },
-      { name: "description", content: "Get in touch with Skyrovix IT Solutions for support, partnerships, or internship questions." },
+      { name: "description", content: "Get in touch with Skyrovix for support, partnerships, or internship questions." },
       { property: "og:title", content: "Contact Skyrovix" },
       { property: "og:description", content: "Reach the Skyrovix team for internship support and partnerships." },
     ],

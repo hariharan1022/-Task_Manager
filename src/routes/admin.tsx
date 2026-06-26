@@ -15,7 +15,7 @@ import { Logo } from "@/components/Logo";
 import { OfferLetterDoc, CertificateDoc, CourseCertificateDoc, downloadPdf, downloadPdfBlob } from "@/components/pdf-docs";
 import {
   LayoutDashboard, GraduationCap, BookOpen, FileText, ListChecks,
-  ClipboardCheck, Brain, IndianRupee, Award, Users, BarChart3,
+  ClipboardCheck, ClipboardList, Brain, IndianRupee, Award, Users, BarChart3,
   Settings, LogOut, Moon, Sun, Bell, Search, ChevronDown, Menu,
   X, Plus, Eye, CheckCircle2, XCircle, Mail, Download, Sparkles,
   ChevronRight, ChevronLeft, Clock, TrendingUp, UserPlus, Wallet,
@@ -41,6 +41,7 @@ const SIDEBAR_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "applications", label: "Internship Applications", icon: Users },
   { id: "courses", label: "Courses", icon: BookOpen },
+  { id: "enrollments", label: "Course Enrollments", icon: ClipboardList },
   { id: "topics", label: "Topics", icon: FolderTree },
   { id: "tasks", label: "Tasks", icon: ListChecks },
   { id: "submissions", label: "Task Submissions", icon: ClipboardCheck },
@@ -48,6 +49,7 @@ const SIDEBAR_ITEMS = [
   { id: "payments", label: "Payments", icon: Wallet },
   { id: "certificates", label: "Certificates", icon: Award },
   { id: "students", label: "Students", icon: GraduationCap },
+  { id: "email-logs", label: "Email Logs", icon: Mail },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "settings", label: "Settings", icon: Settings },
 ] as const;
@@ -253,6 +255,7 @@ function AdminPanel() {
             {active === "dashboard" && <DashboardSection greeting={greeting} overview={overview} onNavigate={setActive} />}
             {active === "applications" && <ApplicationsSection />}
             {active === "courses" && <CoursesSection />}
+            {active === "enrollments" && <CourseEnrollmentsSection />}
             {active === "topics" && <TopicsSection />}
             {active === "tasks" && <TasksSection />}
             {active === "submissions" && <SubmissionsSection />}
@@ -260,6 +263,7 @@ function AdminPanel() {
             {active === "payments" && <PaymentsSection />}
             {active === "certificates" && <CertificatesSection />}
             {active === "students" && <StudentsSection />}
+            {active === "email-logs" && <EmailLogsSection />}
             {active === "analytics" && <AnalyticsSection />}
             {active === "settings" && <SettingsSection />}
           </main>
@@ -377,6 +381,8 @@ function DashboardSection({ greeting, overview, onNavigate }: { greeting: string
 function ApplicationsSection() {
   const qc = useQueryClient();
   const [selectedApp, setSelectedApp] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { data } = useQuery({
     queryKey: ["admin-apps"],
     queryFn: async () => {
@@ -395,6 +401,27 @@ function ApplicationsSection() {
     qc.invalidateQueries({ queryKey: ["admin-overview"] });
   };
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { deleteInternshipApplication: del } = await import("@/lib/admin-service");
+      const result = await del({ data: { applicationId: deleteTarget.id } });
+      if (result.success) {
+        toast.success("Application deleted successfully.");
+        qc.invalidateQueries({ queryKey: ["admin-apps"] });
+        qc.invalidateQueries({ queryKey: ["admin-overview"] });
+      } else {
+        toast.error(result.error ?? "Failed to delete application");
+      }
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to delete application");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
+
   return (
     <div className="animate-fade-in-up space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -403,6 +430,44 @@ function ApplicationsSection() {
           <p className="text-sm text-muted-foreground">{data?.length ?? 0} total applications</p>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => !deleting && setDeleteTarget(null)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md rounded-2xl border border-border/50 bg-white/95 p-6 shadow-2xl backdrop-blur-2xl dark:bg-[#1E293B]/95" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="grid size-10 place-items-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/30"><AlertTriangle className="size-5" /></div>
+              <div>
+                <h3 className="font-bold text-lg">Delete Internship Application?</h3>
+                <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="rounded-xl bg-accent/30 p-4 text-sm space-y-1 mb-4">
+              <p><span className="font-medium">Student:</span> {deleteTarget.full_name}</p>
+              <p><span className="font-medium">Domain:</span> {getDomain(deleteTarget.domain)?.name ?? deleteTarget.domain}</p>
+              <p><span className="font-medium">Duration:</span> {deleteTarget.duration ?? 1} Month(s)</p>
+            </div>
+            <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-3 text-xs text-amber-700 dark:text-amber-400 mb-4">
+              <p className="font-medium mb-1">This will remove:</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li>Internship enrollment</li>
+                <li>Assigned tasks</li>
+                <li>Task submissions</li>
+                <li>Progress tracking</li>
+                <li>Internship certificate (if exists)</li>
+              </ul>
+              <p className="mt-2 font-medium text-green-600 dark:text-green-400">Student account will NOT be deleted.</p>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" className="border-border/60" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white border-0" onClick={handleDelete} disabled={deleting}>
+                {deleting ? "Deleting..." : "Delete Application"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {selectedApp && (
@@ -424,14 +489,21 @@ function ApplicationsSection() {
                 <div><p className="text-muted-foreground text-xs">Applied</p><p>{new Date(selectedApp.created_at).toLocaleDateString("en-IN")}</p></div>
                 <div><p className="text-muted-foreground text-xs">Offer Issued</p><p>{selectedApp.offer_issued_at ? new Date(selectedApp.offer_issued_at).toLocaleDateString("en-IN") : "—"}</p></div>
               </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button size="sm" className="brand-gradient text-white border-0 flex-1" onClick={() => { updateStatus(selectedApp.id, selectedApp.status === "approved" ? "ongoing" : "completed"); setSelectedApp(null); }}>
-                        {selectedApp.status === "approved" ? "Mark Ongoing" : "Mark Completed"}
-                      </Button>
-                      <Button size="sm" variant="outline" className="border-border/60" asChild>
-                        <a href={`mailto:${selectedApp.email}`}><Mail className="mr-1 size-3.5" /> Email</a>
-                      </Button>
-                    </div>
+              <div className="flex gap-2 pt-2 flex-wrap">
+                {selectedApp.status === "approved" && (
+                  <Button size="sm" className="brand-gradient text-white border-0 flex-1" onClick={() => { updateStatus(selectedApp.id, "ongoing"); setSelectedApp(null); }}>
+                    Mark Ongoing
+                  </Button>
+                )}
+                {selectedApp.status === "ongoing" && (
+                  <Button size="sm" className="brand-gradient text-white border-0 flex-1" onClick={() => { updateStatus(selectedApp.id, "completed"); setSelectedApp(null); }}>
+                    Mark Completed
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" className="border-border/60" asChild>
+                  <a href={`mailto:${selectedApp.email}`}><Mail className="mr-1 size-3.5" /> Email</a>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -471,20 +543,21 @@ function ApplicationsSection() {
                       a.status === "completed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
                       a.status === "ongoing" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
                       a.status === "approved" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                      a.status === "rejected" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
                       "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                     }`}>{a.status}</Badge>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button onClick={() => setSelectedApp(a)} className="grid size-8 place-items-center rounded-lg hover:bg-accent/50 transition" title="View"><Eye className="size-4" /></button>
-                      {a.status !== "completed" && a.status !== "ongoing" && (
-                        <button onClick={() => updateStatus(a.id, "ongoing")} className="grid size-8 place-items-center rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition" title="Approve"><CheckCircle2 className="size-4" /></button>
+                      {a.status === "pending" && (
+                        <>
+                          <button onClick={() => updateStatus(a.id, "approved")} className="grid size-8 place-items-center rounded-lg text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30 transition" title="Approve"><CheckCircle2 className="size-4" /></button>
+                          <button onClick={() => updateStatus(a.id, "rejected")} className="grid size-8 place-items-center rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition" title="Reject"><XCircle className="size-4" /></button>
+                        </>
                       )}
                       <a href={`mailto:${a.email}`} className="grid size-8 place-items-center rounded-lg hover:bg-accent/50 transition" title="Send Email"><Mail className="size-4" /></a>
-                      <button onClick={() => downloadPdf(
-                        <OfferLetterDoc fullName={a.full_name} internId={a.intern_id} domain={dd?.name ?? a.domain} issuedAt={a.offer_issued_at} duration={(a as any).duration ?? 1} />,
-                        `OfferLetter_${a.intern_id}.pdf`
-                      )} className="grid size-8 place-items-center rounded-lg hover:bg-accent/50 transition" title="Generate Offer"><Download className="size-4" /></button>
+                      <button onClick={() => setDeleteTarget(a)} className="grid size-8 place-items-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition" title="Delete Application"><Trash2 className="size-4" /></button>
                     </div>
                   </td>
                 </tr>
@@ -682,6 +755,167 @@ function CourseDialog({ open, onClose, onSaved, mode, course }: {
             </Button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
+// COURSE ENROLLMENTS
+// ══════════════════════════════════════════════
+function CourseEnrollmentsSection() {
+  const qc = useQueryClient();
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const { data: enrollments, isLoading } = useQuery({
+    queryKey: ["admin-enrollments"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("enrollments")
+        .select("id, user_id, course_id, status, progress_percent, started_at, completed_at, created_at, courses:course_id(slug, name)")
+        .order("created_at", { ascending: false });
+      return (data ?? []).map((e: any) => ({ ...e, course: e.courses }));
+    },
+  });
+
+  const { data: profiles } = useQuery({
+    queryKey: ["admin-enrollments-profiles"],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("id, full_name, email");
+      return new Map((data ?? []).map((p: any) => [p.id, p]));
+    },
+  });
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { deleteCourseEnrollment: del } = await import("@/lib/admin-service");
+      const result = await del({ data: { enrollmentId: deleteTarget.id } });
+      if (result.success) {
+        toast.success("Course enrollment deleted successfully.");
+        qc.invalidateQueries({ queryKey: ["admin-enrollments"] });
+        qc.invalidateQueries({ queryKey: ["admin-overview"] });
+      } else {
+        toast.error(result.error ?? "Failed to delete enrollment");
+      }
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to delete enrollment");
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
+
+  return (
+    <div className="animate-fade-in-up space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-2xl font-bold">Course Enrollments</h2>
+        <p className="text-sm text-muted-foreground">{enrollments?.length ?? 0} total enrollments</p>
+      </div>
+
+      {/* Delete Confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => !deleting && setDeleteTarget(null)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md rounded-2xl border border-border/50 bg-white/95 p-6 shadow-2xl backdrop-blur-2xl dark:bg-[#1E293B]/95" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="grid size-10 place-items-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/30"><AlertTriangle className="size-5" /></div>
+              <div>
+                <h3 className="font-bold text-lg">Delete Course Enrollment?</h3>
+                <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="rounded-xl bg-accent/30 p-4 text-sm space-y-1 mb-4">
+              <p><span className="font-medium">Student:</span> {deleteTarget.profileName ?? "Unknown"}</p>
+              <p><span className="font-medium">Course:</span> {deleteTarget.course?.name ?? "Unknown"}</p>
+              <p><span className="font-medium">Status:</span> {deleteTarget.status}</p>
+            </div>
+            <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-3 text-xs text-amber-700 dark:text-amber-400 mb-4">
+              <p className="font-medium mb-1">This will remove:</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li>Course enrollment</li>
+                <li>Course progress</li>
+                <li>Quiz attempts</li>
+                <li>Course certificate</li>
+              </ul>
+              <p className="mt-2 font-medium text-green-600 dark:text-green-400">Student account will NOT be deleted.</p>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" className="border-border/60" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white border-0" onClick={handleDelete} disabled={deleting}>
+                {deleting ? "Deleting..." : "Delete Enrollment"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-2xl border border-border/50 bg-white/60 backdrop-blur dark:bg-[#1E293B]/60">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border/50 text-xs uppercase text-muted-foreground">
+              <th className="px-4 py-3 text-left">Student</th>
+              <th className="px-4 py-3 text-left">Course</th>
+              <th className="px-4 py-3 text-left">Progress</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-left">Enrolled</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading && (
+              <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Loading...</td></tr>
+            )}
+            {!isLoading && enrollments?.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">No course enrollments yet.</td></tr>
+            )}
+            {enrollments?.map((e: any) => {
+              const profile = profiles?.get(e.user_id);
+              return (
+                <tr key={e.id} className="border-b border-border/30 transition hover:bg-accent/20">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="grid size-8 shrink-0 place-items-center rounded-full brand-gradient text-[10px] font-bold text-white">{(profile?.full_name ?? "?").charAt(0).toUpperCase()}</div>
+                      <div className="min-w-0"><p className="font-medium text-sm truncate">{profile?.full_name ?? "Unknown"}</p><p className="text-xs text-muted-foreground">{profile?.email ?? ""}</p></div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-xs font-medium">{e.course?.name ?? "Unknown"}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-20 rounded-full bg-accent overflow-hidden">
+                        <div className="h-full brand-gradient rounded-full" style={{ width: `${e.progress_percent ?? 0}%` }} />
+                      </div>
+                      <span className="text-xs text-muted-foreground">{e.progress_percent ?? 0}%</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge className={`text-xs ${
+                      e.status === "completed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                      e.status === "enrolled" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                    }`}>{e.status}</Badge>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(e.created_at).toLocaleDateString("en-IN")}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex justify-end gap-1">
+                      <button
+                        onClick={() => {
+                          setDeleteTarget({ ...e, profileName: profile?.full_name });
+                        }}
+                        className="grid size-8 place-items-center rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition"
+                        title="Delete Enrollment"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -1376,7 +1610,7 @@ function PaymentsSection() {
     queryFn: async () => {
       const { data } = await supabase
         .from("payments")
-        .select("*, applications(full_name, intern_id, domain, id)")
+        .select("*, applications(full_name, intern_id, domain, id, email, user_id)")
         .order("submitted_at", { ascending: false });
       return data ?? [];
     },
@@ -1395,6 +1629,17 @@ function PaymentsSection() {
       const { error: cerr } = await supabase.from("certificates").insert({ application_id: applicationId, certificate_id: cert_id, verification_hash: hash });
       if (cerr) return toast.error(cerr.message);
       toast.success(`Payment verified, certificate ${cert_id} issued`);
+      (async () => {
+        try {
+          const { data: pmt } = await supabase.from("payments").select("*, applications!inner(full_name, intern_id, domain, email, user_id)").eq("id", paymentId).single();
+          if (pmt?.applications?.email) {
+            const { sendCertificateEmail } = await import("@/lib/email-helpers");
+            const app = pmt.applications as any;
+            const result = await sendCertificateEmail({ to: app.email, studentName: app.full_name, studentId: app.user_id, certId: cert_id, domainName: app.domain, internId: app.intern_id });
+            if (!result.success) console.warn("[Email] Certificate email not sent:", result.error);
+          }
+        } catch (e) { console.warn("[Email] Failed to send certificate:", e); }
+      })();
     }
     qc.invalidateQueries({ queryKey: ["admin-payments"] });
   };
@@ -1919,6 +2164,114 @@ function SettingsSection() {
           </div>
           <Button onClick={save} disabled={saving} className="brand-gradient text-white border-0">{saving ? "Saving…" : "Save Changes"}</Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
+// EMAIL LOGS
+// ══════════════════════════════════════════════
+function EmailLogsSection() {
+  const { data: logs } = useQuery({
+    queryKey: ["admin-email-logs"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("email_logs")
+        .select("*")
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const resend = async (log: any) => {
+    try {
+      const { data: app } = await supabase
+        .from("applications")
+        .select("full_name, intern_id, domain, email, user_id")
+        .eq("user_id", log.user_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!app?.email) {
+        toast.error("Cannot resend: student data not found");
+        return;
+      }
+      const { sendEmail } = await import("@/lib/email-service");
+      const result = await sendEmail({
+        data: {
+          to: app.email,
+          studentName: app.full_name,
+          studentId: app.user_id,
+          documentType: log.document_type,
+          subject: `Re: ${log.subject}`,
+          body: `This is a re-sent notification regarding:\n${log.subject}\n\nPlease contact support if you need the original PDF attachment.`,
+          referenceId: log.reference_id,
+          pdfData: {
+            fullName: app.full_name,
+            internId: app.intern_id ?? log.reference_id ?? "",
+            domain: app.domain ?? "",
+            issuedAt: new Date().toISOString(),
+          },
+        },
+      });
+      if (result.success) toast.success("Resend request logged");
+      else toast.error(`Resend failed: ${result.error}`);
+    } catch (e: any) {
+      toast.error(`Resend failed: ${e.message}`);
+    }
+  };
+
+  return (
+    <div className="animate-fade-in-up space-y-4">
+      <h2 className="text-2xl font-bold">Email Logs</h2>
+      <p className="text-sm text-muted-foreground">{logs?.length ?? 0} email records</p>
+      <div className="overflow-x-auto rounded-2xl border border-border/50 bg-white/60 backdrop-blur dark:bg-[#1E293B]/60">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border/50 text-xs uppercase text-muted-foreground">
+              <th className="px-4 py-3 text-left">Student</th>
+              <th className="px-4 py-3 text-left">Email</th>
+              <th className="px-4 py-3 text-left">Document</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-left">Sent At</th>
+              <th className="px-4 py-3 text-left">Error</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs?.length === 0 && (
+              <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">No email records found.</td></tr>
+            )}
+            {logs?.map((log: any) => (
+              <tr key={log.id} className="border-b border-border/30 transition hover:bg-accent/20">
+                <td className="px-4 py-3 font-medium">{log.student_name}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{log.email_to}</td>
+                <td className="px-4 py-3">
+                  <Badge className={`text-xs ${
+                    log.document_type === "offer_letter" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                  }`}>{log.document_type === "offer_letter" ? "Offer Letter" : "Certificate"}</Badge>
+                </td>
+                <td className="px-4 py-3">
+                  <Badge className={`text-xs ${
+                    log.status === "sent" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                    log.status === "failed" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                  }`}>{log.status}</Badge>
+                </td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{log.sent_at ? new Date(log.sent_at).toLocaleString("en-IN") : "—"}</td>
+                <td className="px-4 py-3 text-xs text-red-500 max-w-[200px] truncate" title={log.error_message ?? ""}>{log.error_message ?? "—"}</td>
+                <td className="px-4 py-3 text-right">
+                  {log.status === "failed" && (
+                    <button onClick={() => resend(log)} className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition" title="Resend email">
+                      <RefreshCw className="size-3.5" /> Resend
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

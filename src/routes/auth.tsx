@@ -106,7 +106,7 @@ function AuthPage() {
               </div>
             </div>
           </div>
-          <div className="text-xs text-white/40">© {new Date().getFullYear()} Skyrovix IT Solutions</div>
+          <div className="text-xs text-white/40">© {new Date().getFullYear()} Skyrovix</div>
         </div>
       </div>
 

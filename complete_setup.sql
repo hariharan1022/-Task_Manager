@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS public.tasks (
 GRANT SELECT ON public.tasks TO authenticated, anon;
 GRANT ALL ON public.tasks TO service_role;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Tasks are public" ON public.tasks;
 CREATE POLICY "Tasks are public" ON public.tasks FOR SELECT TO anon, authenticated USING (true);
 
 -- ============ SUBMISSIONS ============
@@ -128,46 +129,61 @@ GRANT SELECT ON public.certificates TO authenticated, anon;
 GRANT INSERT, UPDATE ON public.certificates TO authenticated;
 GRANT ALL ON public.certificates TO service_role;
 ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Certificates are publicly verifiable" ON public.certificates;
 CREATE POLICY "Certificates are publicly verifiable" ON public.certificates FOR SELECT TO anon, authenticated USING (true);
 
 -- ============ POLICIES ============
 -- profiles
+DROP POLICY IF EXISTS "Users view own profile" ON public.profiles;
 CREATE POLICY "Users view own profile" ON public.profiles FOR SELECT TO authenticated USING (auth.uid() = id OR public.has_role(auth.uid(), 'admin'));
+DROP POLICY IF EXISTS "Users insert own profile" ON public.profiles;
 CREATE POLICY "Users insert own profile" ON public.profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
+DROP POLICY IF EXISTS "Users update own profile" ON public.profiles;
 CREATE POLICY "Users update own profile" ON public.profiles FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
 -- user_roles
+DROP POLICY IF EXISTS "Users view own roles" ON public.user_roles;
 CREATE POLICY "Users view own roles" ON public.user_roles FOR SELECT TO authenticated USING (auth.uid() = user_id OR public.has_role(auth.uid(), 'admin'));
 
 -- applications
+DROP POLICY IF EXISTS "Users view own applications" ON public.applications;
 CREATE POLICY "Users view own applications" ON public.applications FOR SELECT TO authenticated USING (auth.uid() = user_id OR public.has_role(auth.uid(), 'admin'));
+DROP POLICY IF EXISTS "Users create own applications" ON public.applications;
 CREATE POLICY "Users create own applications" ON public.applications FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Admins update applications" ON public.applications;
 CREATE POLICY "Admins update applications" ON public.applications FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 
 -- submissions
+DROP POLICY IF EXISTS "Users view own submissions" ON public.submissions;
 CREATE POLICY "Users view own submissions" ON public.submissions FOR SELECT TO authenticated USING (
   EXISTS (SELECT 1 FROM public.applications a WHERE a.id = submissions.application_id AND a.user_id = auth.uid())
   OR public.has_role(auth.uid(), 'admin')
 );
+DROP POLICY IF EXISTS "Users insert own submissions" ON public.submissions;
 CREATE POLICY "Users insert own submissions" ON public.submissions FOR INSERT TO authenticated WITH CHECK (
   EXISTS (SELECT 1 FROM public.applications a WHERE a.id = submissions.application_id AND a.user_id = auth.uid())
 );
+DROP POLICY IF EXISTS "Users update own pending submissions" ON public.submissions;
 CREATE POLICY "Users update own pending submissions" ON public.submissions FOR UPDATE TO authenticated USING (
   (EXISTS (SELECT 1 FROM public.applications a WHERE a.id = submissions.application_id AND a.user_id = auth.uid()) AND status = 'pending')
   OR public.has_role(auth.uid(), 'admin')
 );
 
 -- payments
+DROP POLICY IF EXISTS "Users view own payments" ON public.payments;
 CREATE POLICY "Users view own payments" ON public.payments FOR SELECT TO authenticated USING (
   EXISTS (SELECT 1 FROM public.applications a WHERE a.id = payments.application_id AND a.user_id = auth.uid())
   OR public.has_role(auth.uid(), 'admin')
 );
+DROP POLICY IF EXISTS "Users insert own payments" ON public.payments;
 CREATE POLICY "Users insert own payments" ON public.payments FOR INSERT TO authenticated WITH CHECK (
   EXISTS (SELECT 1 FROM public.applications a WHERE a.id = payments.application_id AND a.user_id = auth.uid())
 );
+DROP POLICY IF EXISTS "Admins update payments" ON public.payments;
 CREATE POLICY "Admins update payments" ON public.payments FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 
 -- certificates
+DROP POLICY IF EXISTS "Authenticated can insert certificates" ON public.certificates;
 CREATE POLICY "Authenticated can insert certificates" ON public.certificates FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
 -- ============ TRIGGERS ============
@@ -189,8 +205,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
-
 
 -- ============ SEED TASKS ============
 INSERT INTO public.tasks (domain, task_number, title, description, resources) VALUES
@@ -255,7 +269,6 @@ INSERT INTO public.tasks (domain, task_number, title, description, resources) VA
 ('digitalmarketing', 4, 'Email Marketing', 'Design a 5-email drip campaign + landing page.', ''),
 ('digitalmarketing', 5, 'DM Capstone', 'Real campaign for a small business / portfolio site with measurable results.', '');
 
-
 -- 20260615124748_ab1b8349-d021-4dd2-a4ca-a4b3f9feba88.sql
 
 -- Lock down SECURITY DEFINER helpers
@@ -265,59 +278,68 @@ REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, a
 GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated, anon;
 
 -- Storage policies: profile-photos
+DROP POLICY IF EXISTS "Users upload own profile photo" ON storage.objects;
 CREATE POLICY "Users upload own profile photo"
   ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'profile-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
 
+DROP POLICY IF EXISTS "Users view own profile photos" ON storage.objects;
 CREATE POLICY "Users view own profile photos"
   ON storage.objects FOR SELECT TO authenticated
   USING (bucket_id = 'profile-photos' AND ((storage.foldername(name))[1] = auth.uid()::text OR public.has_role(auth.uid(), 'admin')));
 
+DROP POLICY IF EXISTS "Users update own profile photos" ON storage.objects;
 CREATE POLICY "Users update own profile photos"
   ON storage.objects FOR UPDATE TO authenticated
   USING (bucket_id = 'profile-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
 
 -- Storage policies: payment-screenshots
+DROP POLICY IF EXISTS "Users upload own payment screenshot" ON storage.objects;
 CREATE POLICY "Users upload own payment screenshot"
   ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'payment-screenshots' AND (storage.foldername(name))[1] = auth.uid()::text);
 
+DROP POLICY IF EXISTS "Users view own payment screenshot" ON storage.objects;
 CREATE POLICY "Users view own payment screenshot"
   ON storage.objects FOR SELECT TO authenticated
   USING (bucket_id = 'payment-screenshots' AND ((storage.foldername(name))[1] = auth.uid()::text OR public.has_role(auth.uid(), 'admin')));
 
-
 -- 20260620152643_29d9ea0d-a546-492e-bd07-2b273ffcf27b.sql
 
 -- Storage: profile-photos DELETE (own folder)
+DROP POLICY IF EXISTS "Users delete own profile photos" ON storage.objects;
 CREATE POLICY "Users delete own profile photos"
 ON storage.objects FOR DELETE TO authenticated
 USING (bucket_id = 'profile-photos' AND auth.uid()::text = (storage.foldername(name))[1]);
 
 -- Storage: payment-screenshots DELETE (own folder)
+DROP POLICY IF EXISTS "Users delete own payment screenshots" ON storage.objects;
 CREATE POLICY "Users delete own payment screenshots"
 ON storage.objects FOR DELETE TO authenticated
 USING (bucket_id = 'payment-screenshots' AND auth.uid()::text = (storage.foldername(name))[1]);
 
 -- Storage: payment-screenshots DELETE (admins)
+DROP POLICY IF EXISTS "Admins delete payment screenshots" ON storage.objects;
 CREATE POLICY "Admins delete payment screenshots"
 ON storage.objects FOR DELETE TO authenticated
 USING (bucket_id = 'payment-screenshots' AND public.has_role(auth.uid(), 'admin'));
 
 -- user_roles: admin-only INSERT/DELETE/UPDATE
+DROP POLICY IF EXISTS "Admins insert user roles" ON public.user_roles;
 CREATE POLICY "Admins insert user roles"
 ON public.user_roles FOR INSERT TO authenticated
 WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins delete user roles" ON public.user_roles;
 CREATE POLICY "Admins delete user roles"
 ON public.user_roles FOR DELETE TO authenticated
 USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins update user roles" ON public.user_roles;
 CREATE POLICY "Admins update user roles"
 ON public.user_roles FOR UPDATE TO authenticated
 USING (public.has_role(auth.uid(), 'admin'))
 WITH CHECK (public.has_role(auth.uid(), 'admin'));
-
 
 -- 20260620153212_6ae526c8-a1b9-4051-aad0-143eb5988a0d.sql
 
@@ -345,8 +367,10 @@ CREATE TABLE IF NOT EXISTS public.courses (
 GRANT SELECT ON public.courses TO authenticated, anon;
 GRANT ALL ON public.courses TO service_role;
 ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can view published courses" ON public.courses;
 CREATE POLICY "Anyone can view published courses" ON public.courses
   FOR SELECT USING (is_published = true OR public.has_role(auth.uid(),'admin'));
+DROP POLICY IF EXISTS "Admins manage courses" ON public.courses;
 CREATE POLICY "Admins manage courses" ON public.courses
   FOR ALL TO authenticated
   USING (public.has_role(auth.uid(),'admin'))
@@ -369,7 +393,9 @@ CREATE TABLE IF NOT EXISTS public.course_topics (
 GRANT SELECT ON public.course_topics TO authenticated, anon;
 GRANT ALL ON public.course_topics TO service_role;
 ALTER TABLE public.course_topics ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can view topics" ON public.course_topics;
 CREATE POLICY "Anyone can view topics" ON public.course_topics FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admins manage topics" ON public.course_topics;
 CREATE POLICY "Admins manage topics" ON public.course_topics
   FOR ALL TO authenticated
   USING (public.has_role(auth.uid(),'admin'))
@@ -392,7 +418,9 @@ CREATE TABLE IF NOT EXISTS public.course_tasks (
 GRANT SELECT ON public.course_tasks TO authenticated, anon;
 GRANT ALL ON public.course_tasks TO service_role;
 ALTER TABLE public.course_tasks ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can view course tasks" ON public.course_tasks;
 CREATE POLICY "Anyone can view course tasks" ON public.course_tasks FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admins manage course tasks" ON public.course_tasks;
 CREATE POLICY "Admins manage course tasks" ON public.course_tasks
   FOR ALL TO authenticated
   USING (public.has_role(auth.uid(),'admin'))
@@ -419,8 +447,10 @@ ALTER TABLE public.course_quiz_questions ENABLE ROW LEVEL SECURITY;
 -- Students can read questions (to render the quiz); correct_index is exposed
 -- in the API surface but graded server-side. For tighter security a view could
 -- mask it; acceptable for MVP given small question pool.
+DROP POLICY IF EXISTS "Authenticated can view quiz questions" ON public.course_quiz_questions;
 CREATE POLICY "Authenticated can view quiz questions" ON public.course_quiz_questions
   FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Admins manage quiz" ON public.course_quiz_questions;
 CREATE POLICY "Admins manage quiz" ON public.course_quiz_questions
   FOR ALL TO authenticated
   USING (public.has_role(auth.uid(),'admin'))
@@ -445,15 +475,19 @@ CREATE TABLE IF NOT EXISTS public.enrollments (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.enrollments TO authenticated;
 GRANT ALL ON public.enrollments TO service_role;
 ALTER TABLE public.enrollments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users view own enrollments" ON public.enrollments;
 CREATE POLICY "Users view own enrollments" ON public.enrollments
   FOR SELECT TO authenticated
   USING (auth.uid() = user_id OR public.has_role(auth.uid(),'admin'));
+DROP POLICY IF EXISTS "Users create own enrollment" ON public.enrollments;
 CREATE POLICY "Users create own enrollment" ON public.enrollments
   FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users update own enrollment" ON public.enrollments;
 CREATE POLICY "Users update own enrollment" ON public.enrollments
   FOR UPDATE TO authenticated
   USING (auth.uid() = user_id OR public.has_role(auth.uid(),'admin'))
   WITH CHECK (auth.uid() = user_id OR public.has_role(auth.uid(),'admin'));
+DROP POLICY IF EXISTS "Users delete own enrollment" ON public.enrollments;
 CREATE POLICY "Users delete own enrollment" ON public.enrollments
   FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
@@ -470,6 +504,7 @@ CREATE TABLE IF NOT EXISTS public.lesson_progress (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.lesson_progress TO authenticated;
 GRANT ALL ON public.lesson_progress TO service_role;
 ALTER TABLE public.lesson_progress ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own progress" ON public.lesson_progress;
 CREATE POLICY "Users manage own progress" ON public.lesson_progress
   FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM public.enrollments e WHERE e.id = enrollment_id AND (e.user_id = auth.uid() OR public.has_role(auth.uid(),'admin'))))
@@ -494,12 +529,15 @@ CREATE TABLE IF NOT EXISTS public.course_task_submissions (
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.course_task_submissions TO authenticated;
 GRANT ALL ON public.course_task_submissions TO service_role;
 ALTER TABLE public.course_task_submissions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users view own task submissions" ON public.course_task_submissions;
 CREATE POLICY "Users view own task submissions" ON public.course_task_submissions
   FOR SELECT TO authenticated
   USING (EXISTS (SELECT 1 FROM public.enrollments e WHERE e.id = enrollment_id AND (e.user_id = auth.uid() OR public.has_role(auth.uid(),'admin'))));
+DROP POLICY IF EXISTS "Users insert own task submissions" ON public.course_task_submissions;
 CREATE POLICY "Users insert own task submissions" ON public.course_task_submissions
   FOR INSERT TO authenticated
   WITH CHECK (EXISTS (SELECT 1 FROM public.enrollments e WHERE e.id = enrollment_id AND e.user_id = auth.uid()));
+DROP POLICY IF EXISTS "Users update own task submissions" ON public.course_task_submissions;
 CREATE POLICY "Users update own task submissions" ON public.course_task_submissions
   FOR UPDATE TO authenticated
   USING (EXISTS (SELECT 1 FROM public.enrollments e WHERE e.id = enrollment_id AND (e.user_id = auth.uid() OR public.has_role(auth.uid(),'admin'))))
@@ -521,12 +559,15 @@ CREATE TABLE IF NOT EXISTS public.quiz_attempts (
 GRANT SELECT, INSERT, UPDATE ON public.quiz_attempts TO authenticated;
 GRANT ALL ON public.quiz_attempts TO service_role;
 ALTER TABLE public.quiz_attempts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users view own attempts" ON public.quiz_attempts;
 CREATE POLICY "Users view own attempts" ON public.quiz_attempts
   FOR SELECT TO authenticated
   USING (EXISTS (SELECT 1 FROM public.enrollments e WHERE e.id = enrollment_id AND (e.user_id = auth.uid() OR public.has_role(auth.uid(),'admin'))));
+DROP POLICY IF EXISTS "Users insert own attempts" ON public.quiz_attempts;
 CREATE POLICY "Users insert own attempts" ON public.quiz_attempts
   FOR INSERT TO authenticated
   WITH CHECK (EXISTS (SELECT 1 FROM public.enrollments e WHERE e.id = enrollment_id AND e.user_id = auth.uid()));
+DROP POLICY IF EXISTS "Users update own attempts" ON public.quiz_attempts;
 CREATE POLICY "Users update own attempts" ON public.quiz_attempts
   FOR UPDATE TO authenticated
   USING (EXISTS (SELECT 1 FROM public.enrollments e WHERE e.id = enrollment_id AND e.user_id = auth.uid()))
@@ -547,8 +588,10 @@ GRANT SELECT, INSERT ON public.course_certificates TO authenticated;
 GRANT SELECT ON public.course_certificates TO anon;
 GRANT ALL ON public.course_certificates TO service_role;
 ALTER TABLE public.course_certificates ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can verify a certificate" ON public.course_certificates;
 CREATE POLICY "Anyone can verify a certificate" ON public.course_certificates
   FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users insert own certificate" ON public.course_certificates;
 CREATE POLICY "Users insert own certificate" ON public.course_certificates
   FOR INSERT TO authenticated
   WITH CHECK (EXISTS (SELECT 1 FROM public.enrollments e WHERE e.id = enrollment_id AND e.user_id = auth.uid()));
@@ -559,9 +602,6 @@ CREATE POLICY "Users insert own certificate" ON public.course_certificates
 CREATE OR REPLACE FUNCTION public.touch_updated_at()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
 BEGIN NEW.updated_at = now(); RETURN NEW; END $$;
-
-
-
 
 -- =========================================================
 -- SEED: Full Stack Development course
@@ -647,24 +687,20 @@ VALUES
   ('cybersecurity','Cyber Security','Defensive and offensive security fundamentals.','Shield','cybersecurity',0,5,8,'Intermediate'),
   ('digitalmarketing','Digital Marketing','SEO, paid ads, content, and growth funnels.','TrendingUp','digitalmarketing',0,5,6,'Beginner');
 
-
 -- 20260620164000_fix_has_role_permissions.sql
 -- Grant execute privilege on has_role function to anon and authenticated users
 -- This prevents the 'permission denied for function has_role' error when public or anon queries are made.
 GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO anon, authenticated;
-
 
 -- 20260621000000_add_internship_statuses.sql
 DO $$ BEGIN ALTER TYPE public.application_status ADD VALUE 'ongoing' AFTER 'approved'; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN ALTER TYPE public.application_status ADD VALUE 'completed' AFTER 'ongoing'; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 ALTER TABLE public.applications ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
 
-
 -- 20260621000001_fix_task_number_check.sql
 -- Allow task_number 0 for the LinkedIn post task
 ALTER TABLE public.tasks DROP CONSTRAINT IF EXISTS tasks_task_number_check;
 ALTER TABLE public.tasks ADD CONSTRAINT tasks_task_number_check CHECK (task_number BETWEEN 0 AND 5);
-
 
 -- 20260621000003_seed_linkedin_task.sql
 -- Seed LinkedIn post task (task_number 0) for every existing domain
@@ -674,7 +710,6 @@ SELECT DISTINCT domain, 0, 'Share Your Offer Letter on LinkedIn',
 FROM public.tasks
 WHERE domain IS NOT NULL
 ON CONFLICT (domain, task_number) DO NOTHING;
-
 
 -- 20260621000004_add_submission_files.sql
 -- Add file columns to submissions table
@@ -686,6 +721,7 @@ INSERT INTO storage.buckets (id, name, public) VALUES ('task-submissions', 'task
 ON CONFLICT (id) DO NOTHING;
 
 -- Allow authenticated users to upload their own task files
+DROP POLICY IF EXISTS "Users upload own task submission files" ON storage.objects;
 CREATE POLICY "Users upload own task submission files"
   ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (
@@ -694,6 +730,7 @@ CREATE POLICY "Users upload own task submission files"
   );
 
 -- Allow users and admins to view task submission files
+DROP POLICY IF EXISTS "Users view own task submission files" ON storage.objects;
 CREATE POLICY "Users view own task submission files"
   ON storage.objects FOR SELECT TO authenticated
   USING (
@@ -705,19 +742,21 @@ CREATE POLICY "Users view own task submission files"
   );
 
 -- Allow users to update/delete their own task submission files
+DROP POLICY IF EXISTS "Users update own task submission files" ON storage.objects;
 CREATE POLICY "Users update own task submission files"
   ON storage.objects FOR UPDATE TO authenticated
   USING (bucket_id = 'task-submissions' AND (storage.foldername(name))[1] = auth.uid()::text);
 
+DROP POLICY IF EXISTS "Users delete own task submission files" ON storage.objects;
 CREATE POLICY "Users delete own task submission files"
   ON storage.objects FOR DELETE TO authenticated
   USING (bucket_id = 'task-submissions' AND (storage.foldername(name))[1] = auth.uid()::text);
 
 -- Admin can delete any task submission file
+DROP POLICY IF EXISTS "Admin delete task submission files" ON storage.objects;
 CREATE POLICY "Admin delete task submission files"
   ON storage.objects FOR DELETE TO authenticated
   USING (bucket_id = 'task-submissions' AND public.has_role(auth.uid(), 'admin'));
-
 
 -- 20260622000001_rpc_ensure_linkedin_task.sql
 -- RPC: ensure the LinkedIn post task (task_number 0) exists for a given domain
@@ -776,7 +815,6 @@ SELECT DISTINCT domain, 0,
 FROM public.tasks
 WHERE domain IS NOT NULL AND task_number > 0
 ON CONFLICT (domain, task_number) DO NOTHING;
-
 
 -- 20260622000002_create_payment_storage_buckets.sql
 -- Create storage buckets for payment screenshots and profile photos
@@ -846,7 +884,6 @@ CREATE POLICY "Users delete own profile photos"
   ON storage.objects FOR DELETE TO authenticated
   USING (bucket_id = 'profile-photos' AND (storage.foldername(name))[1] = auth.uid()::text);
 
-
 -- 20260622000003_lms_enhancements.sql
 -- Topic quiz questions (5 MCQs per topic)
 CREATE TABLE IF NOT EXISTS public.topic_quiz_questions (
@@ -862,6 +899,7 @@ CREATE TABLE IF NOT EXISTS public.topic_quiz_questions (
 GRANT SELECT ON public.topic_quiz_questions TO authenticated;
 GRANT INSERT ON public.topic_quiz_questions TO authenticated;
 ALTER TABLE public.topic_quiz_questions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can view topic quiz questions" ON public.topic_quiz_questions;
 CREATE POLICY "Anyone can view topic quiz questions" ON public.topic_quiz_questions FOR SELECT USING (true);
 
 -- Topic quiz attempts
@@ -878,6 +916,7 @@ CREATE TABLE IF NOT EXISTS public.topic_quiz_attempts (
 );
 GRANT SELECT, INSERT, UPDATE ON public.topic_quiz_attempts TO authenticated;
 ALTER TABLE public.topic_quiz_attempts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own topic quiz attempts" ON public.topic_quiz_attempts;
 CREATE POLICY "Users manage own topic quiz attempts" ON public.topic_quiz_attempts FOR ALL TO authenticated
   USING (EXISTS (SELECT 1 FROM public.enrollments e WHERE e.id = enrollment_id AND e.user_id = auth.uid()));
 
@@ -891,6 +930,7 @@ CREATE TABLE IF NOT EXISTS public.bookmarks (
 );
 GRANT SELECT, INSERT, DELETE ON public.bookmarks TO authenticated;
 ALTER TABLE public.bookmarks ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own bookmarks" ON public.bookmarks;
 CREATE POLICY "Users manage own bookmarks" ON public.bookmarks FOR ALL TO authenticated
   USING (user_id = auth.uid());
 
@@ -906,6 +946,7 @@ CREATE TABLE IF NOT EXISTS public.notes (
 );
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.notes TO authenticated;
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own notes" ON public.notes;
 CREATE POLICY "Users manage own notes" ON public.notes FOR ALL TO authenticated
   USING (user_id = auth.uid());
 
@@ -920,6 +961,7 @@ CREATE TABLE IF NOT EXISTS public.achievement_definitions (
 );
 GRANT SELECT ON public.achievement_definitions TO authenticated;
 ALTER TABLE public.achievement_definitions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "View achievements" ON public.achievement_definitions;
 CREATE POLICY "View achievements" ON public.achievement_definitions FOR SELECT USING (true);
 
 -- User achievements
@@ -932,8 +974,10 @@ CREATE TABLE IF NOT EXISTS public.achievements (
 );
 GRANT SELECT, INSERT ON public.achievements TO authenticated;
 ALTER TABLE public.achievements ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users view own achievements" ON public.achievements;
 CREATE POLICY "Users view own achievements" ON public.achievements FOR SELECT TO authenticated
   USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "Users earn achievements" ON public.achievements;
 CREATE POLICY "Users earn achievements" ON public.achievements FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
 
@@ -951,9 +995,12 @@ CREATE TABLE IF NOT EXISTS public.leaderboard (
 GRANT SELECT ON public.leaderboard TO authenticated;
 GRANT INSERT, UPDATE ON public.leaderboard TO authenticated;
 ALTER TABLE public.leaderboard ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can view leaderboard" ON public.leaderboard;
 CREATE POLICY "Anyone can view leaderboard" ON public.leaderboard FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users insert own leaderboard" ON public.leaderboard;
 CREATE POLICY "Users insert own leaderboard" ON public.leaderboard FOR INSERT TO authenticated
   WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "Users update own leaderboard" ON public.leaderboard;
 CREATE POLICY "Users update own leaderboard" ON public.leaderboard FOR UPDATE TO authenticated
   USING (user_id = auth.uid());
 
@@ -969,7 +1016,6 @@ INSERT INTO public.achievement_definitions (key, title, description, icon) VALUE
   ('note_taker', 'Note Taker', 'Write notes on 3 topics', 'FileText')
 ON CONFLICT (key) DO NOTHING;
 
-
 -- SEED COURSES
 -- Seed 7 core courses
 INSERT INTO public.courses (slug, name, short_description, icon, domain, difficulty, duration_weeks, total_topics, quiz_marks, pass_marks, quiz_duration_min) VALUES
@@ -981,8 +1027,6 @@ INSERT INTO public.courses (slug, name, short_description, icon, domain, difficu
 ('php', 'PHP', 'Build dynamic web applications with PHP', 'Server', 'php', 'Intermediate', 8, 0, 100, 60, 60),
 ('sql', 'SQL', 'Master database queries with SQL', 'Layers', 'sql', 'Intermediate', 6, 0, 100, 60, 60)
 ON CONFLICT (slug) DO NOTHING;
-
-
 
 -- SEED TOPICS
 INSERT INTO public.course_topics (course_id, order_index, title, content_md, code_example, key_points)

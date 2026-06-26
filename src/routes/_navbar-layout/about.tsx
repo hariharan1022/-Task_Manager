@@ -9,8 +9,8 @@ import cofounderPhoto from "@/assets/co founder.jpeg";
 export const Route = createFileRoute("/_navbar-layout/about")({
   head: () => ({
     meta: [
-      { title: "About — Skyrovix IT Solutions" },
-      { name: "description", content: "Learn about Skyrovix IT Solutions, our mission, founders, and the task-based internship platform." },
+      { title: "About — Skyrovix" },
+      { name: "description", content: "Learn about Skyrovix, our mission, founders, and the task-based internship platform." },
     ],
   }),
   component: AboutPage,
@@ -227,7 +227,7 @@ function AboutPage() {
                   <div className="rounded-xl border border-border/40 bg-white/40 dark:bg-[#020617]/30 p-3.5">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Role</p>
                     <p className="mt-1 text-sm font-medium">Founder &amp; CEO</p>
-                    <p className="text-xs text-muted-foreground">Skyrovix IT Solutions</p>
+                    <p className="text-xs text-muted-foreground">Skyrovix</p>
                   </div>
                 </div>
 
@@ -280,7 +280,7 @@ function AboutPage() {
 
                 {/* Name + Title */}
                 <h3 className="text-2xl sm:text-3xl font-bold">{COMPANY.cofounder.name}</h3>
-                <p className="text-sm text-muted-foreground">Co-Founder · Skyrovix IT Solutions</p>
+                <p className="text-sm text-muted-foreground">Co-Founder · Skyrovix</p>
 
                 {/* Bio */}
                 <div className="mt-5 space-y-4 text-sm text-muted-foreground leading-relaxed">
@@ -312,7 +312,7 @@ function AboutPage() {
                   <div className="rounded-xl border border-border/40 bg-white/40 dark:bg-[#020617]/30 p-3.5">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Role</p>
                     <p className="mt-1 text-sm font-medium">Co-Founder</p>
-                    <p className="text-xs text-muted-foreground">Skyrovix IT Solutions</p>
+                    <p className="text-xs text-muted-foreground">Skyrovix</p>
                   </div>
                 </div>
 

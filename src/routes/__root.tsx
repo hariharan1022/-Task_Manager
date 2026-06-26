@@ -45,7 +45,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Skyrovix Internship Portal — Build the Future" },
-      { name: "description", content: "Task-based virtual internships in Full Stack, AI/ML, Data Science, UI/UX, Cyber Security and more. Earn a verified certificate from Skyrovix IT Solutions." },
+      { name: "description", content: "Task-based virtual internships in Full Stack, AI/ML, Data Science, UI/UX, Cyber Security and more. Earn a verified certificate from Skyrovix." },
       { property: "og:title", content: "Skyrovix Internship Portal" },
       { property: "og:description", content: "Task-based virtual internships with offer letters, digital ID cards, and verified certificates." },
       { property: "og:type", content: "website" },

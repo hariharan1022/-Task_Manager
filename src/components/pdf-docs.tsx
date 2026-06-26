@@ -4,10 +4,18 @@ import logo from "@/assets/logo.png";
 import seal from "@/assets/seal.jpg";
 import msme from "@/assets/msme.png";
 import sigFounder from "@/assets/sig-founder.jpg";
-import sigCofounder from "@/assets/sig-cofounder.jpg";
+import sigCofounder from "@/assets/sig-cofounder.jpeg";
 import { COMPANY, durationConfig } from "@/lib/constants";
 
 const C = { brand: "#07284a", ink: "#1e293b", muted: "#64748b", border: "#e2e8f0", light: "#f8fafc" };
+
+export type ImageAssets = {
+  logo?: string;
+  seal?: string;
+  msme?: string;
+  sigFounder?: string;
+  sigCofounder?: string;
+};
 
 const s = StyleSheet.create({
   page: { padding: 24, fontSize: 9, color: C.ink, fontFamily: "Helvetica", position: "relative" },
@@ -70,8 +78,9 @@ const s = StyleSheet.create({
   footerRight: { alignItems: "flex-end", gap: 1 },
 });
 
-export function OfferLetterDoc({ fullName, internId, domain, issuedAt, duration = 1 }: {
+export function OfferLetterDoc({ fullName, internId, domain, issuedAt, duration = 1, verifyUrl, qrCodeDataUri, imageAssets }: {
   fullName: string; internId: string; domain: string; issuedAt: string; duration?: number;
+  verifyUrl?: string; qrCodeDataUri?: string; imageAssets?: ImageAssets;
 }) {
   const date = new Date(issuedAt);
   const dateStr = date.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
@@ -99,7 +108,7 @@ export function OfferLetterDoc({ fullName, internId, domain, issuedAt, duration 
 
         <View style={s.header}>
           <View style={s.headerLeft}>
-            <Image src={logo} style={{ width: 30, height: 30 }} />
+            <Image src={imageAssets?.logo ?? logo} style={{ width: 30, height: 30 }} />
             <View>
               <Text style={s.brand}>{COMPANY.name}</Text>
               <Text style={s.headerSmall}>{COMPANY.tagline} · {COMPANY.website} · {COMPANY.email}</Text>
@@ -225,19 +234,30 @@ export function OfferLetterDoc({ fullName, internId, domain, issuedAt, duration 
           <Text style={s.bold}>Congratulations and Welcome to the Team!</Text>
         </Text>
 
+        {qrCodeDataUri && (
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 10, gap: 8 }}>
+            <Image src={qrCodeDataUri} style={{ width: 60, height: 60 }} />
+            <View>
+              <Text style={{ fontSize: 8, fontWeight: 700, color: C.brand }}>Digitally Verified</Text>
+              <Text style={{ fontSize: 7, color: C.muted }}>Scan QR to verify authenticity</Text>
+              {verifyUrl && <Text style={{ fontSize: 6, color: C.muted, marginTop: 1 }}>{verifyUrl}</Text>}
+            </View>
+          </View>
+        )}
+
         <View style={s.sigRow}>
           <View style={s.sigBlock}>
-            <Image src={sigFounder} style={s.sigImg} />
+            <Image src={imageAssets?.sigFounder ?? sigFounder} style={s.sigImg} />
             <View style={s.sigLine} />
             <Text style={s.bold}>{COMPANY.founder.name}</Text>
             <Text style={{ fontSize: 6.5, color: C.muted }}>{COMPANY.founder.title}</Text>
           </View>
           <View style={s.sigBlock}>
-            <Image src={seal} style={{ width: 44, height: 44, opacity: 0.7 }} />
+            <Image src={imageAssets?.seal ?? seal} style={{ width: 44, height: 44, opacity: 0.7 }} />
             <Text style={{ fontSize: 6, color: C.muted, marginTop: 1 }}>Company Seal</Text>
           </View>
           <View style={s.sigBlock}>
-            <Image src={sigCofounder} style={s.sigImg} />
+            <Image src={imageAssets?.sigCofounder ?? sigCofounder} style={s.sigImg} />
             <View style={s.sigLine} />
             <Text style={s.bold}>{COMPANY.cofounder.name}</Text>
             <Text style={{ fontSize: 6.5, color: C.muted }}>{COMPANY.cofounder.title}</Text>
@@ -246,7 +266,7 @@ export function OfferLetterDoc({ fullName, internId, domain, issuedAt, duration 
 
         <View style={s.footer}>
           <View style={s.footerLeft}>
-            <Image src={msme} style={{ width: 76, height: 30 }} />
+            <Image src={imageAssets?.msme ?? msme} style={{ width: 76, height: 30 }} />
             <Text style={s.footerText}>MSME: UDYAM-TN-17-0076606</Text>
           </View>
           <View style={s.footerRight}>
@@ -258,8 +278,12 @@ export function OfferLetterDoc({ fullName, internId, domain, issuedAt, duration 
   );
 }
 
-export function CertificateDoc({ fullName, internId, domain, certId, issuedAt, verifyUrl }: {
+
+
+
+export function CertificateDoc({ fullName, internId, domain, certId, issuedAt, verifyUrl, qrCodeDataUri, imageAssets }: {
   fullName: string; internId: string; domain: string; certId: string; issuedAt: string; verifyUrl: string;
+  qrCodeDataUri?: string; imageAssets?: ImageAssets;
 }) {
   const date = new Date(issuedAt);
   return (
@@ -268,12 +292,12 @@ export function CertificateDoc({ fullName, internId, domain, certId, issuedAt, v
         <View style={{ borderWidth: 6, borderColor: C.brand, padding: 24, height: "100%" }}>
           <View style={{ borderWidth: 1, borderColor: C.border, padding: 24, height: "100%" }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Image src={logo} style={{ width: 56, height: 56 }} />
+              <Image src={imageAssets?.logo ?? logo} style={{ width: 56, height: 56 }} />
               <View style={{ alignItems: "center" }}>
-                <Text style={{ fontSize: 12, color: C.muted, letterSpacing: 4 }}>SKYROVIX IT SOLUTIONS</Text>
+                <Text style={{ fontSize: 14, color: C.brand, fontWeight: 700, letterSpacing: 4 }}>SKYROVIX</Text>
                 <Text style={{ fontSize: 10, color: C.muted }}>{COMPANY.tagline}</Text>
               </View>
-              <Image src={msme} style={{ height: 40 }} />
+              <Image src={imageAssets?.msme ?? msme} style={{ height: 40 }} />
             </View>
 
             <View style={{ alignItems: "center", marginTop: 18 }}>
@@ -291,18 +315,28 @@ export function CertificateDoc({ fullName, internId, domain, certId, issuedAt, v
               </Text>
             </View>
 
+            {qrCodeDataUri && (
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 12 }}>
+                <Image src={qrCodeDataUri} style={{ width: 48, height: 48 }} />
+                <View>
+                  <Text style={{ fontSize: 8, fontWeight: 700, color: C.brand }}>Digitally Verified</Text>
+                  <Text style={{ fontSize: 7, color: C.muted }}>Scan QR to verify authenticity</Text>
+                </View>
+              </View>
+            )}
+
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginTop: 40 }}>
               <View style={s.sigBlock}>
-                <Image src={sigFounder} style={s.sigImg} />
+                <Image src={imageAssets?.sigFounder ?? sigFounder} style={s.sigImg} />
                 <View style={s.sigLine} />
                 <Text style={s.bold}>{COMPANY.founder.name}</Text>
                 <Text style={s.small}>{COMPANY.founder.title}</Text>
               </View>
               <View style={{ alignItems: "center" }}>
-                <Image src={seal} style={{ width: 90, height: 90, opacity: 0.9 }} />
+                <Image src={imageAssets?.seal ?? seal} style={{ width: 90, height: 90, opacity: 0.9 }} />
               </View>
               <View style={s.sigBlock}>
-                <Image src={sigCofounder} style={s.sigImg} />
+                <Image src={imageAssets?.sigCofounder ?? sigCofounder} style={s.sigImg} />
                 <View style={s.sigLine} />
                 <Text style={s.bold}>{COMPANY.cofounder.name}</Text>
                 <Text style={s.small}>{COMPANY.cofounder.title}</Text>
@@ -314,7 +348,7 @@ export function CertificateDoc({ fullName, internId, domain, certId, issuedAt, v
               <Text>Intern ID: {internId}</Text>
               <Text>Issued: {date.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}</Text>
             </View>
-            <Text style={{ fontSize: 8, color: C.muted, marginTop: 4, textAlign: "center" }}>Verify at: {verifyUrl}</Text>
+            <Text style={{ fontSize: 8, color: C.muted, marginTop: 4, textAlign: "center" }}>Verify at: www.skyrovix.online</Text>
           </View>
         </View>
       </Page>
@@ -322,9 +356,10 @@ export function CertificateDoc({ fullName, internId, domain, certId, issuedAt, v
   );
 }
 
-export function CourseCertificateDoc({ fullName, courseName, score, total, certId, issuedAt, verifyUrl }: {
+export function CourseCertificateDoc({ fullName, courseName, score, total, certId, issuedAt, verifyUrl, qrCodeDataUri, imageAssets }: {
   fullName: string; courseName: string; score: number; total: number;
   certId: string; issuedAt: string; verifyUrl: string;
+  qrCodeDataUri?: string; imageAssets?: ImageAssets;
 }) {
   const date = new Date(issuedAt);
   return (
@@ -333,12 +368,12 @@ export function CourseCertificateDoc({ fullName, courseName, score, total, certI
         <View style={{ borderWidth: 6, borderColor: C.brand, padding: 24, height: "100%" }}>
           <View style={{ borderWidth: 1, borderColor: C.border, padding: 24, height: "100%" }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Image src={logo} style={{ width: 56, height: 56 }} />
+              <Image src={imageAssets?.logo ?? logo} style={{ width: 56, height: 56 }} />
               <View style={{ alignItems: "center" }}>
-                <Text style={{ fontSize: 12, color: C.muted, letterSpacing: 4 }}>SKYROVIX IT SOLUTIONS</Text>
+                <Text style={{ fontSize: 14, color: C.brand, fontWeight: 700, letterSpacing: 4 }}>SKYROVIX</Text>
                 <Text style={{ fontSize: 10, color: C.muted }}>{COMPANY.tagline}</Text>
               </View>
-              <Image src={msme} style={{ height: 40 }} />
+              <Image src={imageAssets?.msme ?? msme} style={{ height: 40 }} />
             </View>
 
             <View style={{ alignItems: "center", marginTop: 18 }}>
@@ -357,18 +392,28 @@ export function CourseCertificateDoc({ fullName, courseName, score, total, certI
               </Text>
             </View>
 
+            {qrCodeDataUri && (
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 12 }}>
+                <Image src={qrCodeDataUri} style={{ width: 48, height: 48 }} />
+                <View>
+                  <Text style={{ fontSize: 8, fontWeight: 700, color: C.brand }}>Digitally Verified</Text>
+                  <Text style={{ fontSize: 7, color: C.muted }}>Scan QR to verify authenticity</Text>
+                </View>
+              </View>
+            )}
+
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginTop: 40 }}>
               <View style={s.sigBlock}>
-                <Image src={sigFounder} style={s.sigImg} />
+                <Image src={imageAssets?.sigFounder ?? sigFounder} style={s.sigImg} />
                 <View style={s.sigLine} />
                 <Text style={s.bold}>{COMPANY.founder.name}</Text>
                 <Text style={s.small}>{COMPANY.founder.title}</Text>
               </View>
               <View style={{ alignItems: "center" }}>
-                <Image src={seal} style={{ width: 90, height: 90, opacity: 0.9 }} />
+                <Image src={imageAssets?.seal ?? seal} style={{ width: 90, height: 90, opacity: 0.9 }} />
               </View>
               <View style={s.sigBlock}>
-                <Image src={sigCofounder} style={s.sigImg} />
+                <Image src={imageAssets?.sigCofounder ?? sigCofounder} style={s.sigImg} />
                 <View style={s.sigLine} />
                 <Text style={s.bold}>{COMPANY.cofounder.name}</Text>
                 <Text style={s.small}>{COMPANY.cofounder.title}</Text>
@@ -380,7 +425,7 @@ export function CourseCertificateDoc({ fullName, courseName, score, total, certI
               <Text>Score: {score}/{total}</Text>
               <Text>Issued: {date.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}</Text>
             </View>
-            <Text style={{ fontSize: 8, color: C.muted, marginTop: 4, textAlign: "center" }}>Verify at: {verifyUrl}</Text>
+            <Text style={{ fontSize: 8, color: C.muted, marginTop: 4, textAlign: "center" }}>Verify at: www.skyrovix.online</Text>
           </View>
         </View>
       </Page>
@@ -389,11 +434,18 @@ export function CourseCertificateDoc({ fullName, courseName, score, total, certI
 }
 
 export async function downloadPdf(doc: ReactElement<DocumentProps>, filename: string) {
-  const blob = await pdf(doc).toBlob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  try {
+    const blob = await pdf(doc).toBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    console.error("Failed to generate/download PDF:", error);
+    if (typeof window !== "undefined") {
+      alert("Could not generate the PDF file. Please check if your browser blocks downloads, or try again.");
+    }
+  }
 }
 
 export async function downloadPdfBlob(doc: ReactElement<DocumentProps>): Promise<Blob> {

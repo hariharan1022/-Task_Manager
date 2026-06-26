@@ -17,7 +17,7 @@ import { DOMAINS, getDomain } from "@/lib/constants";
 import { useAuth } from "@/lib/auth";
 import { FadeUp, Reveal, ScaleIn } from "@/components/motion";
 import { INTERNSHIP_DETAILS } from "@/lib/internship-detail-content";
-import { getDomainTasks } from "@/lib/tasks-data";
+import { getDomainTasks, getTasksByDuration } from "@/lib/tasks-data";
 import {
   BookOpen, GraduationCap, Trophy, Clock, Star, BarChart3,
   Users, ArrowRight, CheckCircle2, Sparkles, Target, Award, FileText,
@@ -59,14 +59,30 @@ function InternshipDetailsPage() {
   const detail = INTERNSHIP_DETAILS[slug];
   const heroImage = DOMAIN_IMAGES[slug];
 
+  const { data: userApplication } = useQuery({
+    queryKey: ["my-application-duration", slug],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("applications")
+        .select("duration")
+        .eq("user_id", user.id)
+        .eq("domain", slug)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const taskRoadmap = useMemo(() => {
-    const domainTasks = getDomainTasks(slug);
-    if (!domainTasks) return [];
-    return domainTasks.tasks.map((task) => ({
+    const tasks = userApplication?.duration
+      ? getTasksByDuration(slug, userApplication.duration)
+      : (getDomainTasks(slug)?.tasks ?? []);
+    return tasks.map((task) => ({
       title: task.title,
       milestones: [...task.features, `Outcome: ${task.outcome}`],
     }));
-  }, [slug]);
+  }, [slug, userApplication]);
 
   const { data: internCount = 0 } = useQuery({
     queryKey: ["intern-count", slug],
@@ -81,7 +97,6 @@ function InternshipDetailsPage() {
 
   const handleApply = () => {
     if (!user) { navigate({ to: "/auth" }); return; }
-    setApplying(true);
     navigate({ to: "/domains", search: { apply: slug } as any });
   };
 

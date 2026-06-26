@@ -1,37 +1,48 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useReviews, useUserReview, useSubmitReview, useDeleteReview, computeStats, type ReviewWithProfile } from "@/lib/reviews";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Star, Pencil, Trash2, MessageSquare, Loader2 } from "lucide-react";
+import { Star, Pencil, Trash2, MessageSquare, Loader2, AlertCircle } from "lucide-react";
 import { Reveal } from "@/components/motion";
 import { toast } from "sonner";
 
 function StarPicker({ value, onChange, size = "md" }: { value: number; onChange: (v: number) => void; size?: "sm" | "md" }) {
   const s = size === "sm" ? "size-4" : "size-6";
   return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button key={star} type="button" onClick={() => onChange(star)} className="p-0.5 transition-transform hover:scale-110">
-          <Star className={`${s} ${star <= value ? "text-amber-400 fill-amber-400" : "text-muted-foreground/30"}`} />
-        </button>
-      ))}
+    <div className="flex flex-col items-start gap-1.5">
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button key={star} type="button" onClick={() => onChange(star)} className="p-0.5 transition-transform hover:scale-110" aria-label={`Rate ${star} star${star !== 1 ? "s" : ""}`}>
+            <Star
+              className={`${s} ${star <= value ? "text-amber-400" : "text-muted-foreground/30"}`}
+              fill={star <= value ? "currentColor" : "none"}
+            />
+          </button>
+        ))}
+      </div>
+      <span className="text-xs text-muted-foreground">{value > 0 ? `Rating: ${value}/5` : "Click a star to rate"}</span>
     </div>
   );
 }
 
-function ReviewCard({ review }: { review: ReviewWithProfile }) {
+function ReviewCard({ review, isOwner, onDelete }: { review: ReviewWithProfile; isOwner: boolean; onDelete: (id: string) => void }) {
+  const [deleting, setDeleting] = useState(false);
   const name = review.profiles?.full_name ?? "Anonymous";
   const initials = name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   const avatarUrl = review.profiles?.photo_url;
   const date = new Date(review.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this review?")) return;
+    setDeleting(true);
+    onDelete(review.id);
+  };
 
   return (
     <Card className="bg-white/60 dark:bg-[#0f172a]/60 border-border/50">
@@ -52,14 +63,23 @@ function ReviewCard({ review }: { review: ReviewWithProfile }) {
               <p className="text-[11px] text-muted-foreground">{date}</p>
             </div>
           </div>
-          <div className="flex">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className={`size-3.5 ${i < review.rating ? "text-amber-400 fill-amber-400" : "text-muted-foreground/20"}`} />
-            ))}
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} className={`size-3.5 ${i < review.rating ? "text-amber-400" : "text-muted-foreground/20"}`} fill={i < review.rating ? "currentColor" : "none"} />
+              ))}
+            </div>
           </div>
         </div>
         {review.title && <p className="text-sm font-semibold">{review.title}</p>}
         <p className="text-sm text-muted-foreground">{review.content}</p>
+        {isOwner && (
+          <div className="pt-2 flex justify-end">
+            <Button variant="ghost" size="sm" className="text-destructive gap-1.5 h-8 px-2 text-xs" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />} Delete
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -74,18 +94,22 @@ function ReviewForm({ targetType, targetId, existingReview, onDone }: {
   const [rating, setRating] = useState(existingReview?.rating ?? 0);
   const [title, setTitle] = useState(existingReview?.title ?? "");
   const [content, setContent] = useState(existingReview?.content ?? "");
+  const [error, setError] = useState<string | null>(null);
   const submitReview = useSubmitReview();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (rating === 0) { toast.error("Please select a star rating"); return; }
-    if (!content.trim()) { toast.error("Please write your review"); return; }
+    setError(null);
+    if (rating === 0) { setError("Please select a star rating"); return; }
+    if (!content.trim()) { setError("Please write your review"); return; }
     try {
       await submitReview.mutateAsync({ target_type: targetType, target_id: targetId, rating, title: title.trim() || undefined, content: content.trim() });
       toast.success(existingReview ? "Review updated!" : "Review submitted!");
       onDone();
     } catch (err: any) {
-      toast.error(err.message || "Failed to submit review");
+      const msg = err?.message || "Failed to submit review";
+      setError(msg);
+      toast.error(msg);
     }
   };
 
@@ -109,11 +133,17 @@ function ReviewForm({ targetType, targetId, existingReview, onDone }: {
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Share your experience with this course..."
+          placeholder="Share your experience..."
           rows={4}
           required
         />
       </div>
+      {error && (
+        <div className="flex items-start gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+          <AlertCircle className="size-4 shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
       <div className="flex gap-3 pt-1">
         <Button type="submit" disabled={submitReview.isPending} className="gap-2">
           {submitReview.isPending && <Loader2 className="size-4 animate-spin" />}
@@ -150,40 +180,15 @@ export default function ReviewSection({ targetType, targetId }: { targetType: "c
   const { user } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: reviews = [], isLoading } = useReviews(targetType, targetId);
+  const { data: reviews = [], isLoading, isError } = useReviews(targetType, targetId);
   const { data: userReview } = useUserReview(targetType, targetId, user?.id);
   const deleteReview = useDeleteReview();
 
   const stats = computeStats(reviews);
 
-  const { data: isEnrolled = false } = useQuery({
-    queryKey: ["review-eligibility", targetType, targetId, user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      if (targetType === "course") {
-        const { data } = await supabase
-          .from("enrollments")
-          .select("id")
-          .eq("user_id", user!.id)
-          .eq("course_id", targetId)
-          .maybeSingle();
-        return !!data;
-      }
-      const { data } = await supabase
-        .from("applications")
-        .select("id")
-        .eq("user_id", user!.id)
-        .eq("domain", targetId)
-        .maybeSingle();
-      return !!data;
-    },
-  });
-
-  const handleDelete = async () => {
-    if (!userReview) return;
-    if (!confirm("Delete your review?")) return;
+  const handleDelete = async (reviewId: string) => {
     try {
-      await deleteReview.mutateAsync(userReview.id);
+      await deleteReview.mutateAsync(reviewId);
       toast.success("Review deleted");
     } catch (err: any) {
       toast.error(err.message || "Failed to delete");
@@ -202,58 +207,53 @@ export default function ReviewSection({ targetType, targetId }: { targetType: "c
       {/* Rating Summary */}
       <Card className="bg-white/60 dark:bg-[#0f172a]/60 border-border/50 mb-8">
         <CardContent className="p-6">
-          <div className="grid sm:grid-cols-[1fr_auto] gap-6 items-start">
-            <div className="flex sm:flex-col items-center sm:items-start gap-3 sm:gap-1">
-              <span className="text-4xl font-bold">{stats.average > 0 ? stats.average : "—"}</span>
-              <div className="flex gap-0.5">
-                {stats.average > 0 && Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`size-4 ${i < Math.round(stats.average) ? "text-amber-400 fill-amber-400" : "text-muted-foreground/30"}`} />
-                ))}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : isError ? (
+            <p className="text-sm text-destructive text-center py-4">Failed to load reviews.</p>
+          ) : (
+            <div className="grid sm:grid-cols-[1fr_auto] gap-6 items-start">
+              <div className="flex sm:flex-col items-center sm:items-start gap-3 sm:gap-1">
+                <span className="text-4xl font-bold">{stats.average > 0 ? stats.average.toFixed(1) : "—"}</span>
+                <div className="flex gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className={`size-4 ${i < Math.round(stats.average) ? "text-amber-400" : "text-muted-foreground/30"}`} fill={i < Math.round(stats.average) ? "currentColor" : "none"} />
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground">{stats.total} review{stats.total !== 1 ? "s" : ""}</p>
               </div>
-              <p className="text-sm text-muted-foreground">{stats.total} review{stats.total !== 1 ? "s" : ""}</p>
+              <div className="min-w-[200px] w-full sm:w-auto">
+                <RatingDistribution stats={stats} />
+              </div>
             </div>
-            <div className="min-w-[200px] w-full sm:w-auto">
-              <RatingDistribution stats={stats} />
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Write / Edit Review */}
       {user ? (
-        isEnrolled ? (
-          <div className="mb-8">
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant={userReview ? "outline" : "default"} className="gap-2">
-                  {userReview ? <><Pencil className="size-4" /> Edit Your Review</> : <><Star className="size-4" /> Write a Review</>}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[480px]">
-                <DialogHeader>
-                  <DialogTitle>{userReview ? "Edit Your Review" : "Write a Review"}</DialogTitle>
-                </DialogHeader>
-                <ReviewForm
-                  targetType={targetType}
-                  targetId={targetId}
-                  existingReview={userReview ? { rating: userReview.rating, title: userReview.title, content: userReview.content } : null}
-                  onDone={() => setDialogOpen(false)}
-                />
-              </DialogContent>
-            </Dialog>
-            {userReview && (
-              <Button variant="ghost" size="sm" className="ml-2 text-destructive gap-1.5" onClick={handleDelete} disabled={deleteReview.isPending}>
-                <Trash2 className="size-3.5" /> Delete
+        <div className="mb-8">
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant={userReview ? "outline" : "default"} className="gap-2">
+                {userReview ? <><Pencil className="size-4" /> Edit Your Review</> : <><Star className="size-4" /> Write a Review</>}
               </Button>
-            )}
-          </div>
-        ) : (
-          <div className="mb-8">
-            <Button variant="outline" className="gap-2" disabled>
-              <Star className="size-4" /> Enroll to Review
-            </Button>
-          </div>
-        )
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[480px]">
+              <DialogHeader>
+                <DialogTitle>{userReview ? "Edit Your Review" : "Write a Review"}</DialogTitle>
+              </DialogHeader>
+              <ReviewForm
+                targetType={targetType}
+                targetId={targetId}
+                existingReview={userReview ? { rating: userReview.rating, title: userReview.title, content: userReview.content } : null}
+                onDone={() => setDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       ) : (
         <div className="mb-8">
           <Button variant="outline" className="gap-2" asChild>
@@ -269,6 +269,11 @@ export default function ReviewSection({ targetType, targetId }: { targetType: "c
         <div className="flex items-center justify-center py-12">
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
+      ) : isError ? (
+        <div className="text-center py-12 space-y-3">
+          <AlertCircle className="size-10 mx-auto text-destructive/60" />
+          <p className="text-destructive">Failed to load reviews. Please try again.</p>
+        </div>
       ) : reviews.length === 0 ? (
         <div className="text-center py-12 space-y-3">
           <MessageSquare className="size-10 mx-auto text-muted-foreground/40" />
@@ -277,7 +282,7 @@ export default function ReviewSection({ targetType, targetId }: { targetType: "c
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {reviews.map((review) => (
-            <ReviewCard key={review.id} review={review} />
+            <ReviewCard key={review.id} review={review} isOwner={user?.id === review.user_id} onDelete={handleDelete} />
           ))}
         </div>
       )}

@@ -14,7 +14,7 @@ export function Footer() {
           <div className="space-y-4">
             <Logo />
             <p className="text-sm leading-relaxed text-muted-foreground max-w-xs">
-              A task-based virtual internship platform by Skyrovix IT Solutions — build real skills, earn a recognised certificate.
+              A task-based virtual internship platform by Skyrovix — build real skills, earn a recognised certificate.
             </p>
             <div className="flex items-center gap-2.5 pt-2">
               <a href="https://www.linkedin.com/in/hariharan-s-92b566381" target="_blank" rel="noopener noreferrer" className="grid size-9 place-items-center rounded-xl border border-border/60 bg-white/50 dark:bg-[#0f172a]/50 text-muted-foreground hover:text-[#0A66C2] hover:border-[#0A66C2]/30 hover:bg-[#0A66C2]/5 transition-all">
@@ -81,7 +81,7 @@ export function Footer() {
       <div className="border-t border-border/50 py-5">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 sm:flex-row">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Skyrovix IT Solutions. All rights reserved.
+            &copy; {new Date().getFullYear()} Skyrovix. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <Link to="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2">Privacy Policy</Link>

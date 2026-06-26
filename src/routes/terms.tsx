@@ -18,7 +18,7 @@ function TermsPage() {
         <p className="mt-2 text-sm text-muted-foreground">Last updated: June 2026</p>
         <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted-foreground">
           <Section title="1. Acceptance of Terms">
-            By applying for an internship through Skyrovix IT Solutions, you agree to these Terms of Service. If you do not agree, please do not use our platform.
+            By applying for an internship through Skyrovix, you agree to these Terms of Service. If you do not agree, please do not use our platform.
           </Section>
           <Section title="2. Internship Program">
             The internship is a task-based virtual program. You are required to complete 5 tasks in your chosen domain. Each task is reviewed by our mentors. The internship is self-paced and does not guarantee employment.
@@ -39,7 +39,7 @@ function TermsPage() {
             The project code and content you create during the internship belong to you. Skyrovix may use anonymized project data for internal quality improvement.
           </Section>
           <Section title="8. Limitation of Liability">
-            Skyrovix IT Solutions is not liable for any indirect, incidental, or consequential damages arising from your use of the platform or participation in the internship program.
+            Skyrovix is not liable for any indirect, incidental, or consequential damages arising from your use of the platform or participation in the internship program.
           </Section>
           <Section title="9. Changes to Terms">
             We reserve the right to update these terms at any time. Users will be notified of material changes via email.

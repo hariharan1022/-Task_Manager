@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type ReviewRow = {
+export type ReviewWithProfile = {
   id: string;
   user_id: string;
   target_type: "course" | "internship";
@@ -12,10 +12,10 @@ export type ReviewRow = {
   status: "approved" | "pending" | "rejected";
   created_at: string;
   updated_at: string;
-};
-
-export type ReviewWithProfile = ReviewRow & {
-  profiles: { full_name: string | null; photo_url: string | null } | null;
+  profiles: {
+    full_name: string | null;
+    photo_url: string | null;
+  } | null;
 };
 
 export type ReviewStats = {
@@ -40,15 +40,25 @@ export function useReviews(targetType: string, targetId: string) {
   return useQuery({
     queryKey: ["reviews", targetType, targetId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("reviews")
-        .select("*, profiles(full_name, photo_url)")
-        .eq("target_type", targetType)
-        .eq("target_id", targetId)
-        .eq("status", "approved")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .rpc("get_reviews_with_profiles", { p_target_type: targetType, p_target_id: targetId });
+      if (error) throw error;
       return (data ?? []) as ReviewWithProfile[];
     },
+    refetchInterval: 10_000,
+  });
+}
+
+export function useRecentReviews(limit = 6) {
+  return useQuery({
+    queryKey: ["recent-reviews", limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .rpc("get_recent_reviews_with_profiles", { p_limit: limit });
+      if (error) throw error;
+      return (data ?? []) as ReviewWithProfile[];
+    },
+    refetchInterval: 30_000,
   });
 }
 
@@ -67,8 +77,22 @@ export function useUserReview(targetType: string, targetId: string, userId: stri
         .maybeSingle();
       return data as ReviewRow | null;
     },
+    refetchInterval: 10_000,
   });
 }
+
+export type ReviewRow = {
+  id: string;
+  user_id: string;
+  target_type: "course" | "internship";
+  target_id: string;
+  rating: number;
+  title: string | null;
+  content: string;
+  status: "approved" | "pending" | "rejected";
+  created_at: string;
+  updated_at: string;
+};
 
 export function useSubmitReview() {
   const qc = useQueryClient();
@@ -103,6 +127,7 @@ export function useSubmitReview() {
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ["reviews", variables.target_type, variables.target_id] });
       qc.invalidateQueries({ queryKey: ["user-review", variables.target_type, variables.target_id] });
+      qc.invalidateQueries({ queryKey: ["recent-reviews"] });
     },
   });
 }
@@ -117,6 +142,7 @@ export function useDeleteReview() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reviews"] });
       qc.invalidateQueries({ queryKey: ["user-review"] });
+      qc.invalidateQueries({ queryKey: ["recent-reviews"] });
     },
   });
 }

@@ -283,11 +283,13 @@ function Dashboard() {
     return allAppSubmissions.filter((s: any) => s.application_id === app.id);
   }, [allAppSubmissions, app]);
 
+  const taskLimits: Record<number, number> = { 1: 5, 2: 8, 3: 10, 6: 12 };
   const { data: internTasks } = useQuery({
-    queryKey: ["my-tasks", app?.domain],
+    queryKey: ["my-tasks", app?.domain, app?.duration],
     queryFn: async () => {
       if (!app) return [];
-      const { data } = await supabase.from("tasks").select("id, task_number").eq("domain", app.domain).order("task_number");
+      const limit = taskLimits[app.duration ?? 1] ?? 5;
+      const { data } = await supabase.from("tasks").select("id, task_number").eq("domain", app.domain).lte("task_number", limit).order("task_number");
       return data ?? [];
     },
     enabled: !!app,
@@ -344,12 +346,11 @@ function Dashboard() {
       for (const a of appsList) {
         if (a.status === "completed" || a.status === "pending") continue;
         try {
-          const domainTasks = allTasksByDomain[a.domain];
-          if (!domainTasks?.length) continue;
           const aSubs = allAppSubmissions.filter((s: any) => s.application_id === a.id);
           const aApproved = aSubs.filter((s: any) => s.status === "approved").length;
+          const limit = taskLimits[a.duration ?? 1] ?? 5;
           const aCert = allAppCerts.find((c: any) => c.application_id === a.id);
-          if (aApproved >= domainTasks.length && aCert) {
+          if (aApproved >= limit && aCert) {
             const { error: updErr } = await supabase.from("applications").update({ status: "completed", completed_at: new Date().toISOString() }).eq("id", a.id);
             if (updErr) { console.error("Auto-complete update failed:", updErr); continue; }
             qc.invalidateQueries({ queryKey: ["my-applications"] });
@@ -593,6 +594,7 @@ function Dashboard() {
                   domainSlug={da.domain}
                   submissions={daSubs}
                   appId={da.id}
+                  duration={da.duration}
                   onChange={() => { qc.invalidateQueries({ queryKey: ["all-submissions"] }); qc.invalidateQueries({ queryKey: ["my-applications"] }); }}
                 />
               </div>
@@ -621,7 +623,7 @@ function Dashboard() {
                 <div><p className="text-muted-foreground text-xs">Name</p><p className="font-semibold mt-0.5">{da.full_name}</p></div>
                 <div><p className="text-muted-foreground text-xs">Intern ID</p><p className="font-semibold mt-0.5 font-mono text-xs">{da.intern_id}</p></div>
                 <div><p className="text-muted-foreground text-xs">Domain</p><p className="font-semibold mt-0.5">{dd?.name ?? da.domain}</p></div>
-                <div><p className="text-muted-foreground text-xs">Duration</p><p className="font-semibold mt-0.5">1 month</p></div>
+                <div><p className="text-muted-foreground text-xs">Duration</p><p className="font-semibold mt-0.5">{da.duration ? `${da.duration} Month${da.duration > 1 ? "s" : ""}` : "—"}</p></div>
               </div>
             </div>
           </div>
@@ -732,7 +734,7 @@ function Dashboard() {
                   const aSubs = allAppSubmissions?.filter((s: any) => s.application_id === a.id) ?? [];
                   const aApproved = aSubs.filter((s: any) => s.status === "approved").length;
                   const aCert = allAppCerts?.find((c: any) => c.application_id === a.id) ?? null;
-                  const appTaskCount = allTasksByDomain?.[a.domain]?.length ?? 0;
+                  const appTaskCount = taskLimits[a.duration ?? 1] ?? 5;
                   return (
                     <button key={a.id} onClick={() => setDetailView({ type: "app", id: a.id })}
                       className="w-full text-left rounded-2xl border border-border/50 bg-white/70 p-4 backdrop-blur-xl transition-all hover:shadow-md hover:-translate-y-0.5 dark:bg-[#1E293B]/70 group">
@@ -922,6 +924,7 @@ function Dashboard() {
               domainSlug={app.domain}
               submissions={internSubmissions ?? []}
               appId={app.id}
+              duration={app.duration}
               onChange={() => { qc.invalidateQueries({ queryKey: ["all-submissions"] }); qc.invalidateQueries({ queryKey: ["my-applications"] }); }}
             />
           </div>
@@ -1148,7 +1151,7 @@ function Dashboard() {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">Duration</p>
-                  <p className="font-semibold mt-0.5">1 month</p>
+                  <p className="font-semibold mt-0.5">{app.duration ? `${app.duration} Month${app.duration > 1 ? "s" : ""}` : "—"}</p>
                 </div>
               </div>
             </div>
@@ -2092,6 +2095,20 @@ function ApplyForm({ onCreated }: { onCreated: () => void }) {
       qc.setQueryData(["my-applications", user.id], [inserted]);
       toast.success("Application approved! Your offer letter is ready.");
       onCreated();
+      (async () => {
+        try {
+          const { getDomain } = await import("@/lib/constants");
+          const { sendOfferLetterEmail } = await import("@/lib/email-helpers");
+          const domainObj = getDomain(domain);
+          const domainName = domainObj?.name ?? domain;
+          const result = await sendOfferLetterEmail({ to: user.email ?? "", studentName: payload.full_name, studentId: user.id, internId: intern_id, domainName, duration: 1 });
+          if (result.success) toast.success("Offer letter sent to your email!");
+          else toast.error("Offer letter email delivery failed. Contact support.");
+        } catch (e) {
+          toast.error("Offer letter email could not be sent.");
+          console.warn("[Email] Failed to send offer letter:", e);
+        }
+      })();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally { setLoading(false); }

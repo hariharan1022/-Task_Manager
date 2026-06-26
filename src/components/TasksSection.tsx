@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { getDomainTasks, LINKEDIN_TASK } from "@/lib/tasks-data";
+import { getDomainTasks, getTasksByDuration, LINKEDIN_TASK } from "@/lib/tasks-data";
 import {
   Search,
   SlidersHorizontal,
@@ -22,32 +22,17 @@ import {
   Sparkles,
   TrendingUp,
   Loader2,
+  ChevronRight,
+  Code,
 } from "lucide-react";
 
-const FEATURE_ICONS: Record<string, string> = {
-  react: "⚛",
-  node: "🚀",
-  mongodb: "🗄",
-  database: "🗄",
-  auth: "🔐",
-  responsive: "📱",
-  deploy: "☁",
-  api: "🔌",
-  jwt: "🔑",
-  tailwind: "🎨",
-  crud: "📝",
-  linkedin: "💼",
-  network: "🤝",
-  post: "📢",
-  share: "📤",
-};
+const TECH_KEYWORDS = ["react", "node", "mongodb", "database", "auth", "responsive", "deploy", "api", "jwt", "tailwind", "crud", "linkedin", "network", "post", "share", "python", "javascript", "typescript", "css", "html", "github", "docker", "aws", "firebase", "sql", "graphql", "next", "express", "redux", "figma"];
 
-function getFeatureIcon(feature: string): string {
-  const lower = feature.toLowerCase();
-  for (const [key, icon] of Object.entries(FEATURE_ICONS)) {
-    if (lower.includes(key)) return icon;
-  }
-  return "▹";
+function extractTechnologies(features: string[]): string[] {
+  const techs = new Set<string>();
+  const lower = features.join(" ").toLowerCase();
+  TECH_KEYWORDS.forEach((kw) => { if (lower.includes(kw)) techs.add(kw); });
+  return [...techs];
 }
 
 type TaskStatus = "completed" | "ongoing" | "pending" | "overdue";
@@ -191,11 +176,13 @@ export function TasksSection({
   domainSlug,
   submissions: rawSubmissions,
   appId,
+  duration,
   onChange,
 }: {
   domainSlug: string;
   submissions: Submission[];
   appId: string;
+  duration?: number;
   onChange: () => void;
 }) {
   const [search, setSearch] = useState("");
@@ -207,20 +194,25 @@ export function TasksSection({
   const [tasksReady, setTasksReady] = useState(false);
 
   const domainData = getDomainTasks(domainSlug);
-  const allTasks = domainData?.tasks ?? [];
+  const allTasks = duration ? getTasksByDuration(domainSlug, duration) : (domainData?.tasks ?? []);
 
   // Fetch task IDs from DB
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("tasks").select("id, task_number").eq("domain", domainSlug);
+      let query = supabase.from("tasks").select("id, task_number").eq("domain", domainSlug);
+      if (duration) {
+        const taskLimits: Record<number, number> = { 1: 5, 2: 8, 3: 10, 6: 12 };
+        query = query.lte("task_number", taskLimits[duration] ?? 5);
+      }
+      const { data } = await query;
       if (cancelled) return;
       const map: Record<number, string> = {};
       for (const t of data ?? []) map[t.task_number] = t.id;
       if (!cancelled) { setTaskIdMap(map); setTasksReady(true); }
     })();
     return () => { cancelled = true; };
-  }, [domainSlug]);
+  }, [domainSlug, duration]);
 
   const tasksWithMeta = useMemo(() => {
     const linkedinId = taskIdMap[0] ?? `${domainSlug}-0`;
@@ -606,15 +598,12 @@ function TaskCard({
       <div className="flex items-start justify-between px-5 pt-5">
         <div className="flex items-center gap-2.5">
           <div
-            className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br font-bold text-white shadow-sm text-sm"
-            style={{
-              backgroundImage: `linear-gradient(135deg, ${domain?.color?.split(" ")[0]?.replace("from-", "") || "#7C3AED"}, ${domain?.color?.split(" ")[1]?.replace("to-", "") || "#6D28D9"})`,
-            }}
+            className={`flex size-11 items-center justify-center rounded-xl bg-gradient-to-br ${domain?.color ?? "from-[#07284a] to-blue-600"} font-bold text-white shadow-sm text-sm`}
           >
             {task.taskNumber}
           </div>
-          <span className="rounded-lg bg-muted/60 px-2 py-1 text-[10px] font-medium text-muted-foreground">
-            {domain?.icon}
+          <span className={`rounded-lg px-2 py-1 text-[10px] font-bold text-white bg-gradient-to-br ${domain?.color ?? "from-[#07284a] to-blue-600"}`}>
+            {domain?.icon ?? "?"}
           </span>
         </div>
         <StatusPill status={status} isOverdue={isOverdue} />
@@ -654,12 +643,28 @@ function TaskCard({
         <ul className="mt-2.5 space-y-1.5">
           {task.features.slice(0, 5).map((f, i) => (
             <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="shrink-0 text-sm">{getFeatureIcon(f)}</span>
+              <ChevronRight className="size-3.5 shrink-0 text-emerald-500" />
               {f}
             </li>
           ))}
         </ul>
       </div>
+
+      {/* Technologies */}
+      {extractTechnologies(task.features).length > 0 && (
+        <div className="mt-4 px-5">
+          <h4 className="flex items-center gap-1.5 text-xs font-semibold text-purple-600 uppercase tracking-wider">
+            <Code className="size-3.5" /> Technologies
+          </h4>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {extractTechnologies(task.features).map((tech) => (
+              <span key={tech} className="rounded-md border border-border/50 bg-muted/40 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                {tech}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Expected Outcome */}
       <div className="mt-5 px-5">

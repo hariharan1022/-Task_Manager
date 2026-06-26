@@ -11,7 +11,7 @@ type Props = {
 };
 
 export function IDCard({ internId, fullName, domain, photoUrl, issuedAt }: Props) {
-  const verifyUrl = `https://skyrovixvirtualinternship.vercel.app/verify-certificate?intern=${internId}`;
+  const verifyUrl = `${window.location.origin}/verify-certificate?intern=${internId}`;
   return (
     <div className="relative mx-auto aspect-[1.6/1] w-full max-w-md overflow-hidden rounded-2xl bg-gradient-to-br from-[#0a3d6b] via-[#07284a] to-[#041b30] p-5 text-white shadow-2xl glow">
       <div className="absolute -right-12 -top-12 size-40 rounded-full bg-white/10 blur-2xl" />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Navbar } from "@/components/Navbar";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DOMAINS, DURATIONS, durationConfig, generateInternId } from "@/lib/constants";
+import { DOMAINS, DURATIONS, durationConfig, generateInternId, getDomain } from "@/lib/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -19,6 +19,9 @@ import { FadeUp } from "@/components/motion";
 export const Route = createFileRoute("/domains/")({
   ssr: false,
   head: () => ({ meta: [{ title: "Internship Domains — Skyrovix" }, { name: "description", content: "Browse 10 internship domains: Full Stack, Frontend, Backend, Data Science, AI/ML, UI/UX, Python, Java, Cyber Security, Digital Marketing." }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    apply: typeof search.apply === "string" ? search.apply : undefined,
+  }),
   component: DomainsPage,
 });
 
@@ -38,10 +41,18 @@ const DOMAIN_IMAGES: Record<string, string> = {
 function DomainsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [applyDomain, setApplyDomain] = useState<string | null>(null);
+  const search = Route.useSearch();
+  const [applyDomain, setApplyDomain] = useState<string | null>(search.apply ?? null);
   const [applyDuration, setApplyDuration] = useState(1);
   const [applying, setApplying] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+
+  // Auto-open dialog from search param (e.g. navigating from detail page)
+  useEffect(() => {
+    if (search.apply && DOMAINS.some((d) => d.slug === search.apply)) {
+      setApplyDomain(search.apply);
+    }
+  }, [search.apply]);
 
   const { data: applications } = useQuery({
     queryKey: ["my-applications", user?.id],
@@ -117,6 +128,21 @@ function DomainsPage() {
       });
 
       toast.success("Application submitted! Your internship has started.");
+      console.log("[Email] Application Created — now sending offer letter email...");
+      try {
+        const { sendOfferLetterEmail } = await import("@/lib/email-helpers");
+        const domainObj = getDomain(applyDomain!);
+        const domainName = domainObj?.name ?? applyDomain!;
+        console.log("[Email] Calling sendOfferLetterEmail...");
+        const result = await sendOfferLetterEmail({ to: currentUser.email ?? "", studentName: payload.full_name, studentId: currentUser.id, internId: intern_id, domainName, duration: applyDuration });
+        console.log("[Email] Result:", JSON.stringify(result));
+        if (result.success) toast.success("Offer letter sent to your email!");
+        else toast.error(`Offer letter email failed: ${result.error || "Unknown error"}`);
+      } catch (e: any) {
+        const msg = e?.message || e?.toString() || "Unknown error";
+        toast.error(`Offer letter email failed: ${msg}`);
+        console.error("[Email] Failed to send offer letter:", e);
+      }
       setApplyDomain(null);
       if (user) navigate({ to: "/dashboard" });
     } catch (err) {
@@ -205,7 +231,7 @@ function DomainsPage() {
       </div>
       <Footer />
 
-      <Dialog open={!!applyDomain} onOpenChange={(o) => { if (!o) { setApplyDomain(null); setApplyDuration(1); setPhotoFile(null); } }}>
+      <Dialog open={!!applyDomain} onOpenChange={(o) => { if (!o) { setApplyDomain(null); setApplyDuration(1); setPhotoFile(null); navigate({ to: "/domains", search: {} }); } }}>
         <DialogContent className="sm:max-w-lg max-h-[85dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Apply for {applyDomain && DOMAINS.find((d) => d.slug === applyDomain)?.name}</DialogTitle>
