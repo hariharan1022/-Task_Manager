@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { DOMAINS, PAYMENT, COMPANY, generateInternId, getDomain } from "@/lib/constants";
+import { DOMAINS, PAYMENT, COMPANY, generateInternId, generateCertId, getDomain } from "@/lib/constants";
 import { validateCoupon, calculateDiscountedAmount, formatDiscount } from "@/lib/coupons";
 import type { CouponResult } from "@/lib/coupons";
 import { toast } from "sonner";
@@ -473,6 +473,41 @@ function Dashboard() {
       qc.invalidateQueries({ queryKey: ["all-payments"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to submit payment");
+    } finally {
+      setSubmittingPayment(false);
+    }
+  };
+
+  const handleFreeCouponSubmit = async () => {
+    if (!app || !couponResult) return;
+    setSubmittingPayment(true);
+    try {
+      const cert_id = generateCertId();
+      const hash = crypto.randomUUID().replace(/-/g, "").slice(0, 32);
+      const { error: payErr } = await (supabase.from("payments" as any) as any).insert({
+        application_id: app.id,
+        utr_number: "FREE_COUPON",
+        screenshot_url: null,
+        amount: 0,
+        coupon_code: couponResult.code,
+        discount_amount: couponResult.discountAmount,
+        status: "verified",
+        verified_at: new Date().toISOString(),
+      });
+      if (payErr) throw payErr;
+      const { error: certErr } = await supabase.from("certificates").insert({
+        application_id: app.id,
+        certificate_id: cert_id,
+        verification_hash: hash,
+      });
+      if (certErr) throw certErr;
+      toast.success(`Certificate ${cert_id} generated!`);
+      setCouponCode("");
+      setCouponResult(null);
+      qc.invalidateQueries({ queryKey: ["all-payments"] });
+      qc.invalidateQueries({ queryKey: ["all-certs"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate certificate");
     } finally {
       setSubmittingPayment(false);
     }
@@ -1058,6 +1093,26 @@ function Dashboard() {
                 </div>
               </div>
             ) : internTotal > 0 && internApproved >= internTotal ? (
+              couponResult?.finalAmount === 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-200/50 dark:border-green-800/30">
+                    <Award className="size-5 text-green-600 shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-green-800 dark:text-green-300">Free with Coupon!</p>
+                      <p className="text-green-700 dark:text-green-400 mt-1">
+                        Coupon <Badge className="text-[10px] bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-300 mx-1">{couponResult.code}</Badge>
+                        applied — <span className="line-through">₹{PAYMENT.amount}</span> <span className="text-green-600 font-bold">₹0</span>. Generate your certificate directly.
+                      </p>
+                    </div>
+                  </div>
+                  <Button className="w-full brand-gradient text-white border-0 rounded-xl h-10 text-sm gap-1.5"
+                    disabled={submittingPayment}
+                    onClick={handleFreeCouponSubmit}>
+                    {submittingPayment ? <Loader2 className="size-4 animate-spin" /> : <Award className="size-4" />}
+                    {submittingPayment ? "Generating..." : "Generate Certificate"}
+                  </Button>
+                </div>
+              ) : (
               <div className="space-y-4">
                 <div className="flex items-start gap-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30">
                   <Wallet className="size-5 text-amber-600 shrink-0 mt-0.5" />
@@ -1130,6 +1185,7 @@ function Dashboard() {
                   </div>
                 </div>
               </div>
+              )
             ) : (
               <p className="text-sm text-muted-foreground">Complete all tasks to proceed with payment.</p>
             )}
