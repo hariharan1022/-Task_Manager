@@ -492,16 +492,22 @@ function TaskCard({
 
         if (resolved) {
           taskId = resolved.id;
-        } else if (task.taskNumber === 0) {
-          // LinkedIn task missing from DB — auto-create it via SECURITY DEFINER RPC
-          const { data: rpcId, error: rpcErr } = await supabase
-            .rpc("ensure_linkedin_task", { p_domain: domain?.slug ?? "" });
+        } else {
+          const rpcName = task.taskNumber === 0 ? "ensure_linkedin_task" : "ensure_task";
+          const rpcParams: Record<string, any> =
+            task.taskNumber === 0
+              ? { p_domain: domain?.slug ?? "" }
+              : {
+                  p_domain: domain?.slug ?? "",
+                  p_task_number: task.taskNumber,
+                  p_title: task.title ?? `Task ${task.taskNumber}`,
+                  p_description: task.description ?? "",
+                };
+          const { data: rpcId, error: rpcErr } = await supabase.rpc(rpcName, rpcParams);
           if (rpcErr || !rpcId) {
             return toast.error("Could not initialise task. Please refresh and try again.");
           }
           taskId = rpcId as string;
-        } else {
-          return toast.error("Task not found. Please try again later.");
         }
       }
       setLoading(true);
