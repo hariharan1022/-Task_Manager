@@ -505,7 +505,8 @@ function TaskCard({
                 };
           const { data: rpcId, error: rpcErr } = await supabase.rpc(rpcName, rpcParams);
           if (rpcErr || !rpcId) {
-            return toast.error("Could not initialise task. Please refresh and try again.");
+            console.error(`${rpcName} failed:`, rpcErr?.message ?? "no id returned");
+            return toast.error(rpcErr?.message?.includes("function") ? "Task system not ready — admin must run the SQL migration in Supabase." : `Could not initialise task: ${rpcErr?.message ?? "unknown error"}`);
           }
           taskId = rpcId as string;
         }
