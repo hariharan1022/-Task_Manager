@@ -60,7 +60,6 @@ const DOMAIN_IMAGES: Record<string, string> = {
 const INTERN_SLUGS = DOMAINS.map((d) => d.slug);
 
 export const Route = createFileRoute("/domains/$slug")({
-  ssr: false,
   head: ({ params }) => {
     const d = getDomain(params.slug);
     const name = d?.name ?? "Domain";

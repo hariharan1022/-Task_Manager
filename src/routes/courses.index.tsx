@@ -22,7 +22,6 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export const Route = createFileRoute("/courses/")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "Online Courses — Learn Programming, Data Science, AI | Skyrovix" },
@@ -101,26 +100,36 @@ function CoursesPage() {
   const { data: courses, isLoading } = useQuery({
     queryKey: ["courses-list"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("courses")
-        .select("id, slug, name, short_description, icon, domain, total_topics, total_tasks, quiz_marks, duration_weeks, difficulty")
-        .eq("is_published", true)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      const dbCourses = (data ?? []) as CourseRow[];
-      const dbSlugs = new Set(dbCourses.map((c) => c.slug));
-      for (const slug of localSlugs) {
-        if (!dbSlugs.has(slug)) {
-          const totalTopics = getLocalTopicCount(slug);
-          dbCourses.push({
-            id: `local-${slug}`, slug, name: slug.charAt(0).toUpperCase() + slug.slice(1),
-            short_description: "Comprehensive course content included with your learning platform.",
-            icon: "Database", domain: slug, total_topics: totalTopics, total_tasks: 5,
-            quiz_marks: 100, duration_weeks: 6, difficulty: "Intermediate",
-          });
+      try {
+        const { data, error } = await supabase
+          .from("courses")
+          .select("id, slug, name, short_description, icon, domain, total_topics, total_tasks, quiz_marks, duration_weeks, difficulty")
+          .eq("is_published", true)
+          .order("created_at", { ascending: true });
+        if (error) throw error;
+        const dbCourses = (data ?? []) as CourseRow[];
+        const dbSlugs = new Set(dbCourses.map((c) => c.slug));
+        for (const slug of localSlugs) {
+          if (!dbSlugs.has(slug)) {
+            const totalTopics = getLocalTopicCount(slug);
+            dbCourses.push({
+              id: `local-${slug}`, slug, name: slug.charAt(0).toUpperCase() + slug.slice(1),
+              short_description: "Comprehensive course content included with your learning platform.",
+              icon: "Database", domain: slug, total_topics: totalTopics, total_tasks: 5,
+              quiz_marks: 100, duration_weeks: 6, difficulty: "Intermediate",
+            });
+          }
         }
+        return dbCourses;
+      } catch {
+        const fallback: CourseRow[] = localSlugs.map((slug) => ({
+          id: `local-${slug}`, slug, name: slug.charAt(0).toUpperCase() + slug.slice(1),
+          short_description: "Comprehensive course content included with your learning platform.",
+          icon: "Database", domain: slug, total_topics: getLocalTopicCount(slug), total_tasks: 5,
+          quiz_marks: 100, duration_weeks: 6, difficulty: "Intermediate",
+        }));
+        return fallback;
       }
-      return dbCourses;
     },
   });
 

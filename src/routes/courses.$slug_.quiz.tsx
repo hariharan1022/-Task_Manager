@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/courses/$slug_/quiz")({
-  ssr: false,
   head: ({ params }) => ({ meta: [{ title: `Final Quiz — ${params.slug} — Skyrovix` }] }),
   component: QuizPage,
 });

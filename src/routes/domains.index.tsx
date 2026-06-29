@@ -17,7 +17,6 @@ import { AuroraBackground } from "@/components/AuroraBackground";
 import { FadeUp } from "@/components/motion";
 
 export const Route = createFileRoute("/domains/")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "Internship Domains — Full Stack, AI/ML, Data Science, UI/UX | Skyrovix" },

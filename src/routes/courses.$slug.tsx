@@ -20,7 +20,6 @@ import {
 import { getLocalCourseContent } from "@/lib/course-content";
 
 export const Route = createFileRoute("/courses/$slug")({
-  ssr: false,
   head: ({ params }) => ({
     meta: [
       { title: `${params.slug.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())} Course — Learn Online | Skyrovix` },

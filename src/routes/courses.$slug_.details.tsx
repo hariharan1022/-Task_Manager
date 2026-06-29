@@ -55,7 +55,6 @@ const COURSE_IMAGES: Record<string, string> = {
 const COURSE_SLUGS = Object.keys(COURSE_DETAILS);
 
 export const Route = createFileRoute("/courses/$slug_/details")({
-  ssr: false,
   component: CourseDetailsPage,
 });
 
