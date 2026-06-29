@@ -477,6 +477,7 @@ function TaskCard({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
     try {
       if (!user) return toast.error("You must be logged in");
       let taskId = task.id;
@@ -512,7 +513,7 @@ function TaskCard({
         }
       }
       setLoading(true);
-      const fd = new FormData(e.currentTarget);
+      const fd = new FormData(form);
       const githubUrl = String(fd.get("github_url") || "");
       const pdfFile = fd.get("pdf") as File | null;
       const screenshotFile = fd.get("screenshot") as File | null;
