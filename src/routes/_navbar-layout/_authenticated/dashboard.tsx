@@ -419,7 +419,11 @@ function Dashboard() {
       const result = await validateCoupon(couponCode.trim(), app?.domain);
       if (result.valid) {
         setCouponResult(result);
-        toast.success(`Coupon applied! You save ₹${result.discountAmount}`);
+        if (result.finalAmount === 0 && app) {
+          await doFreeCertificate(result, app.id);
+        } else {
+          toast.success(`Coupon applied! You save ₹${result.discountAmount}`);
+        }
       } else {
         setCouponResult(null);
         toast.error(result.error || "Invalid coupon");
@@ -478,22 +482,21 @@ function Dashboard() {
     }
   };
 
-  const handleFreeCouponSubmit = async () => {
-    if (!app || !couponResult) return;
+  const doFreeCertificate = async (coupon: CouponResult, applicationId: string) => {
     setSubmittingPayment(true);
     try {
       const { error: payErr } = await (supabase.from("payments" as any) as any).insert({
-        application_id: app.id,
+        application_id: applicationId,
         utr_number: "FREE_COUPON",
         screenshot_url: null,
         amount: 0,
-        coupon_code: couponResult.code,
-        discount_amount: couponResult.discountAmount,
+        coupon_code: coupon.code,
+        discount_amount: coupon.discountAmount,
         status: "verified",
         verified_at: new Date().toISOString(),
       });
       if (payErr) throw payErr;
-      const { data: certId, error: certErr } = await supabase.rpc("generate_certificate", { p_application_id: app.id });
+      const { data: certId, error: certErr } = await supabase.rpc("generate_certificate", { p_application_id: applicationId });
       if (certErr || !certId) throw certErr || new Error("Failed to generate certificate");
       toast.success(`Certificate ${certId} generated!`);
       setCouponCode("");
@@ -1101,7 +1104,7 @@ function Dashboard() {
                   </div>
                   <Button className="w-full brand-gradient text-white border-0 rounded-xl h-10 text-sm gap-1.5"
                     disabled={submittingPayment}
-                    onClick={handleFreeCouponSubmit}>
+                    onClick={() => doFreeCertificate(couponResult!, app!.id)}>
                     {submittingPayment ? <Loader2 className="size-4 animate-spin" /> : <Award className="size-4" />}
                     {submittingPayment ? "Generating..." : "Generate Certificate"}
                   </Button>
