@@ -492,17 +492,20 @@ function Dashboard() {
   const doFreeCertificate = async (coupon: CouponResult, applicationId: string) => {
     setCertStatus("generating");
     try {
-      const { error: payErr } = await (supabase.from("payments" as any) as any).upsert({
-        application_id: applicationId,
-        utr_number: "FREE_COUPON",
-        screenshot_url: null,
-        amount: 0,
-        coupon_code: coupon.code,
-        discount_amount: coupon.discountAmount,
-        status: "verified",
-        verified_at: new Date().toISOString(),
-      }, { onConflict: "application_id" });
-      if (payErr) throw payErr;
+      const { data: existingPay } = await (supabase.from("payments" as any) as any).select("id").eq("application_id", applicationId).maybeSingle();
+      if (!existingPay) {
+        const { error: payErr } = await (supabase.from("payments" as any) as any).insert({
+          application_id: applicationId,
+          utr_number: "FREE_COUPON",
+          screenshot_url: null,
+          amount: 0,
+          coupon_code: coupon.code,
+          discount_amount: coupon.discountAmount,
+          status: "verified",
+          verified_at: new Date().toISOString(),
+        });
+        if (payErr) throw payErr;
+      }
       const { data: certId, error: certErr } = await supabase.rpc("generate_certificate", { p_application_id: applicationId });
       if (certErr || !certId) throw certErr || new Error("Failed to generate certificate");
       setCertStatus("done");
