@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 import { Plus, Trash2, EyeOff, Eye, Loader2, ExternalLink } from "lucide-react";
 
 export function PromoPopupSection() {
@@ -13,6 +14,7 @@ export function PromoPopupSection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [edit, setEdit] = useState<any | null>(null);
+  const { user } = useAuth();
 
   const fetch = async () => {
     const { data } = await supabase.from("promotional_popups" as any).select("*").order("created_at", { ascending: false });
@@ -39,7 +41,7 @@ export function PromoPopupSection() {
 
     if (file?.size) {
       const ext = file.name.split(".").pop();
-      const path = `popups/${crypto.randomUUID()}.${ext}`;
+      const path = `${user?.id ?? "admin"}/popups/${crypto.randomUUID()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("payment-screenshots").upload(path, file);
       if (uploadError) { toast.error("Image upload failed: " + uploadError.message); setSaving(false); return; }
       const { data: { publicUrl } } = supabase.storage.from("payment-screenshots").getPublicUrl(path);
