@@ -199,7 +199,7 @@ function AdminPanel() {
         </aside>
 
         {/* ─── Main Area ─── */}
-        <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : "lg:ml-16"}`}>
+        <div className={`flex-1 min-w-0 transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : "lg:ml-16"}`}>
           {/* ─── Top Navbar ─── */}
           <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border/60 bg-white/70 px-4 backdrop-blur-xl dark:bg-[#0F172A]/80 dark:border-white/5">
             <div className="flex items-center gap-3">
@@ -246,7 +246,7 @@ function AdminPanel() {
           </header>
 
           {/* ─── Page Content ─── */}
-          <main className="p-4 sm:p-6 lg:p-8">
+          <main className="p-4 sm:p-6 lg:p-8 overflow-x-auto">
             {/* Search results */}
             {searchQuery && (
               <div className="mb-6 rounded-2xl border border-border/60 bg-white/60 p-4 backdrop-blur dark:bg-white/5">
