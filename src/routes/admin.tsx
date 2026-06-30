@@ -142,7 +142,7 @@ function AdminPanel() {
 
         {/* ─── Sidebar ─── */}
         <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border/60 bg-white/70 backdrop-blur-2xl transition-all duration-300 dark:bg-[#0F172A]/90 dark:border-white/5 ${
-          mobileOpen ? "translate-x-0" : sidebarOpen ? "w-64 translate-x-0" : "w-16 -translate-x-full lg:translate-x-0"
+          mobileOpen ? "w-64 translate-x-0" : sidebarOpen ? "w-64 -translate-x-full lg:translate-x-0" : "w-16 -translate-x-full lg:translate-x-0"
         }`}>
           {/* Logo */}
           <div className="flex h-16 items-center justify-between border-b border-border/60 px-4 dark:border-white/5">
