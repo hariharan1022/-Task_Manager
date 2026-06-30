@@ -1958,8 +1958,22 @@ function StudentsSection() {
 // ANALYTICS
 // ══════════════════════════════════════════════
 function AnalyticsSection() {
+  const qc = useQueryClient();
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const cfg = { refetchInterval: 30_000 };
+  const cfg = { refetchInterval: 5_000 };
+
+  // Real-time subscriptions
+  useEffect(() => {
+    const channel = supabase.channel("analytics-realtime");
+    const tables = ["applications", "payments", "enrollments", "profiles"];
+    for (const table of tables) {
+      channel.on("postgres_changes" as any, { event: "*", schema: "public", table }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-analytics"] });
+      });
+    }
+    channel.subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const { data: regData = [] } = useQuery({
     queryKey: ["admin-analytics-registrations"],
@@ -2013,7 +2027,7 @@ function AnalyticsSection() {
   const { data: revenue } = useQuery({
     queryKey: ["admin-analytics-revenue"],
     queryFn: async () => {
-      const { data } = await supabase.from("payments").select("amount, created_at").eq("status", "completed");
+      const { data } = await supabase.from("payments").select("amount, created_at").eq("status", "verified");
       if (!data || data.length === 0) return { data: [], total: 0 };
       const map: Record<string, number> = {};
       data.forEach((p) => {
