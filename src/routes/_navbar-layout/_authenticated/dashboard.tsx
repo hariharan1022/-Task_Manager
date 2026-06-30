@@ -27,7 +27,7 @@ import {
   BookOpen, GraduationCap, ArrowRight, Sparkles, User, Mail, Building,
   Phone, Calendar, ChevronRight, ExternalLink, Shield, Bell, Trophy,
   Target, BarChart3, Layers, Brain, Linkedin, Play, ChevronLeft,
-  ListChecks, LayoutDashboard, Flag, AlertTriangle, Zap, Hash, Circle, Loader2,
+  ListChecks, LayoutDashboard, Flag, AlertTriangle, AlertCircle, Zap, Hash, Circle, Loader2,
   TrendingUp, Star, Lock, Eye, LogOut,
   Settings, Wallet, CreditCard, ScrollText, Briefcase,
 } from "lucide-react";
@@ -1893,7 +1893,17 @@ function TasksSectionWidget({ tasks, submissions, enrollmentId, onChange, course
                     <span className="font-semibold">Requirements:</span> {t.requirements}
                   </div>
                 )}
-                {sub?.feedback && (
+                {sub?.status === "rejected" && (
+                  <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/30 dark:bg-red-950/20">
+                    <div className="flex items-center gap-1.5">
+                      <AlertCircle className="size-3.5 text-red-500 shrink-0" />
+                      <span className="text-xs font-semibold text-red-700 dark:text-red-400">Needs Revision</span>
+                    </div>
+                    {sub.feedback && <p className="mt-1 text-xs text-red-600 dark:text-red-300 pl-5">Reason: {sub.feedback}</p>}
+                    <p className="mt-0.5 text-[10px] text-red-500 pl-5">Review the feedback above and resubmit.</p>
+                  </div>
+                )}
+                {sub?.status !== "rejected" && sub?.feedback && (
                   <div className="mt-2 rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900 dark:border-blue-900/30 dark:bg-blue-950/30 dark:text-blue-300">
                     <span className="font-semibold">Feedback:</span> {sub.feedback}
                   </div>
@@ -1904,12 +1914,60 @@ function TasksSectionWidget({ tasks, submissions, enrollmentId, onChange, course
                     <Link to="/courses/$slug" params={{ slug: courseSlug }}><ExternalLink className="mr-1 size-3.5" /> View Details</Link>
                   </Button>
                 </div>
+                <CourseTaskHistory sub={sub} />
               </div>
             )}
           </div>
         );
       })}
     </div>
+  );
+}
+
+function CourseTaskHistory({ sub }: { sub: any }) {
+  const [history, setHistory] = useState<any[]>([]);
+  const [show, setShow] = useState(false);
+  if (!sub) return null;
+  const load = async () => {
+    if (show) { setShow(false); return; }
+    const { data } = await supabase
+      .from("submission_history")
+      .select("*")
+      .eq("submission_id", sub.id)
+      .eq("table_name", "course_task_submissions")
+      .order("created_at", { ascending: false });
+    setHistory(data ?? []);
+    setShow(true);
+  };
+  return (
+    <>
+      <button onClick={load} className="mt-2 flex items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground transition">
+        <Clock className="size-3" /> {show ? "Hide History" : "View History"}
+      </button>
+      {show && (
+        <div className="mt-2 rounded-xl border border-border/40 bg-secondary/20 p-3">
+          <p className="mb-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Submission History</p>
+          {history.length === 0 ? (
+            <p className="text-[10px] text-muted-foreground">No history recorded yet.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {history.map((h: any, i: number) => (
+                <div key={h.id} className="flex items-start gap-2 text-[10px]">
+                  <span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full bg-muted text-[7px] font-bold text-muted-foreground">{i + 1}</span>
+                  <div>
+                    <p>
+                      <span className={`font-semibold ${h.new_status === "approved" ? "text-green-600" : h.new_status === "rejected" ? "text-red-600" : "text-amber-600"}`}>{h.previous_status ?? "—"} → {h.new_status}</span>
+                    </p>
+                    <p className="text-muted-foreground">{new Date(h.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                    {h.reason && <p className="text-red-500 italic">Reason: {h.reason}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -1926,9 +1984,20 @@ function TaskSubmitButton({ task, sub, enrollmentId, onChange }: any) {
     const { error } = sub
       ? await supabase.from("course_task_submissions").update(payload).eq("id", sub.id)
       : await supabase.from("course_task_submissions").insert(payload);
+    if (error) { setSaving(false); return toast.error(error.message); }
+    if (sub && sub.status === "rejected") {
+      const { data: { user: u } } = await supabase.auth.getUser();
+      await supabase.from("submission_history").insert({
+        submission_id: sub.id,
+        table_name: "course_task_submissions",
+        previous_status: "rejected",
+        new_status: "pending",
+        changed_by: u?.id,
+        reason: null,
+      });
+    }
     setSaving(false);
-    if (error) return toast.error(error.message);
-    toast.success(sub ? "Submission updated" : "Submitted for review");
+    toast.success(sub?.status === "rejected" ? "Resubmitted for review!" : (sub ? "Submission updated" : "Submitted for review"));
     onChange();
     setOpen(false);
   };
